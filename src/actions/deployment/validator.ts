@@ -6,3 +6,7 @@ export const createDeploymentSchema = z.object({
   projectId: z.string({ message: 'Project is required' }),
   cache: z.enum(['no-cache', 'cache']).default('no-cache'),
 })
+
+export const cancelDeploymentSchema = z.object({
+  deploymentId: z.string({ message: 'Deployment is required' }),
+})

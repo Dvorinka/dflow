@@ -207,6 +207,7 @@ export const getActionAccess = {
 
   // Deployment actions
   createDeploymentAction: ['services.read', 'services.update'],
+  cancelDeploymentAction: ['services.read', 'services.update'],
 
   //install net data
   installNetdataAction: ['servers.read', 'servers.update'],
