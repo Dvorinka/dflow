@@ -11,7 +11,9 @@ import { server } from '@/lib/server'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
 import { generateRandomString } from '@/lib/utils'
 import { addInstallRailpackQueue } from '@/queues/builder/installRailpack'
+import { addUninstallRailpackQueue } from '@/queues/builder/uninstallRailpack'
 import { addInstallDokkuQueue } from '@/queues/dokku/install'
+import { addUninstallDokkuQueue } from '@/queues/dokku/uninstall'
 import { addManageServerDomainQueue } from '@/queues/domain/manageGlobal'
 import { addDeleteProjectsQueue } from '@/queues/project/deleteProjects'
 
@@ -24,6 +26,7 @@ import {
   createTailscaleServerSchema,
   deleteServerSchema,
   installDokkuSchema,
+  uninstallDokkuSchema,
   updateServerDomainSchema,
   updateServerSchema,
   updateTailscaleServerSchema,
@@ -844,4 +847,55 @@ export const configureGlobalBuildDirAction = protectedClient
       success: result.code === 0,
       message: result.stdout || result.stderr,
     }
+  })
+
+export const resetOnboardingAction = protectedClient
+  .metadata({
+    actionName: 'resetOnboardingAction',
+  })
+  .schema(uninstallDokkuSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId } = clientInput
+    const { payload, userTenant } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+
+    const [dokkuResult, railpackResult] = await Promise.all([
+      addUninstallDokkuQueue({
+        serverDetails: {
+          id: serverId,
+          provider: serverDetails.provider,
+        },
+        sshDetails,
+        tenant: { slug: userTenant.tenant.slug },
+      }),
+
+      addUninstallRailpackQueue({
+        serverDetails: { id: serverId },
+        sshDetails,
+        tenant: { slug: userTenant.tenant.slug },
+      }),
+    ])
+
+    if (dokkuResult.id && railpackResult.id) {
+      const updateResponse = await payload.update({
+        id: serverId,
+        data: { onboarded: false },
+        collection: 'servers',
+      })
+
+      if (updateResponse) {
+        return { success: true }
+      }
+    }
+
+    throw new Error(
+      'Failed to reset onboarding. One or both uninstallations failed.',
+    )
   })
