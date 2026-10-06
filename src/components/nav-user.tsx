@@ -4,7 +4,7 @@ import { Check, HelpCircle, LogOut } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 import { logoutAction } from '@/actions/auth'
@@ -22,11 +22,16 @@ import { User } from '@/payload-types'
 
 export function NavUser({ user }: { user: User }) {
   const params = useParams<{ organisation: string }>()
+  const router = useRouter()
   const initial = user.email.slice(0, 1)
 
   const { execute } = useAction(logoutAction, {
-    onSuccess: async ({ data }) => {
+    onSuccess: () => {
       toast.success('Logged out successfully')
+      // Client navigation: the action only clears the cookie, so route
+      // here explicitly instead of relying on middleware/reload (#465).
+      router.replace('/sign-in')
+      router.refresh()
     },
   })
 
