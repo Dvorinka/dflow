@@ -94,6 +94,27 @@ export const syncServerAppsSchema = z.object({
   serverId: z.string(),
 })
 
+export const danglingVolumesSchema = z.object({
+  serverId: z.string(),
+})
+
+export const deleteDanglingVolumeSchema = z.object({
+  serverId: z.string(),
+  name: z
+    .string()
+    .regex(/^[A-Za-z0-9][A-Za-z0-9_.-]*$/, 'Invalid volume name'),
+})
+
+export const attachDanglingVolumeSchema = z.object({
+  serverId: z.string(),
+  serviceId: z.string(),
+  name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]*$/, 'Invalid volume name'),
+  containerPath: z
+    .string()
+    .regex(/^\//, 'Container path must be absolute')
+    .max(256),
+})
+
 export const cleanupServerSchema = z.object({
   serverId: z.string(),
   // Safe mode: only prune Docker objects older than this (hours, 1-8760)

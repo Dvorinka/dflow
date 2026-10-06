@@ -4,6 +4,7 @@ import dns from 'dns/promises'
 import isPortReachable from 'is-port-reachable'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { NodeSSH } from 'node-ssh'
 import { extractID } from 'payload/shared'
 
 import updateRailpack from '@/lib/axios/updateRailpack'
@@ -23,6 +24,7 @@ import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { addResetServerQueue } from '@/queues/server/reset'
 
 import {
+  attachDanglingVolumeSchema,
   checkDNSConfigSchema,
   checkServerConnectionSchema,
   cleanupServerSchema,
@@ -30,6 +32,8 @@ import {
   configureGlobalBuildDirSchema,
   createServerSchema,
   createTailscaleServerSchema,
+  danglingVolumesSchema,
+  deleteDanglingVolumeSchema,
   deleteServerSchema,
   getServersWithFieldsInputSchema,
   installDokkuSchema,
@@ -519,6 +523,196 @@ export const syncServerAppsAction = protectedClient
     } finally {
       ssh.dispose()
     }
+  })
+
+const DANGLING_STORAGE_PATH = '/var/lib/dokku/data/storage/'
+
+const listMountedPaths = async (
+  ssh: NodeSSH,
+  appNames: string[],
+): Promise<Set<string>> => {
+  const mounted = new Set<string>()
+  for (const app of appNames) {
+    try {
+      const mounts = (await dokku.volumes.list(ssh, app)) as {
+        host_path: string
+      }[]
+      for (const mount of mounts) {
+        if (typeof mount.host_path === 'string') mounted.add(mount.host_path)
+      }
+    } catch {
+      // App without storage or removed mid-scan; ignore
+    }
+  }
+  return mounted
+}
+
+// Lists storage directories no app mounts anymore (#492). Read-only.
+export const getDanglingVolumesAction = protectedClient
+  .metadata({
+    actionName: 'getDanglingVolumesAction',
+  })
+  .inputSchema(danglingVolumesSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId } = clientInput
+    const { payload } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+    const ssh = await dynamicSSH(sshDetails)
+
+    try {
+      const apps = ((await dokku.apps.list(ssh)) as string[])
+        .map(app => app.trim())
+        .filter(Boolean)
+      const dirs = await ssh.execCommand(
+        `ls -1 ${DANGLING_STORAGE_PATH}`,
+      )
+      const names = dirs.code === 0 ? dirs.stdout.split('\n').map(d => d.trim()).filter(Boolean) : []
+      const mounted = await listMountedPaths(ssh, apps)
+
+      const volumes = []
+      for (const name of names) {
+        if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(name)) continue
+        const fullPath = `${DANGLING_STORAGE_PATH}${name}`
+        if (mounted.has(fullPath)) continue
+        let size: string | null = null
+        try {
+          const du = await ssh.execCommand(`du -sh ${fullPath}`)
+          if (du.code === 0) size = du.stdout.split('\t')[0]?.trim() ?? null
+        } catch {
+          size = null
+        }
+        volumes.push({ name, path: fullPath, size })
+      }
+
+      const { docs: services } = await payload.find({
+        collection: 'services',
+        pagination: false,
+        depth: 0,
+        select: { name: true, volumes: true },
+        where: {
+          and: [
+            { 'project.server': { equals: serverId } },
+            { deletedAt: { exists: false } },
+          ],
+        },
+      })
+
+      return {
+        success: true,
+        volumes,
+        services: services.map(service => ({
+          id: service.id,
+          name: service.name,
+          volumes: service.volumes ?? [],
+        })),
+      }
+    } finally {
+      ssh.dispose()
+    }
+  })
+
+export const deleteDanglingVolumeAction = protectedClient
+  .metadata({
+    actionName: 'deleteDanglingVolumeAction',
+  })
+  .inputSchema(deleteDanglingVolumeSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId, name } = clientInput
+    const { payload } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+    const ssh = await dynamicSSH(sshDetails)
+
+    try {
+      const fullPath = `${DANGLING_STORAGE_PATH}${name}`
+      // Re-verify unmounted right before removal
+      const apps = ((await dokku.apps.list(ssh)) as string[])
+        .map(app => app.trim())
+        .filter(Boolean)
+      const mounted = await listMountedPaths(ssh, apps)
+      if (mounted.has(fullPath)) {
+        throw new Error(`${name} is mounted by an app, refusing to delete`)
+      }
+
+      const rm = await ssh.execCommand(`rm -rf "${fullPath}"`)
+      if (rm.code !== 0) {
+        throw new Error(rm.stderr.slice(0, 300) || 'Removal failed')
+      }
+
+      return { success: true }
+    } finally {
+      ssh.dispose()
+    }
+  })
+
+export const attachDanglingVolumeAction = protectedClient
+  .metadata({
+    actionName: 'attachDanglingVolumeAction',
+  })
+  .inputSchema(attachDanglingVolumeSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serviceId, name, containerPath } = clientInput
+    const {
+      payload,
+      userTenant: { tenant },
+    } = ctx
+
+    const service = await payload.findByID({
+      collection: 'services',
+      id: serviceId,
+      depth: 3,
+    })
+
+    const hostPath = `${DANGLING_STORAGE_PATH}${name}`
+    const existing = (service.volumes ?? []) as {
+      hostPath: string
+      containerPath: string
+    }[]
+    if (existing.some(volume => volume.hostPath === hostPath)) {
+      throw new Error(`${name} is already attached to this service`)
+    }
+
+    const updatedService = await payload.update({
+      collection: 'services',
+      id: serviceId,
+      depth: 3,
+      data: {
+        volumes: [...existing, { hostPath, containerPath }],
+      },
+    })
+
+    const project = updatedService.project
+    if (typeof project === 'object' && typeof project?.server === 'object') {
+      const { updateVolumesQueue } = await import(
+        '@/queues/volume/updateVolumesQueue'
+      )
+      await updateVolumesQueue({
+        restart: true,
+        service: updatedService,
+        serverDetails: {
+          id: project.server.id,
+        },
+        project,
+        tenantDetails: {
+          slug: tenant.slug,
+        },
+      })
+    }
+
+    return { success: true }
   })
 
 export const updateServerDomainAction = protectedClient
