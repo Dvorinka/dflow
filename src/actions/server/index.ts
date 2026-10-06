@@ -33,6 +33,7 @@ import {
   deleteServerSchema,
   getServersWithFieldsInputSchema,
   installDokkuSchema,
+  syncServerAppsSchema,
   uninstallDokkuSchema,
   updateRailpackSchema,
   updateServerDomainSchema,
@@ -468,6 +469,55 @@ export const updateDokkuAction = protectedClient
     }
 
     return { success: false, message: 'Failed to queue dokku update' }
+  })
+
+// Reports drift between dokku apps on the server and dFlow services (#417).
+// Read-only: lists apps missing on either side so users can reconcile.
+export const syncServerAppsAction = protectedClient
+  .metadata({
+    actionName: 'syncServerAppsAction',
+  })
+  .inputSchema(syncServerAppsSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId } = clientInput
+    const { payload } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+    const ssh = await dynamicSSH(sshDetails)
+
+    try {
+      const dokkuApps = (await dokku.apps.list(ssh)) as string[]
+      const appNames = dokkuApps.map(app => app.trim()).filter(Boolean)
+
+      const { docs: services } = await payload.find({
+        collection: 'services',
+        pagination: false,
+        depth: 0,
+        select: { name: true },
+        where: {
+          and: [
+            { 'project.server': { equals: serverId } },
+            { deletedAt: { exists: false } },
+          ],
+        },
+      })
+      const serviceNames = services.map(service => service.name)
+
+      return {
+        success: true,
+        dokkuApps: appNames,
+        missingInDflow: appNames.filter(name => !serviceNames.includes(name)),
+        missingOnServer: serviceNames.filter(name => !appNames.includes(name)),
+      }
+    } finally {
+      ssh.dispose()
+    }
   })
 
 export const updateServerDomainAction = protectedClient

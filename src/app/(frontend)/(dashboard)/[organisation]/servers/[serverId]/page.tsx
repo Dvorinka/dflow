@@ -23,6 +23,7 @@ import ConnectingStatusBanner from '@/components/servers/ConnectingStatusBanner'
 import ConnectionErrorBanner from '@/components/servers/ConnectionErrorBanner'
 import UpdateEC2InstanceForm from '@/components/servers/CreateEC2InstanceForm'
 import Danger from '@/components/servers/Danger'
+import SyncAppsCard from '@/components/servers/SyncAppsCard'
 import DefaultResourceLimitsForm from '@/components/servers/DefaultResourceLimitsForm'
 import DomainForm from '@/components/servers/DomainForm'
 import DomainList from '@/components/servers/DomainList'
@@ -140,6 +141,8 @@ const GeneralTab = ({ server }: { server: ServerType }) => {
   return (
     <div className='space-y-6'>
       <ServerDetails serverDetails={serverDetails} server={server} />
+
+      <SyncAppsCard serverId={server.id} />
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <div className='md:col-span-2'>

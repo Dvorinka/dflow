@@ -83,6 +83,10 @@ export const uninstallDokkuSchema = z.object({
   serverId: z.string(),
 })
 
+export const syncServerAppsSchema = z.object({
+  serverId: z.string(),
+})
+
 export const cleanupServerSchema = z.object({
   serverId: z.string(),
   // Safe mode: only prune Docker objects older than this (hours, 1-8760)
