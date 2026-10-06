@@ -1,7 +1,8 @@
 'use server'
 
 import { BeszelClient } from '@/lib/beszel/client/BeszelClient'
-import { Collections } from '@/lib/beszel/types'
+import { TypedBeszelHelpers } from '@/lib/beszel/client/typedHelpers'
+import { Alert, Collections } from '@/lib/beszel/types'
 import { pub } from '@/lib/redis'
 import { protectedClient, userClient } from '@/lib/safe-action'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
@@ -17,7 +18,11 @@ import {
   processServices,
   setupBeszelSystem,
 } from './utils'
-import { getSystemStatsSchema, installMonitoringToolsSchema } from './validator'
+import {
+  getSystemAlertsSchema,
+  getSystemStatsSchema,
+  installMonitoringToolsSchema,
+} from './validator'
 
 export const installMonitoringToolsAction = protectedClient
   .metadata({ actionName: 'installMonitoringToolsAction' })
@@ -246,6 +251,52 @@ export const getSystemStatsAction = userClient
       return {
         success: false,
         error: `Failed to fetch system stats: ${message}`,
+      }
+    }
+  })
+
+export const getSystemAlertsAction = userClient
+  .metadata({
+    actionName: 'getSystemAlerts',
+  })
+  .inputSchema(getSystemAlertsSchema)
+  .action(async ({ clientInput }) => {
+    const { systemId } = clientInput
+
+    try {
+      const beszelConfig = checkBeszelConfig()
+
+      if (!beszelConfig.configured) {
+        return {
+          success: false,
+          error: `Beszel monitoring is not configured. Missing: ${beszelConfig.missing?.join(', ')}`,
+        }
+      }
+
+      const { monitoringUrl, superuserEmail, superuserPassword } = beszelConfig
+
+      const client = await BeszelClient.createWithSuperuserAuth(
+        monitoringUrl,
+        superuserEmail,
+        superuserPassword,
+      )
+
+      const helpers = new TypedBeszelHelpers(client)
+      const alerts = await helpers.getTriggeredAlerts()
+
+      // ponytail: filter in code; the helper has no per-system filter param
+      return {
+        success: true,
+        data: alerts.filter(
+          (alert: Alert) => alert.system === systemId,
+        ),
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+
+      return {
+        success: false,
+        error: `Failed to fetch system alerts: ${message}`,
       }
     }
   })

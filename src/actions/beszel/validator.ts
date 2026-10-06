@@ -11,3 +11,7 @@ export const getSystemStatsSchema = z.object({
   type: StatTypeEnum,
   from: z.string(),
 })
+
+export const getSystemAlertsSchema = z.object({
+  systemId: z.string(),
+})
