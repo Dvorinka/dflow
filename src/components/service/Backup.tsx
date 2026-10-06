@@ -45,12 +45,14 @@ export const IndividualBackup = ({
   showRestoreIcon = true,
   showDeleteIcon = true,
   databaseIcon: DatabaseIcon,
+  databaseType,
 }: {
   backup: BackupType
   serviceId: string
   showRestoreIcon?: boolean
   showDeleteIcon?: boolean
   databaseIcon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  databaseType?: string | null
 }) => {
   const {
     execute: internalRestoreExecution,
@@ -122,6 +124,11 @@ export const IndividualBackup = ({
           <DatabaseBackup size={16} className='stroke-muted-foreground' />
         )}
         <div className='text-sm font-medium'>{formattedDate}</div>
+        {databaseType && (
+          <Badge variant='outline' className='text-xs'>
+            {databaseType}
+          </Badge>
+        )}
         <Badge
           className=''
           variant={
@@ -331,6 +338,9 @@ const Backup = ({
               key={backup.id}
               backup={backup}
               serviceId={serviceId}
+              databaseType={
+                databaseDetails?.type ?? backup.databaseType ?? null
+              }
             />
           ))}
         </div>
@@ -379,37 +389,56 @@ export const BackupDetails = ({ data }: { data: BackupType[] }) => {
         <div key={projectName} className='rounded-xl border p-6 shadow-sm'>
           <h4 className='mb-4 text-2xl font-semibold'>{projectName}</h4>
           <div className='space-y-6'>
-            {Object.entries(services).map(([serviceName, backups]) => (
-              <div key={serviceName}>
-                <h5 className='text-muted-foreground mb-2 text-lg font-medium'>
-                  {serviceName}
-                </h5>
-                <ul className='space-y-3'>
-                  {backups.map(backup => {
-                    const DatabaseIcon = databaseOptions?.find(
-                      database =>
-                        database.value ===
-                        (backup?.service as Service)?.databaseDetails?.type,
-                    )?.icon
+            {Object.entries(services).map(([serviceName, backups]) => {
+              // Survives service deletion: type is denormalized on the
+              // backup itself (#483)
+              const groupType =
+                backups.find(b => b.databaseType)?.databaseType ??
+                (typeof backups[0]?.service === 'string'
+                  ? null
+                  : backups[0]?.service.databaseDetails?.type ?? null)
+              const isDeleted = projectName === 'Deleted Project/Service'
+              return (
+                <div key={serviceName}>
+                  <h5 className='text-muted-foreground mb-2 flex items-center gap-2 text-lg font-medium'>
+                    {isDeleted ? `Deleted service (${serviceName})` : serviceName}
+                    {groupType && (
+                      <Badge variant='outline' className='text-xs'>
+                        {groupType}
+                      </Badge>
+                    )}
+                  </h5>
+                  <ul className='space-y-3'>
+                    {backups.map(backup => {
+                      const backupType =
+                        backup.databaseType ??
+                        (typeof backup.service === 'string'
+                          ? null
+                          : backup.service.databaseDetails?.type ?? null)
+                      const DatabaseIcon = databaseOptions?.find(
+                        database => database.value === backupType,
+                      )?.icon
 
-                    return (
-                      <IndividualBackup
-                        key={backup.id}
-                        showRestoreIcon={false}
-                        showDeleteIcon={false}
-                        backup={backup}
-                        databaseIcon={DatabaseIcon}
-                        serviceId={
-                          typeof backup.service === 'string'
-                            ? backup.service
-                            : backup.service.id
-                        }
-                      />
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
+                      return (
+                        <IndividualBackup
+                          key={backup.id}
+                          showRestoreIcon={false}
+                          showDeleteIcon={false}
+                          backup={backup}
+                          databaseIcon={DatabaseIcon}
+                          databaseType={backupType}
+                          serviceId={
+                            typeof backup.service === 'string'
+                              ? backup.service
+                              : backup.service.id
+                          }
+                        />
+                      )
+                    })}
+                  </ul>
+                </div>
+              )
+            })}
           </div>
         </div>
       ))}

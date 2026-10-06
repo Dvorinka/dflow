@@ -47,6 +47,13 @@ export const Backups: CollectionConfig = {
       type: 'text',
     },
     {
+      // Denormalized at creation so backups stay identifiable after the
+      // service is deleted (#483)
+      name: 'databaseType',
+      label: 'Database Type',
+      type: 'text',
+    },
+    {
       name: 'status',
       type: 'select',
       options: [

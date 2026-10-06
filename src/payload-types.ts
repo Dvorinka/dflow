@@ -932,6 +932,7 @@ export interface Backup {
   service: string | Service;
   type?: ('external' | 'internal') | null;
   backupName?: string | null;
+  databaseType?: string | null;
   status: 'in-progress' | 'failed' | 'success';
   updatedAt: string;
   createdAt: string;
@@ -2268,6 +2269,7 @@ export interface BackupsSelect<T extends boolean = true> {
   service?: T;
   type?: T;
   backupName?: T;
+  databaseType?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;
