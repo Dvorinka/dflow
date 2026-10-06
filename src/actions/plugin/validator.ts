@@ -17,6 +17,20 @@ export const installPluginSchema = z.object({
   pluginURL: z.string(),
 })
 
+export const installCustomPluginSchema = z.object({
+  serverId: z.string(),
+  pluginName: z
+    .string()
+    .regex(
+      /^[a-z0-9][a-z0-9-]*$/,
+      'Lowercase letters, numbers and hyphens only',
+    ),
+  pluginURL: z
+    .string()
+    .url('Must be a valid git URL')
+    .refine(url => url.endsWith('.git'), 'URL must end with .git'),
+})
+
 export const checkPluginUsageSchema = z.object({
   serverId: z.string(),
   category: z.string(),

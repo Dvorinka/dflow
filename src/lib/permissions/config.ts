@@ -33,7 +33,7 @@ export const getActionAccess = {
 
   // Plugin actions
   installPluginAction: ['servers.update'],
-  syncPluginAction: ['servers.read', 'servers.update'],
+  installCustomPluginAction: ['servers.update'],  syncPluginAction: ['servers.read', 'servers.update'],
   togglePluginStatusAction: ['servers.update'],
   deletePluginAction: ['servers.update'],
   configureLetsencryptPluginAction: ['servers.update'],
