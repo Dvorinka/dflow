@@ -13,6 +13,7 @@ import { getPayload } from 'payload'
 import { getQueue, getWorker } from '@/lib/bullmq'
 import { dokku } from '@/lib/dokku'
 import { jobOptions, pub, queueConnection } from '@/lib/redis'
+import { sendActionEvent } from '@/lib/sendEvent'
 import { dynamicSSH } from '@/lib/ssh'
 import { Service } from '@/payload-types'
 
@@ -130,10 +131,11 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
           })
 
           // sending refresh event after deployment entry got created
-          await pub.publish(
-            'refresh-channel',
-            JSON.stringify({ refresh: true }),
-          )
+          sendActionEvent({
+            pub,
+            action: 'refresh',
+            tenantSlug: tenantDetails.slug,
+          })
 
           if (
             typeof project === 'object' &&
@@ -222,6 +224,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                         populatedVariables: updatedPopulatedVariables ?? '{}',
                         variables: updatedVariables ?? [],
                       },
+                      tenantSlug: tenantDetails.slug,
                     })
 
                     await waitForJobCompletion(railpackDeployQueue)
@@ -244,6 +247,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                           populatedVariables: updatedPopulatedVariables ?? '{}',
                           variables: updatedVariables ?? [],
                         },
+                        tenantSlug: tenantDetails.slug,
                       })
 
                     await waitForJobCompletion(dockerFileDeploymentQueue)
@@ -264,6 +268,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                             ? githubSettings.port.toString()
                             : '3000',
                         },
+                        tenantSlug: tenantDetails.slug,
                       })
 
                     await waitForJobCompletion(buildPacksDeploymentQueue)
@@ -355,6 +360,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                       serviceId: serviceDetails.id,
                       name: serviceDetails.name,
                     },
+                    tenantSlug: tenantDetails.slug,
                   })
 
                 await waitForJobCompletion(dockerImageQueueResponse)
@@ -381,6 +387,9 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                   deploymentId: deploymentResponse.id,
                   serverId: project.server.id,
                 },
+                tenant: {
+                  slug: tenantDetails.slug,
+                },
               })
 
               await waitForJobCompletion(databaseQueueResponse)
@@ -396,6 +405,9 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                   serviceDetails: {
                     action: 'expose',
                     id: serviceDetails.id,
+                  },
+                  tenant: {
+                    slug: tenantDetails.slug,
                   },
                 })
 

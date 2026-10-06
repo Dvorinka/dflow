@@ -13,9 +13,11 @@ import { addCreateDatabaseQueue } from '@/queues/database/create'
 export const triggerDeployment = async ({
   serviceId,
   cache,
+  tenantSlug,
 }: {
   serviceId: string
   cache: 'cache' | 'no-cache'
+  tenantSlug: string
 }) => {
   const payload = await getPayload({ config: configPromise })
 
@@ -70,6 +72,7 @@ export const triggerDeployment = async ({
             name: serviceDetails.name,
           },
           sshDetails,
+          tenantSlug,
         })
 
         queueResponseId = id
@@ -95,6 +98,7 @@ export const triggerDeployment = async ({
                 populatedVariables: populatedVariables ?? '{}',
                 variables: variables ?? [],
               },
+              tenantSlug,
             })
 
             queueResponseId = id
@@ -116,6 +120,7 @@ export const triggerDeployment = async ({
                 populatedVariables: populatedVariables ?? '{}',
                 variables: variables ?? [],
               },
+              tenantSlug,
             })
 
             queueResponseId = id
@@ -135,6 +140,7 @@ export const triggerDeployment = async ({
                   ? githubSettings.port.toString()
                   : '3000',
               },
+              tenantSlug,
             })
 
             queueResponseId = id
@@ -152,6 +158,9 @@ export const triggerDeployment = async ({
           id: serviceDetails.id,
           deploymentId: deploymentResponse.id,
           serverId: project.server.id,
+        },
+        tenant: {
+          slug: tenantSlug,
         },
       })
 
@@ -175,6 +184,7 @@ export const triggerDeployment = async ({
             name: serviceDetails.name,
           },
           sshDetails,
+          tenantSlug,
         })
 
         queueResponseId = id
@@ -195,6 +205,7 @@ export const triggerDeployment = async ({
             serviceId: serviceDetails.id,
             name: serviceDetails.name,
           },
+          tenantSlug,
         })
 
         queueResponseId = dockerImageQueueResponse.id
