@@ -47,20 +47,7 @@ export const internalBackupAction = protectedClient
       id: serviceId,
     })
 
-    const { createdAt: backupCreatedTime, id: backupId } = await payload.create(
-      {
-        collection: 'backups',
-        data: {
-          service: serviceId,
-          type: 'internal',
-          databaseType: serviceDetails?.databaseDetails?.type,
-          status: 'in-progress',
-          tenant: userTenant.tenant?.id,
-        },
-      },
-    )
-
-    const now = new Date(backupCreatedTime)
+    const now = new Date()
 
     const formattedDate = [
       now.getUTCFullYear(),
@@ -70,6 +57,20 @@ export const internalBackupAction = protectedClient
       String(now.getUTCMinutes()).padStart(2, '0'),
       String(now.getUTCSeconds()).padStart(2, '0'),
     ].join('-')
+
+    const dumpFileName = `${serviceDetails?.name}-${formattedDate}.dump`
+
+    const { id: backupId } = await payload.create({
+      collection: 'backups',
+      data: {
+        service: serviceId,
+        type: 'internal',
+        databaseType: serviceDetails?.databaseDetails?.type,
+        backupName: dumpFileName,
+        status: 'in-progress',
+        tenant: userTenant.tenant?.id,
+      },
+    })
 
     let queueResponseId: string | undefined = ''
 
@@ -84,7 +85,7 @@ export const internalBackupAction = protectedClient
         serverDetails: {
           id: project?.server?.id,
         },
-        dumpFileName: `${serviceDetails?.name}-${formattedDate}.dump`,
+        dumpFileName,
         serviceId,
         backupId,
         tenant: {
@@ -109,11 +110,27 @@ export const internalRestoreAction = protectedClient
     const { serviceId, backupId } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, ...serviceDetails } = await payload.findByID({
-      collection: 'services',
-      depth: 3,
-      id: serviceId,
-    })
+    const [{ project, ...serviceDetails }, backup] = await Promise.all([
+      payload.findByID({
+        collection: 'services',
+        depth: 3,
+        id: serviceId,
+      }),
+      payload.findByID({
+        collection: 'backups',
+        id: backupId,
+      }),
+    ])
+
+    // Refuse cross-type restores (e.g. mongo dump into postgres, #484).
+    // Legacy backups without a recorded type can't be verified, allow those.
+    const backupType = backup.databaseType ?? null
+    const serviceType = serviceDetails?.databaseDetails?.type ?? null
+    if (backupType && serviceType && backupType !== serviceType) {
+      throw new Error(
+        `Backup type mismatch: backup is ${backupType}, target database is ${serviceType}`,
+      )
+    }
 
     let queueResponseId: string | undefined = ''
 
@@ -122,7 +139,7 @@ export const internalRestoreAction = protectedClient
 
       const { id } = await addInternalBackupQueue({
         databaseName: serviceDetails?.name,
-        databaseType: serviceDetails?.databaseDetails?.type ?? '',
+        databaseType: serviceType ?? '',
         sshDetails,
         type: 'import',
         serverDetails: {
@@ -130,6 +147,7 @@ export const internalRestoreAction = protectedClient
         },
         serviceId,
         backupId,
+        dumpFileName: backup.backupName ?? undefined,
         tenant: {
           slug: userTenant.tenant.slug,
         },

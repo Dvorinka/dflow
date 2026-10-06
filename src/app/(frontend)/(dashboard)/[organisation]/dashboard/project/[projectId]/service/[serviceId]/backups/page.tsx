@@ -1,4 +1,8 @@
-import { getServiceBackups, getServiceDetails } from '@/actions/pages/service'
+import {
+  getRestorableBackups,
+  getServiceBackups,
+  getServiceDetails,
+} from '@/actions/pages/service'
 import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import Backup from '@/components/service/Backup'
 
@@ -13,11 +17,15 @@ interface PageProps {
 const BackupsPage = async ({ params }: PageProps) => {
   const { serviceId } = await params
 
-  const [{ data: service }, { data: backups = [], serverError }] =
-    await Promise.all([
-      getServiceDetails({ id: serviceId }),
-      getServiceBackups({ id: serviceId }),
-    ])
+  const [
+    { data: service },
+    { data: backups = [], serverError },
+    { data: restorableBackups = [] },
+  ] = await Promise.all([
+    getServiceDetails({ id: serviceId }),
+    getServiceBackups({ id: serviceId }),
+    getRestorableBackups({ id: serviceId }),
+  ])
 
   const databaseDetails = service?.databaseDetails ?? {}
 
@@ -37,6 +45,7 @@ const BackupsPage = async ({ params }: PageProps) => {
       databaseDetails={databaseDetails}
       serviceId={serviceId}
       backups={backups}
+      restorableBackups={restorableBackups}
     />
   )
 }

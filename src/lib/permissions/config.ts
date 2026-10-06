@@ -153,6 +153,7 @@ export const getActionAccess = {
   getServiceDetails: ['services.read'],
   getServiceDeploymentsBackups: ['services.read'],
   getServiceBackups: ['backups.read'],
+  getRestorableBackups: ['backups.read'],
   createServiceAction: ['services.create', 'projects.read', 'services.read'],
   createServiceWithPluginAction: [
     'servers.read',
