@@ -12,6 +12,7 @@ import { protectedClient, userClient } from '@/lib/safe-action'
 import { server } from '@/lib/server'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
 import { generateRandomString } from '@/lib/utils'
+import { isVersionNewer } from '@/lib/version'
 import { ServersSelect, Service } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'
 import { addInstallRailpackQueue } from '@/queues/builder/installRailpack'
@@ -535,7 +536,7 @@ export const updateRailpackAction = protectedClient
 
     const latestRelease = await updateRailpack()
 
-    if (+latestRelease > +railpackVersion) {
+    if (isVersionNewer(latestRelease, railpackVersion)) {
       const serverDetails = await payload.findByID({
         collection: 'servers',
         id: serverId,
