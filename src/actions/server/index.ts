@@ -444,7 +444,13 @@ export const updateServerDomainAction = protectedClient
     const filteredDomains =
       operation !== 'remove'
         ? [
-            ...previousDomains,
+            // 'set' replaces the default: clear previous defaults so exactly
+            // one domain stays default
+            ...previousDomains.map(prevDomain =>
+              operation === 'set'
+                ? { ...prevDomain, default: false }
+                : prevDomain,
+            ),
             ...domains.map(domain => ({
               domain,
               default: operation === 'set',

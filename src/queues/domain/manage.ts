@@ -295,7 +295,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           if (letsencryptResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully added SSL Certificate to domain ${domain}`,
+              message: `✅ Successfully added SSL Certificate to domain ${name}`,
               serverId: serverDetails.id,
             })
           }

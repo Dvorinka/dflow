@@ -121,7 +121,6 @@ const DomainCard = ({
   const {
     execute: markAsDefault,
     isPending: markingAsDefault,
-    hasSucceeded: triggeredMarkAsDefault,
   } = useAction(markDefaultServiceDomainAction, {
     onError: ({ error }) => {
       toast.error('Failed to mark as default', {
@@ -386,7 +385,7 @@ const DomainCard = ({
             {!isDefaultDomain && domain.synced && (
               <Button
                 isLoading={markingAsDefault}
-                disabled={markingAsDefault || triggeredMarkAsDefault}
+                disabled={markingAsDefault}
                 onClick={() => {
                   markAsDefault({
                     defaultDomain: domain.domain,
@@ -406,7 +405,6 @@ const DomainCard = ({
                 checkingDNSConfig ||
                 syncingDomain ||
                 domain.synced ||
-                triggeredDomainSync ||
                 isPending
               }
               isLoading={syncingDomain}

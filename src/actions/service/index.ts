@@ -876,6 +876,8 @@ export const markDefaultServiceDomainAction = protectedClient
         return { success: true }
       }
     }
+
+    throw new Error('Failed to mark domain as default, please try again')
   })
 
 export const updateVolumesAction = protectedClient
