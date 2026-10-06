@@ -33,6 +33,7 @@ import {
   deleteServerSchema,
   getServersWithFieldsInputSchema,
   installDokkuSchema,
+  setServerAutoCleanupSchema,
   syncServerAppsSchema,
   uninstallDokkuSchema,
   updateRailpackSchema,
@@ -1340,4 +1341,31 @@ export const cleanupServerAction = protectedClient
     }
 
     return { success: false }
+  })
+
+export const setServerAutoCleanupAction = protectedClient
+  .metadata({
+    actionName: 'setServerAutoCleanupAction',
+  })
+  .inputSchema(setServerAutoCleanupSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const {
+      serverId,
+      enabled,
+      olderThanHours = 168,
+      pruneVolumes = false,
+    } = clientInput
+    const { payload, userTenant } = ctx
+
+    await payload.update({
+      collection: 'servers',
+      id: serverId,
+      data: {
+        autoCleanup: { enabled, olderThanHours, pruneVolumes },
+      },
+    })
+
+    revalidatePath(`/${userTenant.tenant.slug}/servers/${serverId}`)
+
+    return { success: true }
   })

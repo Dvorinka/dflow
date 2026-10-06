@@ -148,6 +148,7 @@ export interface Config {
     tasks: {
       checkServersSshConnections: CheckServersSshConnections;
       'activity-cleanup': TaskActivityCleanup;
+      'scheduled-cleanup': TaskScheduledCleanup;
       inline: {
         input: unknown;
         output: unknown;
@@ -618,6 +619,14 @@ export interface Server {
    * Default build directory for all Dokku applications on this server. Leave empty to use repository root.
    */
   globalBuildPath?: string | null;
+  /**
+   * Run Docker/Dokku cleanup on a schedule with these settings.
+   */
+  autoCleanup?: {
+    enabled?: boolean | null;
+    olderThanHours?: number | null;
+    pruneVolumes?: boolean | null;
+  };
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
@@ -1531,7 +1540,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'checkServersSshConnections' | 'activity-cleanup';
+        taskSlug: 'inline' | 'checkServersSshConnections' | 'activity-cleanup' | 'scheduled-cleanup';
         taskID: string;
         input?:
           | {
@@ -1564,7 +1573,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'checkServersSshConnections' | 'activity-cleanup') | null;
+  taskSlug?: ('inline' | 'checkServersSshConnections' | 'activity-cleanup' | 'scheduled-cleanup') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -1976,6 +1985,13 @@ export interface ServersSelect<T extends boolean = true> {
       };
   connectionAttempts?: T;
   globalBuildPath?: T;
+  autoCleanup?:
+    | T
+    | {
+        enabled?: T;
+        olderThanHours?: T;
+        pruneVolumes?: T;
+      };
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2987,6 +3003,14 @@ export interface CheckServersSshConnections {
  * via the `definition` "TaskActivity-cleanup".
  */
 export interface TaskActivityCleanup {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskScheduled-cleanup".
+ */
+export interface TaskScheduledCleanup {
   input?: unknown;
   output?: unknown;
 }

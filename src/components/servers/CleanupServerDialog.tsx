@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { type ReactNode, useState } from 'react'
 import { toast } from 'sonner'
 
-import { cleanupServerAction } from '@/actions/server'
+import { cleanupServerAction, setServerAutoCleanupAction } from '@/actions/server'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/check-box'
 import {
@@ -31,10 +31,17 @@ const AGE_OPTIONS = [
   { label: 'Older than 30 days', value: 720 },
 ]
 
-const CleanupServerDialog = ({ children }: { children: ReactNode }) => {
+const CleanupServerDialog = ({
+  children,
+  initialAutoCleanup = false,
+}: {
+  children: ReactNode
+  initialAutoCleanup?: boolean
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [olderThanHours, setOlderThanHours] = useState<number>(168)
   const [pruneVolumes, setPruneVolumes] = useState<boolean>(false)
+  const [repeatDaily, setRepeatDaily] = useState<boolean>(initialAutoCleanup)
   const params = useParams<{ serverId: string }>()
   const { execute, isPending } = useAction(cleanupServerAction, {
     onSuccess: ({ data }) => {
@@ -50,12 +57,38 @@ const CleanupServerDialog = ({ children }: { children: ReactNode }) => {
       toast.error(`Failed to queue server cleanup: ${error.serverError}`)
     },
   })
+  const { execute: saveAutoCleanup, isPending: isSaving } = useAction(
+    setServerAutoCleanupAction,
+    {
+      onError: ({ error }) => {
+        toast.error(`Failed to save schedule: ${error.serverError}`)
+      },
+    },
+  )
+
+  const busy = isPending || isSaving
+
+  const handleRun = () => {
+    // Persist the schedule first so automatic runs reuse these settings
+    saveAutoCleanup({
+      serverId: params.serverId,
+      enabled: repeatDaily,
+      olderThanHours,
+      pruneVolumes,
+    })
+    execute({
+      serverId: params.serverId,
+      olderThanHours,
+      pruneVolumes,
+      dokkuCleanup: true,
+    })
+  }
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={state => {
-        if (isPending) return
+        if (busy) return
         setIsOpen(state)
       }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -109,25 +142,33 @@ const CleanupServerDialog = ({ children }: { children: ReactNode }) => {
               </p>
             </div>
           </div>
+          <div className='flex items-start space-x-3'>
+            <Checkbox
+              id='repeat-cleanup'
+              checked={repeatDaily}
+              onCheckedChange={checked => setRepeatDaily(Boolean(checked))}
+              className='mt-0.5'
+            />
+            <div className='space-y-1'>
+              <label
+                htmlFor='repeat-cleanup'
+                className='cursor-pointer text-sm leading-none font-medium'>
+                Repeat automatically every day
+              </label>
+              <p className='text-muted-foreground text-xs'>
+                Runs daily at 04:00 with these settings. Uncheck to run once.
+              </p>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant='secondary' disabled={isPending}>
+            <Button variant='secondary' disabled={busy}>
               Cancel
             </Button>
           </DialogClose>
-          <Button
-            disabled={isPending}
-            isLoading={isPending}
-            onClick={() => {
-              execute({
-                serverId: params.serverId,
-                olderThanHours,
-                pruneVolumes,
-                dokkuCleanup: true,
-              })
-            }}>
+          <Button disabled={busy} isLoading={busy} onClick={handleRun}>
             Run Cleanup
           </Button>
         </DialogFooter>

@@ -69,6 +69,13 @@ export const updateServerResourceLimitsSchema = z.object({
   }),
 })
 
+export const setServerAutoCleanupSchema = z.object({
+  serverId: z.string(),
+  enabled: z.boolean(),
+  olderThanHours: z.number().int().min(1).max(8760).default(168),
+  pruneVolumes: z.boolean().default(false),
+})
+
 export const deleteServerSchema = z.object({
   id: z.string(),
   deleteProjects: z.boolean(),
