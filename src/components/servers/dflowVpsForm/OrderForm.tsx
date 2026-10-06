@@ -196,7 +196,7 @@ export const OrderForm = ({ dFlowUser }: { dFlowUser: any }) => {
               <AlertTitle>Onboarding not completed!</AlertTitle>
               <AlertDescription>
                 Please complete onboarding process for using our services,
-                attach Discord account & accept our Terms of Service{' '}
+                connect your GitHub account & accept our Terms of Service{' '}
                 <a
                   className='text-foreground inline-block underline'
                   href={`${DFLOW_CONFIG.URL}/dashboard?terms-of-service=true`}
