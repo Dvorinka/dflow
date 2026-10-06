@@ -37,6 +37,7 @@ import {
   danglingVolumesSchema,
   deleteDanglingVolumeSchema,
   deleteServerSchema,
+  executeCommandSchema,
   getServersWithFieldsInputSchema,
   installDokkuSchema,
   setServerAutoCleanupSchema,
@@ -807,6 +808,67 @@ export const attachDanglingVolumeAction = protectedClient
     }
 
     return { success: true }
+  })
+
+// Runs one SSH command and returns truncated output (#37, #416). Gated by
+// servers.update like every other mutating server action; the caller's SSH
+// key already grants full access, so this adds no new trust.
+export const executeCommandAction = protectedClient
+  .metadata({
+    actionName: 'executeCommandAction',
+  })
+  .inputSchema(executeCommandSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId, command } = clientInput
+    const { payload, user } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+    const ssh = await dynamicSSH(sshDetails)
+
+    try {
+      const result = await Promise.race([
+        ssh.execCommand(command),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Command timed out after 30s')), 30000),
+        ),
+      ])
+
+      if (user) {
+        const { trackActivity } = await import('@/lib/activityTracker')
+        await trackActivity({
+          payload,
+          userId: user.id,
+          eventType: 'server_command_executed',
+          operation: 'exec',
+          label: 'Remote Command Executed',
+          status: result.code === 0 ? 'success' : 'failed',
+          severity: 'warning',
+          category: 'server',
+          collectionSlug: 'servers',
+          documentId: serverId,
+          icon: 'terminal',
+          metadata: { command: command.slice(0, 500), exitCode: result.code },
+        })
+      }
+
+      const truncate = (s: string) =>
+        s.length > 20000 ? `${s.slice(0, 20000)}\n...[truncated]` : s
+
+      return {
+        success: true,
+        code: result.code,
+        stdout: truncate(result.stdout),
+        stderr: truncate(result.stderr),
+      }
+    } finally {
+      ssh.dispose()
+    }
   })
 
 export const updateServerDomainAction = protectedClient

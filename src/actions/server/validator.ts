@@ -94,6 +94,14 @@ export const syncServerAppsSchema = z.object({
   serverId: z.string(),
 })
 
+export const executeCommandSchema = z.object({
+  serverId: z.string(),
+  command: z
+    .string()
+    .min(1, 'Command is required')
+    .max(2000, 'Command too long'),
+})
+
 export const danglingVolumesSchema = z.object({
   serverId: z.string(),
 })

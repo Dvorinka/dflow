@@ -19,6 +19,7 @@ export const getActionAccess = {
   configureGlobalBuildDirAction: ['servers.read', 'servers.update'],
   resetServerAction: ['servers.read', 'servers.update'],
   syncServerAppsAction: ['servers.read'],
+  executeCommandAction: ['servers.update'],
   getDanglingVolumesAction: ['servers.read'],
   deleteDanglingVolumeAction: ['servers.update'],
   attachDanglingVolumeAction: ['servers.update', 'services.update'],
