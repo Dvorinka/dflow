@@ -27,6 +27,9 @@ export const sendEvent = ({
   void Promise.all([
     pub.publish(channel, message),
     channelId ? pub.lpush(channelId, message) : null,
+    // Bound Redis growth: the DB record is the durable store, the list is
+    // only a live-replay buffer (#311)
+    channelId ? pub.expire(channelId, 7 * 24 * 60 * 60) : null,
   ]).catch(error => {
     console.error(`Failed to process event for ${channel}:`, error)
   })

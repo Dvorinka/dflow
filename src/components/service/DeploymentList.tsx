@@ -109,7 +109,8 @@ const DeploymentList = ({
                     logs={deployedLogs}
                     deployment={deploymentDetails}
                     serverId={serverId}
-                    serviceId={serviceId}>
+                    serviceId={serviceId}
+                    live={status === 'building' || status === 'queued'}>
                     <Button variant='outline'>View Logs</Button>
                   </DeploymentTerminal>
 

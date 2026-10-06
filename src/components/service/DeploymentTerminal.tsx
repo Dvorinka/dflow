@@ -20,23 +20,22 @@ const TerminalContent = ({
   serviceId,
   serverId,
   deploymentId,
+  live,
 }: {
   serviceId: string
   serverId: string
   logs: unknown[]
   deploymentId: string
+  live: boolean
 }) => {
   const eventSourceRef = useRef<EventSource>(null)
   const previousLogsRef = useRef(false)
   const { terminalRef, writeLog, terminalInstance } = useXterm()
 
   useEffect(() => {
-    if (!!logs.length) {
-      eventSourceRef.current?.close()
-      return
-    }
-
-    if (!terminalInstance) {
+    // Finished deployments render persisted logs below; only live ones
+    // need the SSE stream (which replays Redis history first, #311)
+    if (!live || !terminalInstance) {
       return
     }
 
@@ -48,8 +47,6 @@ const TerminalContent = ({
       const data = JSON.parse(event.data) ?? {}
       const logs = data?.logs ?? []
       const updatedPreviousLogs = previousLogsRef.current
-
-      console.log({ data })
 
       if (data?.message) {
         const formattedLog = `${data?.message}`
@@ -70,17 +67,17 @@ const TerminalContent = ({
     return () => {
       eventSource.close()
     }
-  }, [terminalInstance])
+  }, [terminalInstance, live, serviceId, serverId, deploymentId, writeLog])
 
   useEffect(() => {
-    if (!!logs.length && terminalInstance) {
+    if (!live && !!logs.length && terminalInstance) {
       if (terminalRef.current) {
         logs.forEach(log => {
           writeLog({ message: `${log}` })
         })
       }
     }
-  }, [terminalInstance, logs, writeLog])
+  }, [terminalInstance, logs, writeLog, live, terminalRef])
 
   return <XTermTerminal ref={terminalRef} />
 }
@@ -91,12 +88,14 @@ const DeploymentTerminal = ({
   serviceId,
   serverId,
   logs,
+  live,
 }: {
   children: React.ReactNode
   deployment: Deployment
   serviceId: string
   serverId: string
   logs: unknown[]
+  live: boolean
 }) => {
   return (
     <Dialog>
@@ -119,6 +118,7 @@ const DeploymentTerminal = ({
           serviceId={serviceId}
           logs={logs}
           deploymentId={deployment.id}
+          live={live}
         />
       </DialogContent>
     </Dialog>
