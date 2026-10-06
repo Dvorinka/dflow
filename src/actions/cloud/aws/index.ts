@@ -1,6 +1,7 @@
 'use server'
 
 import {
+  DescribeImagesCommand,
   DescribeInstancesCommand,
   DescribeKeyPairsCommand,
   EC2Client,
@@ -23,6 +24,7 @@ import {
   connectAWSAccountSchema,
   createEC2InstanceSchema,
   deleteAWSAccountSchema,
+  listUbuntuAmisSchema,
   updateAWSAccountSchema,
   updateEC2InstanceSchema,
 } from './validator'
@@ -652,4 +654,75 @@ export const checkAWSAccountConnection = protectedClient
           'Failed to connect to AWS. Please check your credentials and try again.',
       }
     }
+  })
+
+// Lists Canonical Ubuntu LTS AMIs for a region so the EC2 form offers all
+// supported versions with region-correct IDs instead of one hardcoded AMI (#109)
+export const listUbuntuAmisAction = protectedClient
+  .metadata({
+    actionName: 'listUbuntuAmisAction',
+  })
+  .inputSchema(listUbuntuAmisSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { accountId, region } = clientInput
+    const { payload } = ctx
+
+    const awsAccountDetails = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id: accountId,
+    })
+
+    const accessKeyId = awsAccountDetails.awsDetails?.accessKeyId
+    const secretAccessKey = awsAccountDetails.awsDetails?.secretAccessKey
+
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error('AWS account credentials not found')
+    }
+
+    const ec2Client = new EC2Client({
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+    })
+
+    const response = await ec2Client.send(
+      new DescribeImagesCommand({
+        Owners: ['099720109477'], // Canonical
+        Filters: [
+          { Name: 'architecture', Values: ['x86_64'] },
+          { Name: 'root-device-type', Values: ['ebs'] },
+          { Name: 'virtualization-type', Values: ['hvm'] },
+          { Name: 'state', Values: ['available'] },
+          {
+            Name: 'name',
+            Values: [
+              'ubuntu/images/hvm-ssd/ubuntu-24.04-amd64-server-*',
+              'ubuntu/images/hvm-ssd/ubuntu-22.04-amd64-server-*',
+              'ubuntu/images/hvm-ssd/ubuntu-20.04-amd64-server-*',
+            ],
+          },
+        ],
+      }),
+    )
+
+    const latestByVersion = new Map<
+      string,
+      { label: string; value: string; created: string }
+    >()
+    for (const image of response.Images ?? []) {
+      const match = image.Name?.match(/ubuntu-(\d+\.\d+)-amd64-server-/)
+      if (!match || !image.ImageId) continue
+      const version = match[1]
+      const created = image.CreationDate ?? ''
+      if (!latestByVersion.has(version) || created > (latestByVersion.get(version)?.created ?? '')) {
+        latestByVersion.set(version, {
+          label: `Ubuntu Server ${version} LTS`,
+          value: image.ImageId,
+          created,
+        })
+      }
+    }
+
+    return [...latestByVersion.entries()]
+      .sort(([a], [b]) => b.localeCompare(a, undefined, { numeric: true }))
+      .map(([version, { label, value }]) => ({ version, label, value }))
   })

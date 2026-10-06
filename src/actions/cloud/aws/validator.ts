@@ -76,3 +76,8 @@ export const checkAWSConnectionSchema = z.object({
   secretAccessKey: z.string().min(1, 'Secret Access Key is required'),
   region: z.string().optional().default('us-east-1'),
 })
+
+export const listUbuntuAmisSchema = z.object({
+  accountId: z.string().min(1, 'Account is required'),
+  region: z.string().min(1, 'Region is required'),
+})

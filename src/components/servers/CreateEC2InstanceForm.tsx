@@ -17,6 +17,7 @@ import { z } from 'zod'
 import { getCloudProvidersAccountsAction } from '@/actions/cloud'
 import {
   createEC2InstanceAction,
+  listUbuntuAmisAction,
   updateEC2InstanceAction,
 } from '@/actions/cloud/aws'
 import { createEC2InstanceSchema } from '@/actions/cloud/aws/validator'
@@ -198,6 +199,31 @@ const CreateEC2InstanceForm = ({
   }
 
   const selectedAwsAccountId = form.watch('accountId')
+  const selectedRegion = form.watch('region')
+
+  const {
+    execute: fetchAmis,
+    result: amisResult,
+    isPending: isLoadingAmis,
+  } = useAction(listUbuntuAmisAction, {
+    onError: ({ error }) => {
+      toast.error(`Failed to load Ubuntu images: ${error.serverError}`)
+    },
+  })
+
+  useEffect(() => {
+    if (isCreating && selectedAwsAccountId && selectedRegion) {
+      fetchAmis({ accountId: selectedAwsAccountId, region: selectedRegion })
+    }
+  }, [isCreating, selectedAwsAccountId, selectedRegion, fetchAmis])
+
+  const amiOptions =
+    amisResult?.data && amisResult.data.length > 0
+      ? amisResult.data.map(ami => ({
+          label: ami.label,
+          value: ami.value,
+        }))
+      : amiList.map(({ label, value }) => ({ label, value }))
 
   const filteredSecurityGroups = securityGroups?.filter(
     securityGroup =>
@@ -493,11 +519,17 @@ const CreateEC2InstanceForm = ({
                     </FormControl>
 
                     <SelectContent>
-                      {amiList.map(({ label, value }) => (
-                        <SelectItem key={value} value={value}>
-                          {`${label} (${value})`}
+                      {isLoadingAmis ? (
+                        <SelectItem value='__loading' disabled>
+                          Loading Ubuntu images...
                         </SelectItem>
-                      ))}
+                      ) : (
+                        amiOptions.map(({ label, value }) => (
+                          <SelectItem key={value} value={value}>
+                            {`${label} (${value})`}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
