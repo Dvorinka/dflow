@@ -223,6 +223,7 @@ const CreateSecurityGroupForm = ({
   setOpen,
   cloudProviderAccounts = [],
   isFullScreen = false,
+  onCreated,
 }: {
   type?: 'create' | 'update'
   securityGroup?: Partial<SecurityGroup>
@@ -230,6 +231,7 @@ const CreateSecurityGroupForm = ({
   setOpen?: Dispatch<SetStateAction<boolean>>
   cloudProviderAccounts: CloudProviderAccount[]
   isFullScreen?: boolean
+  onCreated?: (id: string) => void
 }) => {
   const initialInboundRules = securityGroup?.inboundRules?.map(rule => ({
     description: rule.description || '',
@@ -512,6 +514,8 @@ const CreateSecurityGroupForm = ({
           toast.success(`Successfully created ${input.name} security group`)
           form.reset()
           setOpen?.(false)
+          // Auto-select the new group in the calling form (#108)
+          if (data.id) onCreated?.(data.id)
         }
       },
       onError: ({ error }) => {
