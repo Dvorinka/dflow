@@ -266,7 +266,9 @@ export const logoutAction = publicClient
     const cookieStore = await cookies()
     cookieStore.delete('payload-token')
 
-    redirect('/sign-in')
+    // Return instead of redirect(): server-action redirects don't trigger
+    // client navigation via useAction, leaving stale UI until reload (#465).
+    return { success: true }
   })
 
 export const getUserAction = userClient
