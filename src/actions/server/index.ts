@@ -1155,13 +1155,31 @@ export const resetServerOnboardingAction = protectedClient
   .inputSchema(uninstallDokkuSchema)
   .action(async ({ clientInput, ctx }) => {
     const { serverId } = clientInput
-    const { payload, userTenant } = ctx
+    const { payload, user, userTenant } = ctx
 
     await payload.update({
       id: serverId,
       data: { onboarded: false, domains: [], plugins: [] },
       collection: 'servers',
     })
+
+    // Audit trail for the reset (surfaced as an alert via ?onboarding-reset=1)
+    if (user) {
+      const { trackActivity } = await import('@/lib/activityTracker')
+      await trackActivity({
+        payload,
+        userId: user.id,
+        eventType: 'server_onboarding_reset',
+        operation: 'update',
+        label: 'Server Onboarding Reset',
+        status: 'success',
+        severity: 'warning',
+        category: 'server',
+        collectionSlug: 'servers',
+        documentId: serverId,
+        icon: 'rotate-ccw',
+      })
+    }
 
     revalidatePath(`/${userTenant.tenant.slug}/servers/${serverId}`)
     return { success: true }
