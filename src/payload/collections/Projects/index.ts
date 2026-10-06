@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload'
 
+import { trackActivity } from '@/lib/activityTracker'
 import { User } from '@/payload-types'
 import { isAdmin } from '@/payload/access/isAdmin'
 
@@ -22,6 +23,37 @@ export const Projects: CollectionConfig = {
     readVersions: isAdmin,
   },
   orderable: true,
+  hooks: {
+    afterChange: [
+      async ({ doc, operation, req }) => {
+        const { payload, user } = req
+
+        if (!user || operation !== 'create') return
+
+        await trackActivity({
+          payload,
+          userId: user.id,
+          eventType: 'project_created',
+          operation: 'create',
+          label: 'Project Created',
+          status: 'success',
+          severity: 'info',
+          category: 'project',
+          collectionSlug: 'projects',
+          documentId: doc.id,
+          documentTitle: doc.name,
+          icon: 'folder-plus',
+          metadata: {
+            projectName: doc.name,
+            serverId:
+              typeof doc.server === 'string' ? doc.server : doc.server?.id,
+            template: doc.template || null,
+          },
+          req,
+        })
+      },
+    ],
+  },
   fields: [
     {
       name: 'name',
