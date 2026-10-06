@@ -18,16 +18,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useCrossDomainAuthContext } from '@/providers/CrossDomainAuthProvider'
 import { User } from '@/payload-types'
 
 export function NavUser({ user }: { user: User }) {
   const params = useParams<{ organisation: string }>()
   const router = useRouter()
   const initial = user.email.slice(0, 1)
+  const { crossDomainLogout } = useCrossDomainAuthContext()
 
   const { execute } = useAction(logoutAction, {
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Logged out successfully')
+      // Clear sibling-app sessions when configured, then leave (#364)
+      await crossDomainLogout().catch(() => {})
       // Client navigation: the action only clears the cookie, so route
       // here explicitly instead of relying on middleware/reload (#465).
       router.replace('/sign-in')

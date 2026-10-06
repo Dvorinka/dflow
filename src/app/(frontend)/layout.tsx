@@ -12,6 +12,7 @@ import { BrandingProvider } from '@/providers/BrandingProvider'
 import NProgressProvider from '@/providers/NProgressProvider'
 import { NetworkStatusProvider } from '@/providers/NetworkStatusProvider'
 import { AppVersionProvider } from '@/providers/AppVersionProvider'
+import { CrossDomainAuthProvider } from '@/providers/CrossDomainAuthProvider'
 
 import './globals.css'
 
@@ -109,6 +110,12 @@ export default async function RootLayout({
   const theme = themeData?.data
   const branding = brandingData?.data
 
+  // Sibling-app logout sync targets (#364); empty = disabled
+  const authSyncDomains = (env.NEXT_PUBLIC_AUTH_SYNC_DOMAINS ?? '')
+    .split(',')
+    .map(d => d.trim())
+    .filter(Boolean)
+
   return (
     // todo: add next-themes support, add context to pass logo url to client-components
     <html lang='en' suppressHydrationWarning>
@@ -150,6 +157,7 @@ export default async function RootLayout({
           {/* <PosthogProvider> */}
           {/* <SuspendedPostHogPageView /> */}
           <NetworkStatusProvider>
+            <CrossDomainAuthProvider domains={authSyncDomains}>
             <AppVersionProvider
               initialVersion={env.NEXT_PUBLIC_APP_VERSION ?? 'dev'}>
               <ThemeProvider enableSystem attribute='class'>
@@ -166,6 +174,7 @@ export default async function RootLayout({
               />
             </ThemeProvider>
             </AppVersionProvider>
+            </CrossDomainAuthProvider>
           </NetworkStatusProvider>
           {/* </PosthogProvider> */}
         </NProgressProvider>
