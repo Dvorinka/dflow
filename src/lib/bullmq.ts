@@ -25,6 +25,21 @@ const logAsync = (logFn: () => void) => {
 // caching queues & workers in memory
 export const workers = new Map<string, Worker>()
 export const queues = new Map<string, Queue>()
+
+// User context carried by most jobs (tenant always, userId usually) so
+// queue logs can be attributed (#302). Best-effort: shapes vary per queue.
+const jobContext = (job: any): { tenantSlug?: string; userId?: string } => {
+  const data = job?.data ?? {}
+  const tenantSlug =
+    typeof data?.tenant?.slug === 'string' ? data.tenant.slug : undefined
+  const userId =
+    typeof data?.userId === 'string'
+      ? data.userId
+      : typeof data?.serviceDetails?.userId === 'string'
+        ? data.serviceDetails.userId
+        : undefined
+  return { tenantSlug, userId }
+}
 export const getQueue = ({
   name,
   connection,
@@ -63,6 +78,7 @@ export const getQueue = ({
         queue: name,
         jobId: job.id,
         jobName: job.name,
+        ...jobContext(job),
         event: 'job-added',
       })
     })
@@ -129,6 +145,7 @@ export const getWorker = <T = any>({
         queue: name,
         jobId: job.id,
         jobName: job.name,
+        ...jobContext(job),
         event: 'job-active',
         timestamp: new Date().toISOString(),
       })
@@ -145,6 +162,7 @@ export const getWorker = <T = any>({
         queue: name,
         jobId: job.id,
         jobName: job.name,
+        ...jobContext(job),
         event: 'job-completed',
         duration,
         timestamp: new Date().toISOString(),
@@ -162,6 +180,7 @@ export const getWorker = <T = any>({
         queue: name,
         jobId: job?.id,
         jobName: job?.name,
+        ...jobContext(job),
         event: 'job-failed',
         error: err.message,
         stack: err.stack,
@@ -178,6 +197,7 @@ export const getWorker = <T = any>({
         queue: name,
         jobId: job.id,
         jobName: job.name,
+        ...jobContext(job),
         event: 'job-stalled',
         timestamp: new Date().toISOString(),
       })
