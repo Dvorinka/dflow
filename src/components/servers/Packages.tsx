@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 
 import { updateRailpackAction } from '@/actions/server'
 import updateRailpack from '@/lib/axios/updateRailpack'
+import { isVersionNewer } from '@/lib/version'
 import { ServerType } from '@/payload-types-overrides'
 
 const Packages = ({
@@ -65,7 +66,8 @@ const Packages = ({
                 Railpack
                 {railpack && (
                   <span className='text-xs text-muted-foreground'>
-                    installed: {railpack} | latest: {latestVersion}
+                    installed: {railpack}
+                    {latestVersion ? ` | recommended: ${latestVersion}` : ''}
                   </span>
                 )}
               </div>
@@ -77,12 +79,25 @@ const Packages = ({
 
           <Button
             variant='outline'
-            disabled={isUpdating || !railpack}
+            disabled={
+              isUpdating ||
+              !railpack ||
+              !latestVersion ||
+              !isVersionNewer(latestVersion, railpack)
+            }
             onClick={() =>
               railpack &&
               updateRailpackExecution({ serverId, railpackVersion: railpack })
             }>
-            {isUpdating ? <Loader className='h-4 w-4' /> : 'Update'}
+            {isUpdating ? (
+              <Loader className='h-4 w-4' />
+            ) : !latestVersion ? (
+              'Checking...'
+            ) : railpack && isVersionNewer(latestVersion, railpack) ? (
+              `Update to recommended`
+            ) : (
+              'Up to date'
+            )}
           </Button>
         </div>
       </CardContent>
