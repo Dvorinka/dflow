@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { adminClient, protectedClient } from '@/lib/safe-action'
-import { generateRandomString } from '@/lib/utils'
+import { getUniqueName } from '@/lib/uniqueName'
 import { ServerType } from '@/payload-types-overrides'
 import { addDeleteProjectQueue } from '@/queues/project/deleteProject'
 
@@ -33,32 +33,15 @@ export const createProjectAdminAction = adminClient
 
     const slicedName = name?.slice(0, 10)
 
-    let uniqueName = slicedName
-
-    const { docs: duplicateProjects } = await payload.find({
-      collection: 'projects',
-      where: {
-        and: [
-          {
-            name: {
-              equals: slicedName,
-            },
-          },
-
-          {
-            tenant: {
-              equals: tenantId,
-            },
-          },
-        ],
-      },
-    })
-
-    if (duplicateProjects.length > 0) {
-      // add a 4-random character generation
-      const uniqueSuffix = generateRandomString({ length: 4 })
-      uniqueName = `${slicedName}-${uniqueSuffix}`
-    }
+    let uniqueName = await getUniqueName(async name => {
+      const { totalDocs } = await payload.count({
+        collection: 'projects',
+        where: {
+          and: [{ name: { equals: name } }, { tenant: { equals: tenantId } }],
+        },
+      })
+      return totalDocs > 0
+    }, slicedName)
 
     const response = await payload.create({
       collection: 'projects',
@@ -142,32 +125,15 @@ export const createProjectAction = protectedClient
 
     const slicedName = name?.slice(0, 10)
 
-    let uniqueName = slicedName
-
-    const { docs: duplicateProjects } = await payload.find({
-      collection: 'projects',
-      where: {
-        and: [
-          {
-            name: {
-              equals: slicedName,
-            },
-          },
-
-          {
-            tenant: {
-              equals: tenant.id,
-            },
-          },
-        ],
-      },
-    })
-
-    if (duplicateProjects.length > 0) {
-      // add a 4-random character generation
-      const uniqueSuffix = generateRandomString({ length: 4 })
-      uniqueName = `${slicedName}-${uniqueSuffix}`
-    }
+    let uniqueName = await getUniqueName(async name => {
+      const { totalDocs } = await payload.count({
+        collection: 'projects',
+        where: {
+          and: [{ name: { equals: name } }, { tenant: { equals: tenant.id } }],
+        },
+      })
+      return totalDocs > 0
+    }, slicedName)
 
     const response = await payload.create({
       collection: 'projects',
