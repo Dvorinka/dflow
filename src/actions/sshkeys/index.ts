@@ -27,6 +27,24 @@ export const createSSHKeyAction = protectedClient
     } = ctx
     const { name, description, privateKey, publicKey } = clientInput
 
+    // EC2 and manual flows re-submit the same key names; refuse duplicates
+    // per tenant instead of piling up identical records (#44)
+    const { totalDocs } = await payload.count({
+      collection: 'sshKeys',
+      where: {
+        and: [
+          { name: { equals: name } },
+          { tenant: { equals: tenant.id } },
+        ],
+      },
+    })
+
+    if (totalDocs > 0) {
+      throw new Error(
+        `An SSH key named "${name}" already exists. Please reuse it or choose another name.`,
+      )
+    }
+
     const response = await payload.create({
       collection: 'sshKeys',
       data: {
