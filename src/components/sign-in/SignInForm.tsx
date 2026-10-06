@@ -60,9 +60,11 @@ const SignInForm: React.FC<SignInFormProps> = ({
   const watchPassword = form.watch('password')
   const hasPassword = watchPassword && watchPassword.length > 0
 
-  // Determine what features to show based on authMethod
+  // Determine what features to show based on authMethod.
+  // resendEnvExist is the client signal for the Resend guard; the server
+  // already degrades to email-password, this just avoids a dead path in UI.
   const showPasswordField = method !== 'magic-link'
-  const showMagicLink = method !== 'email-password'
+  const showMagicLink = method !== 'email-password' && resendEnvExist
   const showSignUpLink = method !== 'magic-link' // Hide sign up for magic-link only
   const showForgotPassword = method !== 'magic-link'
 
