@@ -218,6 +218,9 @@ certificatesResolvers:
     acme:
       email: $TRAEFIK_EMAIL
       storage: /etc/traefik/acme.json
+      # Uncomment to test setup changes without burning production rate
+      # limits: https://letsencrypt.org/docs/rate-limits/
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       httpChallenge:
         entryPoint: web # Used for app-specific domains
 api:
@@ -237,6 +240,14 @@ http:
         - websecure
       tls:
         certResolver: letsencrypt
+        # Shared SAN set across all routers: traefik issues one certificate
+        # covering every subdomain instead of one per router, staying clear
+        # of Let's Encrypt duplicate-certificate rate limits.
+        domains:
+          - main: "dflow.${WILD_CARD_DOMAIN}"
+            sans:
+              - "dflow-traefik.${WILD_CARD_DOMAIN}"
+              - "monitoring.${WILD_CARD_DOMAIN}"
       service: dflow-app-service
   services:
     dflow-app-service:
@@ -255,6 +266,11 @@ http:
         - websecure
       tls:
         certResolver: letsencrypt
+        domains:
+          - main: "dflow.${WILD_CARD_DOMAIN}"
+            sans:
+              - "dflow-traefik.${WILD_CARD_DOMAIN}"
+              - "monitoring.${WILD_CARD_DOMAIN}"
       service: dflow-traefik-service
   services:
     dflow-traefik-service:
@@ -272,6 +288,11 @@ http:
         - websecure
       tls:
         certResolver: letsencrypt
+        domains:
+          - main: "dflow.${WILD_CARD_DOMAIN}"
+            sans:
+              - "dflow-traefik.${WILD_CARD_DOMAIN}"
+              - "monitoring.${WILD_CARD_DOMAIN}"
       service: dflow-beszel-service
   services:
     dflow-beszel-service:
@@ -282,7 +303,7 @@ EOF
 printf "📁 Created traefik configuration in dynamic folder\n"
 
 # 6. Create docker-compose.yml
-if curl -fsSL https://raw.githubusercontent.com/dflow-sh/dflow/refs/heads/main/docker-compose.yml -o docker-compose.yaml; then
+if curl -fsSL https://raw.githubusercontent.com/Dvorinka/dflow/refs/heads/main/docker-compose.yml -o docker-compose.yaml; then
   printf "📁 Created docker-compose.yaml\n"
 else
   printf "⚠️ Failed to download docker-compose.yaml, please check your internet connection or download manually."
