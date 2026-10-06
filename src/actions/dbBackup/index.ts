@@ -41,23 +41,24 @@ export const internalBackupAction = protectedClient
     const { payload, userTenant } = ctx
     const { serviceId } = clientInput
 
+    const { project, ...serviceDetails } = await payload.findByID({
+      collection: 'services',
+      depth: 3,
+      id: serviceId,
+    })
+
     const { createdAt: backupCreatedTime, id: backupId } = await payload.create(
       {
         collection: 'backups',
         data: {
           service: serviceId,
           type: 'internal',
+          databaseType: serviceDetails?.databaseDetails?.type,
           status: 'in-progress',
           tenant: userTenant.tenant?.id,
         },
       },
     )
-
-    const { project, ...serviceDetails } = await payload.findByID({
-      collection: 'services',
-      depth: 3,
-      id: serviceId,
-    })
 
     const now = new Date(backupCreatedTime)
 
