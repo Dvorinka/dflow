@@ -10,7 +10,7 @@ import { dokku } from '@/lib/dokku'
 import { jobOptions, pub, queueConnection } from '@/lib/redis'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
-import { generateRandomString } from '@/lib/utils'
+import { getUniqueName } from '@/lib/uniqueName'
 import { Server } from '@/payload-types'
 
 export type ServiceCreateData = z.infer<typeof createServiceSchema>
@@ -114,23 +114,18 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
 
         // Generate service name
         const slicedName = name.slice(0, 10)
-        let serviceName = `${projectName}-${slicedName}`
-
-        // Check if service name exists
-        const { totalDocs } = await payload.find({
-          collection: 'services',
-          where: {
-            and: [
-              { tenant: { equals: tenantId } },
-              { name: { equals: serviceName } },
-            ],
-          },
-        })
-
-        if (totalDocs > 0) {
-          const uniqueSuffix = generateRandomString({ length: 4 })
-          serviceName = `${serviceName}-${uniqueSuffix}`
-        }
+        let serviceName = await getUniqueName(async candidate => {
+          const { totalDocs } = await payload.count({
+            collection: 'services',
+            where: {
+              and: [
+                { tenant: { equals: tenantId } },
+                { name: { equals: candidate } },
+              ],
+            },
+          })
+          return totalDocs > 0
+        }, `${projectName}-${slicedName}`)
 
         // Install required plugins for database type if needed
         if (databaseType) {

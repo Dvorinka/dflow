@@ -9,7 +9,7 @@ import { dokku } from '@/lib/dokku'
 import { protectedClient } from '@/lib/safe-action'
 import { checkServerResources } from '@/lib/server/resourceCheck'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
-import { generateRandomString } from '@/lib/utils'
+import { getUniqueName } from '@/lib/uniqueName'
 import { addDestroyApplicationQueue } from '@/queues/app/destroy'
 import { addResourceAppQueue } from '@/queues/app/resource'
 import { addRestartAppQueue } from '@/queues/app/restart'
@@ -81,25 +81,18 @@ export const createServiceAction = protectedClient
 
     const slicedName = name.slice(0, 10)
 
-    let serviceName = `${projectName}-${slicedName}`
-
-    const { totalDocs } = await payload.find({
-      collection: 'services',
-      where: {
-        and: [
-          {
-            tenant: {
-              equals: tenant.id,
-            },
-          },
-          {
-            name: {
-              equals: serviceName,
-            },
-          },
-        ],
-      },
-    })
+    let serviceName = await getUniqueName(async candidate => {
+      const { totalDocs } = await payload.count({
+        collection: 'services',
+        where: {
+          and: [
+            { tenant: { equals: tenant.id } },
+            { name: { equals: candidate } },
+          ],
+        },
+      })
+      return totalDocs > 0
+    }, `${projectName}-${slicedName}`)
 
     let ssh: NodeSSH | null = null
 
@@ -117,10 +110,7 @@ export const createServiceAction = protectedClient
       //   )
       // }
 
-      if (totalDocs > 0) {
-        const uniqueSuffix = generateRandomString({ length: 4 })
-        serviceName = `${serviceName}-${uniqueSuffix}`
-      }
+      // serviceName is already unique (resolved above); no suffix needed
 
       if (type === 'app' || type === 'docker') {
         ssh = await dynamicSSH(sshDetails)
