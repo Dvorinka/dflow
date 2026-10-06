@@ -48,7 +48,15 @@ const ConfigureDefaultDomain = ({ server }: { server: ServerType }) => {
       // if tailscale is preferred and hostname is set, we need to add a domain with the hostname and proxy domain url
       // if publicIp is set, we need to add a domain with the publicIp and nip.io
       // if publicIp is not set, we need to add a domain with the publicIp and nip.io
-      const publicIp = server.publicIp || server.ip
+      // Placeholder IP means no real address assigned yet; never build a
+      // domain from it (previously produced junk like 999...nip.io or an
+      // undefined host for SSH servers, #432).
+      const publicIp =
+        server.publicIp && server.publicIp !== '999.999.999.999'
+          ? server.publicIp
+          : server.ip && server.ip !== '999.999.999.999'
+            ? server.ip
+            : undefined
 
       if (env.NEXT_PUBLIC_PROXY_DOMAIN_URL) {
         if (server.preferConnectionType === 'tailscale' && server.hostname) {

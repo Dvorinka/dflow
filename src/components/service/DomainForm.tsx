@@ -54,7 +54,7 @@ const DomainForm = ({ ip }: { ip: string }) => {
         certificateType: 'none',
         autoRegenerateSSL: false,
         hostname: '',
-        default: true,
+        default: false,
       },
       operation: 'add',
     },
