@@ -74,6 +74,7 @@ export interface Config {
     deployments: Deployment;
     cloudProviderAccounts: CloudProviderAccount;
     securityGroups: SecurityGroup;
+    dockerRegistries: DockerRegistry;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -96,6 +97,7 @@ export interface Config {
     deployments: DeploymentsSelect<false> | DeploymentsSelect<true>;
     cloudProviderAccounts: CloudProviderAccountsSelect<false> | CloudProviderAccountsSelect<true>;
     securityGroups: SecurityGroupsSelect<false> | SecurityGroupsSelect<true>;
+    dockerRegistries: DockerRegistriesSelect<false> | DockerRegistriesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -440,6 +442,21 @@ export interface Service {
     status?: ('running' | 'missing' | 'exited') | null;
     exposedPorts?: string[] | null;
   };
+  dockerDetails?: {
+    /**
+     * Enter the docker-registry URL: ghrc://contentql/pin-bolt:latest
+     */
+    url?: string | null;
+    account?: (string | null) | DockerRegistry;
+    ports?:
+      | {
+          hostPort: number;
+          containerPort: number;
+          scheme: 'http' | 'https';
+          id?: string | null;
+        }[]
+      | null;
+  };
   domains?:
     | {
         domain: string;
@@ -453,7 +470,6 @@ export interface Service {
     docs?: (string | Deployment)[] | null;
     hasNextPage?: boolean | null;
   } | null;
-  linkedServices?: string[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -476,6 +492,19 @@ export interface GitProvider {
     installationToken?: string | null;
     tokenExpiration?: string | null;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dockerRegistries".
+ */
+export interface DockerRegistry {
+  id: string;
+  name: string;
+  type: 'docker' | 'github' | 'digitalocean' | 'quay';
+  username: string;
+  password: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -544,6 +573,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'securityGroups';
         value: string | SecurityGroup;
+      } | null)
+    | ({
+        relationTo: 'dockerRegistries';
+        value: string | DockerRegistry;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -650,6 +683,20 @@ export interface ServicesSelect<T extends boolean = true> {
         status?: T;
         exposedPorts?: T;
       };
+  dockerDetails?:
+    | T
+    | {
+        url?: T;
+        account?: T;
+        ports?:
+          | T
+          | {
+              hostPort?: T;
+              containerPort?: T;
+              scheme?: T;
+              id?: T;
+            };
+      };
   domains?:
     | T
     | {
@@ -660,7 +707,6 @@ export interface ServicesSelect<T extends boolean = true> {
         id?: T;
       };
   deployments?: T;
-  linkedServices?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -825,6 +871,18 @@ export interface SecurityGroupsSelect<T extends boolean = true> {
   securityGroupId?: T;
   syncStatus?: T;
   lastSyncedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dockerRegistries_select".
+ */
+export interface DockerRegistriesSelect<T extends boolean = true> {
+  name?: T;
+  type?: T;
+  username?: T;
+  password?: T;
   updatedAt?: T;
   createdAt?: T;
 }
