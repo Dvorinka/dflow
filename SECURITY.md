@@ -20,3 +20,12 @@ We aim to acknowledge within 72 hours.
   rejected entirely when `AUTH_METHOD=email-password` or Resend is
   unconfigured.
 - Session cookies are `httpOnly`, `secure` outside development, 7-day TTL.
+
+## Data protection (#104)
+
+Secrets are encrypted at rest with `@oversightstudio/encrypted-fields`.
+Covered collections: SSH keys, cloud provider accounts (AWS keys, API
+tokens), service credentials and variables, Docker registry passwords,
+and template secrets. Even with database access, key material is not
+readable without the application encryption key. Never log decrypted
+values; the logger redacts configured paths.
