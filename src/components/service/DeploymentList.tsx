@@ -3,9 +3,13 @@
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { format, formatDistanceToNow } from 'date-fns'
-import { Rocket, ServerCog } from 'lucide-react'
+import { Rocket, ServerCog, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
+import { useAction } from 'next-safe-action/hooks'
+import { toast } from 'sonner'
 
+import { cancelDeploymentAction } from '@/actions/deployment'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Tooltip,
@@ -37,6 +41,23 @@ const DeploymentList = ({
 }) => {
   const filteredDeployments = deployments.filter(
     deployment => typeof deployment !== 'string',
+  )
+  const router = useRouter()
+
+  const { execute: cancelDeployment, isPending: isCancelling } = useAction(
+    cancelDeploymentAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Deployment cancelled')
+          router.refresh()
+        }
+      },
+      onError: ({ error }) => {
+        toast.error(`Failed to cancel deployment: ${error.serverError}`)
+        router.refresh()
+      },
+    },
   )
 
   return (
@@ -83,13 +104,28 @@ const DeploymentList = ({
                   </div>
                 </div>
 
-                <DeploymentTerminal
-                  logs={deployedLogs}
-                  deployment={deploymentDetails}
-                  serverId={serverId}
-                  serviceId={serviceId}>
-                  <Button variant='outline'>View Logs</Button>
-                </DeploymentTerminal>
+                <div className='flex items-center gap-2'>
+                  <DeploymentTerminal
+                    logs={deployedLogs}
+                    deployment={deploymentDetails}
+                    serverId={serverId}
+                    serviceId={serviceId}>
+                    <Button variant='outline'>View Logs</Button>
+                  </DeploymentTerminal>
+
+                  {/* Only queued deployments can be cancelled; building holds
+                      open SSH sessions that can't be killed safely (#279) */}
+                  {status === 'queued' && (
+                    <Button
+                      variant='outline'
+                      disabled={isCancelling}
+                      isLoading={isCancelling}
+                      onClick={() => cancelDeployment({ deploymentId: id })}>
+                      <X size={14} />
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )
