@@ -61,6 +61,7 @@ interface PageProps {
   searchParams: Promise<{
     refreshServerDetails?: string
     tab?: string
+    'onboarding-reset'?: string
   }>
 }
 
@@ -505,6 +506,10 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
 
   const serverStatus = getServerStatus(server)
 
+  // Set by ResetOnboardingDialog after a reset; shows a persistent alert (#384)
+  const showOnboardingResetAlert =
+    syncSearchParams['onboarding-reset'] === '1' && server.onboarded !== true
+
   const renderContent = () => {
     // 1. Show provisioning banner for DFlow provisioning state
     if (serverStatus.type === 'provisioning') {
@@ -582,6 +587,18 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
     if (serverStatus.type === 'onboarding') {
       return (
         <BannerLayout server={server}>
+          {showOnboardingResetAlert && (
+            <Alert variant='warning' className='mb-4 flex items-center gap-3'>
+              <TriangleAlert className='h-5 w-5' />
+              <div>
+                <AlertTitle>Onboarding Reset Triggered</AlertTitle>
+                <AlertDescription>
+                  Reconfiguration is in progress and may take several minutes.
+                  Complete the steps below to finish setting up your server.
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
           <Onboarding server={server} />
         </BannerLayout>
       )

@@ -1,7 +1,8 @@
 import { AlertTriangle } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { type ReactNode, useState } from 'react'
+import { toast } from 'sonner'
 
 import { resetServerOnboardingAction } from '@/actions/server'
 import { Button } from '@/components/ui/button'
@@ -19,10 +20,24 @@ import {
 const ResetOnboardingDialog = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false)
   const params = useParams<{ serverId: string }>()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { execute, isPending } = useAction(resetServerOnboardingAction, {
     // onSuccess, close the dialog
     onSuccess: () => {
       setIsOpen(false)
+      toast.success(
+        'Onboarding reset triggered. Reconfiguration may take several minutes.',
+      )
+      // Persist a flag so the server page shows a reset alert (#384)
+      const next = new URLSearchParams(searchParams.toString())
+      next.set('onboarding-reset', '1')
+      router.replace(`${pathname}?${next.toString()}`)
+      router.refresh()
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || 'Failed to reset onboarding.')
     },
   })
 
