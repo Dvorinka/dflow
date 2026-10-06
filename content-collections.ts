@@ -1,12 +1,13 @@
 import { defineCollection, defineConfig } from '@content-collections/core'
-import { compileMDX } from '@content-collections/mdx'
+import { compileMarkdown } from '@content-collections/markdown'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
+import remarkGfm from 'remark-gfm'
 
 const introduction = defineCollection({
   name: 'introduction',
   directory: 'src/docs/introduction',
-  include: '**/*.md',
+  include: ['*.md', '*.mdx'],
   schema: z => ({
     title: z.string(),
     category: z.string(),
@@ -14,12 +15,17 @@ const introduction = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }
@@ -37,12 +43,17 @@ const servers = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }
@@ -60,12 +71,17 @@ const onboarding = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }
@@ -83,12 +99,17 @@ const services = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }
@@ -106,12 +127,17 @@ const security = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }
@@ -129,12 +155,17 @@ const templates = defineCollection({
     categoryOrder: z.number(),
   }),
   transform: async (document, context) => {
-    const mdx = await compileMDX(context, document, {
-      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
     })
+
     return {
       ...document,
-      mdx,
+      html,
       slug: document.title.toLowerCase().replace(/ /g, '-'),
       categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
     }

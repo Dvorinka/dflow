@@ -232,6 +232,10 @@ export const getActionAccess = {
     'projects.create',
     'services.create',
   ],
+
+  getServiceNginxConfigAction: ['services.read'],
+  setServiceNginxConfigSchema: ['services.update'],
+  getDeploymentsAction: ['services.read'],
 } as const
 
 export type GetActionAccessMap = typeof getActionAccess
