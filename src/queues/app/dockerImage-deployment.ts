@@ -1,4 +1,4 @@
-import { dokku } from '../../lib/dokku'
+import { dokku } from '@/lib/dokku'
 import configPromise from '@payload-config'
 import { env } from 'env'
 import { NodeSSH } from 'node-ssh'

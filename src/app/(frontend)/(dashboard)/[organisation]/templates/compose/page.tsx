@@ -1,4 +1,4 @@
-import LayoutClient from '../../layout.client'
+import LayoutClient from '@/app/(frontend)/(dashboard)/[organisation]/layout.client'
 
 import CreateNewTemplate from '@/components/templates/compose'
 
