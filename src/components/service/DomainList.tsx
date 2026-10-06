@@ -42,17 +42,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { WILD_CARD_DOMAINS } from '@/lib/constants'
+import { getDnsRecordName } from '@/lib/dnsRecord'
 import { Server, Service } from '@/payload-types'
 
 import DomainForm from './DomainForm'
 import RegenerateSSLForm from './RegenerateSSLForm'
 
-const getRecordName = (domain: string) => {
-  const match = domain.match(
-    /^((?:[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*)?)\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/,
-  )
-  return match ? match[1] : '@'
-}
+const getRecordName = (domain: string) =>
+  getDnsRecordName(domain, env.NEXT_PUBLIC_PROXY_DOMAIN_URL)
 
 const DomainCard = ({
   domain,

@@ -41,11 +41,10 @@ import {
 import { WILD_CARD_DOMAINS } from '@/lib/constants'
 import { Server } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'
+import { getDnsRecordName } from '@/lib/dnsRecord'
 
-const extractWildcard = (domain: string) => {
-  const match = domain.match(/^([\d\.]+|[^.]+)\./)
-  return match ? match[1] : null
-}
+const extractWildcard = (domain: string) =>
+  getDnsRecordName(domain, env.NEXT_PUBLIC_PROXY_DOMAIN_URL)
 
 const DomainItem = ({
   domain,
