@@ -769,6 +769,34 @@ export const Servers: CollectionConfig = {
       },
     },
     {
+      name: 'autoCleanup',
+      label: 'Automatic Cleanup',
+      type: 'group',
+      admin: {
+        description:
+          'Run Docker/Dokku cleanup on a schedule with these settings.',
+      },
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          defaultValue: false,
+        },
+        {
+          name: 'olderThanHours',
+          type: 'number',
+          defaultValue: 168,
+          min: 1,
+          max: 8760,
+        },
+        {
+          name: 'pruneVolumes',
+          type: 'checkbox',
+          defaultValue: false,
+        },
+      ],
+    },
+    {
       type: 'relationship',
       name: 'createdBy',
       relationTo: 'users',

@@ -36,6 +36,7 @@ import { Branding } from './payload/globals/Branding'
 import { Theme } from './payload/globals/Theme'
 import { checkServersConnectionsTask } from './payload/jobs/checkServersConnections'
 import { createActivityCleanupTask } from './payload/jobs/cleanupActivity'
+import { createScheduledCleanupTask } from './payload/jobs/scheduledCleanup'
 import { webhooksPlugin } from './plugins/webhook'
 
 const filename = fileURLToPath(import.meta.url)
@@ -154,6 +155,10 @@ export default buildConfig({
         olderThan: 7776000000, // 90 days in milliseconds
         cronTime: '0 3 * * *',
         queueName: 'activity-cleanup',
+      }),
+      createScheduledCleanupTask({
+        cronTime: '0 4 * * *',
+        queueName: 'server-scheduled-cleanup',
       }),
     ],
     access: {

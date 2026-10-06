@@ -97,7 +97,8 @@ const Danger = ({ server }: { server: ServerType }) => {
                 </div>
               </div>
 
-              <CleanupServerDialog>
+              <CleanupServerDialog
+                initialAutoCleanup={server.autoCleanup?.enabled ?? false}>
                 <Button variant='secondary'>
                   <Brush className='h-4 w-4' />
                   Cleanup
