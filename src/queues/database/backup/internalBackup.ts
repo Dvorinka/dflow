@@ -59,10 +59,14 @@ export const addInternalBackupQueue = async (data: QueueArgs) => {
         ssh = await dynamicSSH(sshDetails)
 
         if (type === 'import') {
-          const { createdAt: backupCreatedTime } = await payload.findByID({
-            collection: 'backups',
-            id: backupId ?? '',
-          })
+          // Prefer the filename recorded at export time so dumps can be
+          // restored into a differently-named (e.g. newly created, #484)
+          // database; fall back to the legacy name reconstruction.
+          const { createdAt: backupCreatedTime, backupName } =
+            await payload.findByID({
+              collection: 'backups',
+              id: backupId ?? '',
+            })
 
           const backupCreatedDate = new Date(backupCreatedTime)
 
@@ -74,7 +78,10 @@ export const addInternalBackupQueue = async (data: QueueArgs) => {
             String(backupCreatedDate.getUTCMinutes()).padStart(2, '0'),
             String(backupCreatedDate.getUTCSeconds()).padStart(2, '0'),
           ].join('-')
-          const generatedDumpFileName = `${databaseName}-${formattedDate}.dump`
+          const generatedDumpFileName =
+            dumpFileName ||
+            backupName ||
+            `${databaseName}-${formattedDate}.dump`
 
           const result = await dokku.database.internal.import(
             ssh,

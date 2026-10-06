@@ -20,6 +20,13 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
+import {
   ChevronDown,
   Cloud,
   DatabaseBackup,
@@ -178,12 +185,15 @@ const Backup = ({
   databaseDetails,
   serviceId,
   backups,
+  restorableBackups = [],
 }: {
   databaseDetails: Service['databaseDetails']
   serviceId: string
   backups: BackupType[]
+  restorableBackups?: BackupType[]
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
+  const [restoreBackupId, setRestoreBackupId] = useState<string>('')
   const { execute: internalDBBackupExecution, isPending: isInternalDBPending } =
     useAction(internalBackupAction, {
       onExecute: () => {
@@ -202,6 +212,30 @@ const Backup = ({
       onError: ({ error }) => {
         toast.error('Backup Failed', {
           id: 'create-backup',
+          description: error?.serverError,
+        })
+      },
+    })
+
+  const { execute: restoreExistingExecution, isPending: isRestorePending } =
+    useAction(internalRestoreAction, {
+      onExecute: () => {
+        toast.loading('Restoring backup...', {
+          id: 'restore-existing-backup',
+        })
+      },
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Added to queue', {
+            id: 'restore-existing-backup',
+            description: 'Added backup restoration to queue',
+          })
+          setRestoreBackupId('')
+        }
+      },
+      onError: ({ error }) => {
+        toast.error('Restore Failed', {
+          id: 'restore-existing-backup',
           description: error?.serverError,
         })
       },
@@ -343,6 +377,56 @@ const Backup = ({
               }
             />
           ))}
+        </div>
+      )}
+
+      {/* Restore into this (possibly newly created, #484) database from a
+          sibling backup of the same type on the same server */}
+      {restorableBackups.length > 0 && (
+        <div className='mt-6 space-y-3 rounded-md border p-4'>
+          <div>
+            <h3 className='text-sm font-medium'>
+              Restore from existing backup
+            </h3>
+            <p className='text-muted-foreground text-xs'>
+              Seed this database from another {databaseDetails?.type} backup
+              on the same server. Type is validated before restore.
+            </p>
+          </div>
+          <div className='flex flex-col gap-2 sm:flex-row'>
+            <Select
+              value={restoreBackupId}
+              onValueChange={setRestoreBackupId}>
+              <SelectTrigger className='sm:max-w-md'>
+                <SelectValue placeholder='Select a backup to restore' />
+              </SelectTrigger>
+              <SelectContent>
+                {restorableBackups.map(backup => {
+                  const sourceName =
+                    typeof backup.service === 'string'
+                      ? backup.service
+                      : backup.service.name
+                  return (
+                    <SelectItem key={backup.id} value={backup.id}>
+                      {backup.backupName ?? backup.id} — {sourceName} (
+                      {new Date(backup.createdAt).toLocaleString()})
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
+            <Button
+              disabled={!restoreBackupId || isRestorePending}
+              isLoading={isRestorePending}
+              onClick={() =>
+                restoreExistingExecution({
+                  backupId: restoreBackupId,
+                  serviceId,
+                })
+              }>
+              Restore selected
+            </Button>
+          </div>
         </div>
       )}
     </>

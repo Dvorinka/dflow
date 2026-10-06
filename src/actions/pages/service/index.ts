@@ -143,3 +143,62 @@ export const getServiceBackups = protectedClient
 
     return backups
   })
+
+// Backups that can seed this (possibly newly created, #484) database:
+// same server, same database type, successful, from other services.
+export const getRestorableBackups = protectedClient
+  .metadata({
+    actionName: 'getRestorableBackups',
+  })
+  .inputSchema(getServiceDetailsSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { id } = clientInput
+    const {
+      payload,
+      userTenant: { tenant },
+    } = ctx
+
+    const target = await payload.findByID({
+      collection: 'services',
+      id,
+      depth: 2,
+    })
+    const targetType = target?.databaseDetails?.type ?? null
+    const targetServerId =
+      typeof target?.project === 'object' &&
+      typeof target.project.server === 'object'
+        ? target.project.server.id
+        : typeof target?.project === 'object'
+          ? target.project.server
+          : null
+
+    if (!targetType || !targetServerId) return []
+
+    const { docs: backups } = await payload.find({
+      collection: 'backups',
+      pagination: false,
+      sort: '-createdAt',
+      where: {
+        and: [
+          { status: { equals: 'success' } },
+          { databaseType: { equals: targetType } },
+          { 'tenant.slug': { equals: tenant.slug } },
+        ],
+      },
+      depth: 2,
+    })
+
+    // ponytail: in-code server match; Payload where can't join
+    // backup -> service -> project -> server in one query.
+    return backups.filter(backup => {
+      if (typeof backup.service === 'string') return false
+      if (backup.service.id === id) return false
+      const project = backup.service.project
+      if (typeof project !== 'object' || !project) return false
+      const serverId =
+        typeof project.server === 'object'
+          ? project.server.id
+          : project.server
+      return serverId === targetServerId
+    })
+  })
