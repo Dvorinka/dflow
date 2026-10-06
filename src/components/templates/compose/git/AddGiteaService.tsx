@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { buildOptions } from '@/lib/buildOptions'
+import { buildOptions } from '@/lib/ui/buildOptions'
 import { cn } from '@/lib/utils'
 
 const AddGiteaService = ({

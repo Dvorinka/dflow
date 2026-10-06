@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 
 import InvitationView from '@/components/invite'
-import { getCurrentUser } from '@/lib/getCurrentUser'
-import { verifyInviteToken } from '@/lib/verifyInviteToken'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
+import { verifyInviteToken } from '@/lib/auth/verifyInviteToken'
 
 interface PageProps {
   searchParams: Promise<{ token?: string }>

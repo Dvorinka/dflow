@@ -29,7 +29,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Label } from '@/components/ui/label'
-import { buildOptions } from '@/lib/buildOptions'
+import { buildOptions } from '@/lib/ui/buildOptions'
 import { GitProvider, Service } from '@/payload-types'
 
 const githubURLRegex = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)(?:\.git)?$/

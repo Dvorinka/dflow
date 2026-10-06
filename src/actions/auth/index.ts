@@ -9,8 +9,8 @@ import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 
 import { renderMagicLinkEmail } from '@/emails/magic-link'
-import { createSession } from '@/lib/createSession'
-import { isMagicLinkAllowed, isPasswordAllowed } from '@/lib/authMethod'
+import { createSession } from '@/lib/auth/createSession'
+import { isMagicLinkAllowed, isPasswordAllowed } from '@/lib/auth/authMethod'
 import { protectedClient, publicClient, userClient } from '@/lib/safe-action'
 
 import {

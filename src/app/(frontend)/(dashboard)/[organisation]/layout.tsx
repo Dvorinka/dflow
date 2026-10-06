@@ -24,7 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { DFLOW_CONFIG } from '@/lib/constants'
-import { getCurrentUser } from '@/lib/getCurrentUser'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import BubbleProvider from '@/providers/BubbleProvider'
 import Provider from '@/providers/Provider'
 import TerminalProvider from '@/providers/TerminalProvider'

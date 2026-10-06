@@ -36,7 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { getSessionValue } from '@/lib/getSessionValue'
+import { getSessionValue } from '@/lib/auth/getSessionValue'
 import { Service } from '@/payload-types'
 import { useArchitectureContext } from '@/providers/ArchitectureProvider'
 

@@ -1,6 +1,6 @@
 import { CollectionBeforeChangeHook, ValidationError } from 'payload'
 
-import { isReservedSlug } from '@/lib/reservedSlugs'
+import { isReservedSlug } from '@/lib/auth/reservedSlugs'
 import { User } from '@/payload-types'
 
 export const createTenantAndRole: CollectionBeforeChangeHook<User> = async ({

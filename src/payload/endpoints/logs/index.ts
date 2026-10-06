@@ -3,7 +3,7 @@ import { LoaderInput } from 'nuqs'
 import { APIError, PayloadHandler } from 'payload'
 
 import { dokku } from '@/lib/dokku'
-import { loadServiceLogs } from '@/lib/searchParams'
+import { loadServiceLogs } from '@/lib/ui/searchParams'
 
 export const logs: PayloadHandler = async ({ headers, payload, query }) => {
   const auth = await payload.auth({ headers })

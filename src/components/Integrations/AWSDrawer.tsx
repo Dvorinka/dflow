@@ -18,7 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { integrationsList } from '@/lib/integrationList'
+import { integrationsList } from '@/lib/ui/integrationList'
 
 import CloudProvidersList from './CloudProvidersList'
 import AWSAccountForm from './aws/AWSAccountForm'

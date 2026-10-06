@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import { APIError, PayloadHandler, PayloadRequest } from 'payload'
 
 import { renderLoginConfirmationEmail } from '@/emails/login-confirmation'
-import { createSession } from '@/lib/createSession'
+import { createSession } from '@/lib/auth/createSession'
 
 export const autoLogin: PayloadHandler = async (req: PayloadRequest) => {
   const { createRedisClient } = await import('@/lib/redis')
@@ -45,7 +45,7 @@ export const autoLogin: PayloadHandler = async (req: PayloadRequest) => {
     // Env-gated kill switch: reject magic-link tokens when disabled
     // (AUTH_METHOD=email-password or Resend unconfigured).
     if (isMagicLink) {
-      const { isMagicLinkAllowed } = await import('@/lib/authMethod')
+      const { isMagicLinkAllowed } = await import('@/lib/auth/authMethod')
       let dbMethod: unknown
       try {
         const cfg = await payload.findGlobal({ slug: 'auth-config', req })

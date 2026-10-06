@@ -38,7 +38,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import SelectSearch from '@/components/ui/select-search'
-import { buildOptions } from '@/lib/buildOptions'
+import { buildOptions } from '@/lib/ui/buildOptions'
 import { cn } from '@/lib/utils'
 
 const githubURLRegex = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)(?:\.git)?$/

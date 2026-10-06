@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DFLOW_CONFIG } from '@/lib/constants'
-import { cloudProvidersList } from '@/lib/integrationList'
+import { cloudProvidersList } from '@/lib/ui/integrationList'
 import type { VpsPlan } from '@/lib/restSDK/types'
 import { CloudProviderAccount, SecurityGroup, SshKey } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'

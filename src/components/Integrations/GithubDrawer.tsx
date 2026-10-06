@@ -20,7 +20,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { integrationsList } from '@/lib/integrationList'
+import { integrationsList } from '@/lib/ui/integrationList'
 
 const GitHubDrawer = () => {
   const [activeSlide, setActiveSlide] = useQueryState(

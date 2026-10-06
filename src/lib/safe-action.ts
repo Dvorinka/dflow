@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { log } from '@/lib/logger'
 import { Role, Tenant } from '@/payload-types'
 
-import { getTenant } from './get-tenant'
+import { getTenant } from '@/lib/auth/get-tenant'
 import { assertRolePermission } from './permissions/utils'
 
 type UserTenant = {

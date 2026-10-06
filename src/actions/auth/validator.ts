@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { isReservedSlug } from '@/lib/reservedSlugs'
+import { isReservedSlug } from '@/lib/auth/reservedSlugs'
 
 export const signInSchema = z.object({
   email: z
