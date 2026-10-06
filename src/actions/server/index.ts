@@ -21,6 +21,7 @@ import { addInstallDokkuQueue } from '@/queues/dokku/install'
 import { addManageServerDomainQueue } from '@/queues/domain/manageGlobal'
 import { addDeleteProjectsQueue } from '@/queues/project/deleteProjects'
 import { addCleanupServerQueue } from '@/queues/server/cleanup'
+import { checkServersSSHConnectionQueue } from '@/queues/server/checkSSHConnection'
 import { addResetServerQueue } from '@/queues/server/reset'
 
 import {
@@ -145,6 +146,13 @@ export const createServerAction = protectedClient
     const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
     await invalidateServerCache(tenant.slug)
 
+    // Sync details immediately so the new server shows live status (#259);
+    // the queue itself dedupes runs within 2 minutes.
+    await checkServersSSHConnectionQueue({
+      tenant: { slug: tenant.slug, id: tenant.id },
+      refreshServerDetails: true,
+    })
+
     return { success: true, server: response }
   })
 
@@ -205,6 +213,11 @@ export const createTailscaleServerAction = protectedClient
 
     const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
     await invalidateServerCache(tenant.slug)
+
+    await checkServersSSHConnectionQueue({
+      tenant: { slug: tenant.slug, id: tenant.id },
+      refreshServerDetails: true,
+    })
 
     if (response) {
       redirect(`/${tenant.slug}/servers`)
