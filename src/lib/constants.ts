@@ -86,7 +86,8 @@ export const REFERENCE_VARIABLE_REGEX = /\${{\s*(\w+):([\w-]+)\.([\w_]+)\s*}}/
 export const TEMPLATE_EXPR = /\{\{\s*(.*?)\s*\}\}/g
 
 export const posthogHost = 'https://us.i.posthog.com'
-export const posthogKey = 'phc_CkZ9XejPwdsrmxUl0Pmp0n3fRUioTekrpBS1lnzuGOn'
+// Telemetry key must come from the environment, never committed (#gitleaks).
+// Unset = PostHog stays uninitialized.
 
 export const databaseOptions = [
   {

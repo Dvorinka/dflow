@@ -34,6 +34,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_WEBSITE_URL: z.string().url(),
     NEXT_PUBLIC_APP_VERSION: z.string().min(1).optional(),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
     // Comma-separated sibling domains for cross-app auth sync (#364).
     // Unset = sync disabled. Example: "app.dflow.sh"
     NEXT_PUBLIC_AUTH_SYNC_DOMAINS: z.string().optional(),
@@ -50,6 +51,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_WEBSITE_URL || process.env.RAILWAY_PUBLIC_DOMAIN,
     ),
     NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_AUTH_SYNC_DOMAINS: process.env.NEXT_PUBLIC_AUTH_SYNC_DOMAINS,
     NEXT_PUBLIC_WEBHOOK_URL: process.env.NEXT_PUBLIC_WEBHOOK_URL,
     DATABASE_URI: process.env.DATABASE_URI,

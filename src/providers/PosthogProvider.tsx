@@ -5,8 +5,6 @@ import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
 import { useEffect } from 'react'
 
-import { posthogKey } from '@/lib/constants'
-
 export default function PosthogProvider({
   children,
 }: {
@@ -16,12 +14,13 @@ export default function PosthogProvider({
     // skipping posthog loading for development and when telemetry is disabled
     if (
       process.env.NODE_ENV === 'development' ||
-      env.NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED
+      env.NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED ||
+      !env.NEXT_PUBLIC_POSTHOG_KEY
     ) {
       return
     }
 
-    posthog.init(posthogKey, {
+    posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
       api_host: `${env.NEXT_PUBLIC_WEBSITE_URL}/ingest`,
       capture_pageview: false, // Disable automatic pageview capture, as we capture manually
     })
