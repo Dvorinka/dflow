@@ -278,7 +278,7 @@ export const deleteServiceAction = protectedClient
   })
   .inputSchema(deleteServiceSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { id, deleteBackups, deleteFromServer } = clientInput
+    const { id, deleteBackups, deleteFromServer, deleteVolumes } = clientInput
     const {
       userTenant: { tenant },
       payload,
@@ -335,6 +335,7 @@ export const deleteServiceAction = protectedClient
             serverDetails: {
               id: serverDetails.id,
             },
+            deleteVolumes,
           })
 
           queueId = appDeletionQueueResponse.id

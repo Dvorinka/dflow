@@ -33,6 +33,7 @@ const DeleteServiceContent = ({
 }) => {
   const [deleteBackups, setDeleteBackups] = useState<boolean>(false)
   const [deleteFromServer, setDeleteFromServer] = useState<boolean>(true)
+  const [deleteVolumes, setDeleteVolumes] = useState<boolean>(false)
   const router = useRouter()
   const params = useParams<{ organisation: string; projectId: string }>()
 
@@ -63,6 +64,7 @@ const DeleteServiceContent = ({
       id: service.id,
       deleteBackups,
       deleteFromServer,
+      deleteVolumes: deleteFromServer && deleteVolumes,
     })
   }
 
@@ -154,6 +156,30 @@ const DeleteServiceContent = ({
                     </p>
                   </div>
                 </div>
+
+                {deleteFromServer && (
+                  <div className='flex items-start space-x-3'>
+                    <Checkbox
+                      id='delete-volumes'
+                      checked={deleteVolumes}
+                      onCheckedChange={checked =>
+                        setDeleteVolumes(Boolean(checked))
+                      }
+                      className='mt-0.5'
+                    />
+                    <div className='space-y-1'>
+                      <label
+                        htmlFor='delete-volumes'
+                        className='cursor-pointer text-sm leading-none font-medium'>
+                        Delete associated storage volumes
+                      </label>
+                      <p className='text-muted-foreground text-xs'>
+                        Remove dokku-managed storage data for this service.
+                        Bind mounts outside dokku storage are kept.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Warning Messages */}
@@ -175,6 +201,9 @@ const DeleteServiceContent = ({
                   <AlertTitle>Permanent Action</AlertTitle>
                   <AlertDescription>
                     The service will be stopped and removed from the server.
+                    {deleteVolumes
+                      ? ' Its dokku-managed storage volumes will be deleted too.'
+                      : ' Its storage volumes will be left on the server unless you also check volume deletion.'}{' '}
                     This action cannot be undone.
                   </AlertDescription>
                 </Alert>

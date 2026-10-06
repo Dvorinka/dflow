@@ -24,6 +24,7 @@ export const deleteServiceSchema = z.object({
   id: z.string(),
   deleteBackups: z.boolean().optional(),
   deleteFromServer: z.boolean(),
+  deleteVolumes: z.boolean().optional(),
 })
 
 const gitSettings = z
