@@ -10,6 +10,7 @@ import DefaultMonitoring from './DefaultMonitoring'
 import DefaultMonitoringInstall from './DefaultMonitoringInstall'
 import NetdataInstallPrompt from './NetdataInstallPrompt'
 import NetdataMonitoring from './NetdataMonitoring'
+import SystemAlerts from './SystemAlerts'
 
 const MonitoringTab = ({
   server,
@@ -52,6 +53,7 @@ const MonitoringTab = ({
       </div>
 
       {/* Tabs Content */}
+      <SystemAlerts systemId={server.beszel?.systemId} />
       <Tabs defaultValue='default' className='w-full'>
         <TabsList className='grid w-fit grid-cols-2'>
           <TabsTrigger value='default' className='flex items-center gap-2'>
