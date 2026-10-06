@@ -454,9 +454,11 @@ export const updateServerDomainAction = protectedClient
                 ? { ...prevDomain, default: false }
                 : prevDomain,
             ),
+            // synced is required by the collection; new rows start unsynced
             ...domains.map(domain => ({
               domain,
               default: operation === 'set',
+              synced: false,
             })),
           ]
         : previousDomains.filter(
