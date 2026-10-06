@@ -4,7 +4,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { publicClient } from '@/lib/safe-action'
-import { effectiveAuthMethod } from '@/lib/authMethod'
+import { effectiveAuthMethod } from '@/lib/auth/authMethod'
 
 export const getAuthConfigAction = publicClient
   .metadata({ actionName: 'fetchAuthConfigAction' })

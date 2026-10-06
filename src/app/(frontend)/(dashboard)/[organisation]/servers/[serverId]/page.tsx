@@ -49,7 +49,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { supportedLinuxVersions } from '@/lib/constants'
 import { netdata } from '@/lib/netdata'
-import { loadServerPageTabs } from '@/lib/searchParams'
+import { loadServerPageTabs } from '@/lib/ui/searchParams'
 import { SecurityGroup, SshKey } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'
 

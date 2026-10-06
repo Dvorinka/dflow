@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { getSessionValue } from '@/lib/getSessionValue'
+import { getSessionValue } from '@/lib/auth/getSessionValue'
 import { useArchitectureContext } from '@/providers/ArchitectureProvider'
 
 import AddDatabaseService from './AddDatabaseService'

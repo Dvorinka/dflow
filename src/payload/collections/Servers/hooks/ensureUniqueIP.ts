@@ -2,7 +2,7 @@ import type { FieldHook, Where } from 'payload'
 import { ValidationError } from 'payload'
 
 import { extractID } from '@/lib/extractID'
-import { getUserTenantIDs } from '@/lib/getUserTenantIDs'
+import { getUserTenantIDs } from '@/lib/auth/getUserTenantIDs'
 
 export const ensureUniqueIP: FieldHook = async ({
   data,

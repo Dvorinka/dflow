@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { integrationsList } from '@/lib/integrationList'
+import { integrationsList } from '@/lib/ui/integrationList'
 
 const IntegrationsList = () => {
   const [_, setActiveSlide] = useQueryState(

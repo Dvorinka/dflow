@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { setCookieAction } from '@/lib/set-organisation-cookie'
+import { setCookieAction } from '@/lib/ui/set-organisation-cookie'
 
 export default function SetOrganisationCookie({
   organisationSlug,

@@ -2,7 +2,7 @@ import { LoaderInput } from 'nuqs'
 import { APIError, PayloadHandler } from 'payload'
 
 import { pub } from '@/lib/redis'
-import { loadServiceLogs } from '@/lib/searchParams'
+import { loadServiceLogs } from '@/lib/ui/searchParams'
 
 export const serverEvents: PayloadHandler = async ({
   headers,
