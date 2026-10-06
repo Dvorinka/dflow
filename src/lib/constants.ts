@@ -9,7 +9,8 @@ import {
 
 export const supportedLinuxVersions = ['11', '12', '20.04', '22.04', '24.04']
 
-export const supportedDokkuVersion = '0.35.15'
+// Supported dokku version moved to config/package-versions.json (#387);
+// import { packageVersions } from '@/lib/packageVersions' instead.
 
 export const awsRegions = [
   // { label: 'US East (N. Virginia)', value: 'us-east-1' },
