@@ -42,6 +42,7 @@ import { ServerType } from '@/payload-types-overrides'
 
 import PluginConfigurationForm from './PluginConfigurationForm'
 import { PluginUninstallDialog } from './PluginUninstallDialog'
+import InstallCustomPluginDialog from './InstallCustomPluginDialog'
 
 // Job Queued
 // Queued job to install plugin
@@ -393,7 +394,10 @@ const PluginsList = ({
     <div className='space-y-4'>
       <div className='flex items-center justify-between'>
         <h4 className='text-lg font-semibold'>Plugins</h4>
-        <RefreshButton showText={true} text='Refresh Server Status' />
+        <div className='flex items-center gap-2'>
+          <InstallCustomPluginDialog serverId={server.id} />
+          <RefreshButton showText={true} text='Refresh Server Status' />
+        </div>
       </div>
 
       <Alert variant='info'>

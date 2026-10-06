@@ -16,6 +16,7 @@ import {
   checkPluginUsageSchema,
   configureLetsencryptPluginSchema,
   installAndConfigureLetsencryptPluginSchema,
+  installCustomPluginSchema,
   installPluginSchema,
   syncPluginSchema,
   togglePluginStatusSchema,
@@ -26,6 +27,45 @@ export const installPluginAction = protectedClient
     actionName: 'installPluginAction',
   })
   .inputSchema(installPluginSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { payload, userTenant } = ctx
+    const { serverId, pluginName, pluginURL } = clientInput
+
+    // Fetching server details instead of passing from client
+    const server = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 5,
+    })
+
+    const sshDetails = extractSSHDetails({ server })
+    const queueResponse = await addInstallPluginQueue({
+      pluginDetails: {
+        name: pluginName,
+        url: pluginURL,
+      },
+      serverDetails: {
+        id: serverId,
+        previousPlugins: server.plugins ?? [],
+      },
+      sshDetails,
+      tenant: {
+        slug: userTenant.tenant.slug,
+      },
+    })
+
+    if (queueResponse.id) {
+      return { success: true }
+    }
+  })
+
+// Install an arbitrary dokku plugin from a git URL (#415). Names are
+// validated; the plugin appears under Custom Plugins after sync.
+export const installCustomPluginAction = protectedClient
+  .metadata({
+    actionName: 'installCustomPluginAction',
+  })
+  .inputSchema(installCustomPluginSchema)
   .action(async ({ clientInput, ctx }) => {
     const { payload, userTenant } = ctx
     const { serverId, pluginName, pluginURL } = clientInput
