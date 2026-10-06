@@ -1,6 +1,30 @@
+import { encryptedField } from '@oversightstudio/encrypted-fields'
 import { CollectionConfig, Field } from 'payload'
 
 import { isAdmin } from '@/payload/access/isAdmin'
+
+const databaseOptions = [
+  {
+    label: 'Postgres',
+    value: 'postgres',
+  },
+  {
+    label: 'MongoDB',
+    value: 'mongo',
+  },
+  {
+    label: 'MySQL',
+    value: 'mysql',
+  },
+  {
+    label: 'Redis',
+    value: 'redis',
+  },
+  {
+    label: 'MariaDB',
+    value: 'mariadb',
+  },
+]
 
 const databaseField: Field = {
   label: 'Database Details',
@@ -23,28 +47,7 @@ const databaseField: Field = {
         {
           name: 'type',
           type: 'select',
-          options: [
-            {
-              label: 'Postgres',
-              value: 'postgres',
-            },
-            {
-              label: 'MongoDB',
-              value: 'mongo',
-            },
-            {
-              label: 'MySQL',
-              value: 'mysql',
-            },
-            {
-              label: 'Redis',
-              value: 'redis',
-            },
-            {
-              label: 'MariaDB',
-              value: 'mariadb',
-            },
-          ],
+          options: databaseOptions,
         },
         {
           name: 'username',
@@ -328,20 +331,31 @@ export const Services: CollectionConfig = {
         { label: 'Docker', value: 'docker' },
       ],
     },
-    // Storing environment variables in JSON format
-    // there will be 2 types of variables
-    // 1. default variables MY_VARIABLE="Something"
-    // 2. reference variables 👇
-    //   DATABASE_URI: {
-    //   type: "reference",
-    //   value: "mongodb://something",
-    //   linkedService: "mongo-database", // the Dokku service name
-    //   dokkuAlias: "MONGO_DATABASE_DB_URL",  // used when running dokku config
-    // }
     {
       name: 'environmentVariables',
       type: 'json',
     },
+    {
+      name: 'variables',
+      type: 'array',
+      fields: [
+        encryptedField({
+          name: 'key',
+          type: 'text',
+          required: true,
+        }),
+        // Storing environment value format -> service-name converted to uppercase with underscore and _DB at ending -> PAYLOAD_MONGO_DB
+        encryptedField({
+          name: 'value',
+          type: 'text',
+          required: true,
+        }),
+      ],
+    },
+    encryptedField({
+      name: 'populatedVariables',
+      type: 'json',
+    }),
     // Builder settings
     {
       name: 'builder',

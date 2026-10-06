@@ -249,6 +249,11 @@ export const updateServiceAction = protectedClient
       Object.entries(data).filter(([_, value]) => value && value !== undefined),
     )
 
+    const previousDetails = await payload.findByID({
+      collection: 'services',
+      id,
+    })
+
     const response = await payload.update({
       collection: 'services',
       data: filteredObject,
@@ -256,18 +261,25 @@ export const updateServiceAction = protectedClient
       depth: 10,
     })
 
+    const environmentVariablesChange =
+      data?.variables &&
+      JSON.stringify(previousDetails.variables) !==
+        JSON.stringify(data?.variables)
+
     // If env variables are added then adding it to queue to update env
     if (
-      data?.environmentVariables &&
+      environmentVariablesChange &&
       typeof response?.project === 'object' &&
       typeof response?.project?.server === 'object' &&
       typeof response?.project?.server?.sshKey === 'object'
     ) {
       await addUpdateEnvironmentVariablesQueue({
         serviceDetails: {
-          environmentVariables: data?.environmentVariables,
+          previousVariables: previousDetails?.variables ?? [],
+          variables: response?.variables ?? [],
           name: response?.name,
           noRestart: data?.noRestart ?? true,
+          id,
         },
         sshDetails: {
           host: response?.project?.server?.ip,
@@ -282,6 +294,11 @@ export const updateServiceAction = protectedClient
     }
 
     if (response?.id) {
+      const projectId =
+        typeof response?.project === 'object'
+          ? response?.project?.id
+          : response?.project
+      revalidatePath(`/dashboard/project/${projectId}/service/${response?.id}`)
       return { success: true }
     }
   })

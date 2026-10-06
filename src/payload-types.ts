@@ -424,6 +424,14 @@ export interface Service {
     | number
     | boolean
     | null;
+  variables?:
+    | {
+        key: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  populatedVariables?: string | null;
   builder?: ('railpack' | 'nixpacks' | 'dockerfile' | 'herokuBuildPacks' | 'buildPacks') | null;
   provider?: (string | null) | GitProvider;
   providerType?: ('github' | 'gitlab' | 'bitbucket') | null;
@@ -708,6 +716,14 @@ export interface ServicesSelect<T extends boolean = true> {
   description?: T;
   type?: T;
   environmentVariables?: T;
+  variables?:
+    | T
+    | {
+        key?: T;
+        value?: T;
+        id?: T;
+      };
+  populatedVariables?: T;
   builder?: T;
   provider?: T;
   providerType?: T;
