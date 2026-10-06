@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { BrandingProvider } from '@/providers/BrandingProvider'
 import NProgressProvider from '@/providers/NProgressProvider'
 import { NetworkStatusProvider } from '@/providers/NetworkStatusProvider'
+import { AppVersionProvider } from '@/providers/AppVersionProvider'
 
 import './globals.css'
 
@@ -149,7 +150,9 @@ export default async function RootLayout({
           {/* <PosthogProvider> */}
           {/* <SuspendedPostHogPageView /> */}
           <NetworkStatusProvider>
-            <ThemeProvider enableSystem attribute='class'>
+            <AppVersionProvider
+              initialVersion={env.NEXT_PUBLIC_APP_VERSION ?? 'dev'}>
+              <ThemeProvider enableSystem attribute='class'>
               <BrandingProvider branding={branding}>
                 {children}
               </BrandingProvider>
@@ -162,6 +165,7 @@ export default async function RootLayout({
                 visibleToasts={5}
               />
             </ThemeProvider>
+            </AppVersionProvider>
           </NetworkStatusProvider>
           {/* </PosthogProvider> */}
         </NProgressProvider>
