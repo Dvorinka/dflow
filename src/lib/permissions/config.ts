@@ -117,6 +117,7 @@ export const getActionAccess = {
     'servers.update',
   ],
   checkAWSAccountConnection: ['servers.read'],
+  listUbuntuAmisAction: ['servers.read'],
   connectAWSAccountAction: ['cloudProviderAccounts.create'],
   updateAWSAccountAction: ['cloudProviderAccounts.update'],
   deleteAWSAccountAction: ['cloudProviderAccounts.delete'],
