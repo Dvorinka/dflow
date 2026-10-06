@@ -61,3 +61,27 @@ To this component, you need to pass 3 props:
   sectionId='#-external-credentials'
 />
 ```
+
+#### Queue triggering (server actions vs payload hooks)
+
+Background work runs on BullMQ queues in `src/queues/<area>/<job>.ts`. Each
+queue exposes an `add*Queue(data)` function plus a worker created by
+`getWorker` in `src/lib/bullmq.ts` (centralized logging with tenant/user
+attribution).
+
+Conventions:
+
+- Server actions (`src/actions/**/index.ts`) trigger queues after the
+  database write: deployments, domain changes, plugin install/sync,
+  backups, cleanup, monitoring setup, EC2 provisioning.
+- Payload hooks trigger queues only for side effects owned by the data
+  layer: collection `afterChange` hooks log user activity
+  (`src/lib/activityTracker.ts` backed by the `activity` collection) for
+  project creation and server add/onboard events.
+- Scheduled work uses Payload jobs (`src/payload/jobs/*` with cron):
+  SSH connection checks, activity retention, opt-in server cleanup.
+- Log streaming uses Redis pub/sub + per-deployment lists
+  (`src/lib/sendEvent.ts`); lists expire after 7 days, records are durable.
+
+Keep CPU/SSH-heavy work in queues, never in hooks: hooks run inside the
+request lifecycle and cannot be retried independently.
