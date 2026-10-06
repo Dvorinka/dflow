@@ -300,7 +300,9 @@ const DomainCard = ({
                   <DialogTitle>Domain Configuration</DialogTitle>
                   <DialogDescription>
                     Add the records in your domain provider. This step can be
-                    skipped for wildcard domains ex: nip.io, sslip.io
+                    skipped for wildcard domains ex: nip.io, sslip.io. If
+                    using Cloudflare, disable the proxy (grey cloud) and set
+                    TTL to auto while verifying.
                   </DialogDescription>
                 </DialogHeader>
 
