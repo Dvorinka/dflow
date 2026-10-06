@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 // import { addInstallTerminalQueue } from '@/queues/terminal/install'
 // import { addUninstallTerminalQueue } from '@/queues/terminal/uninstall'
@@ -31,11 +32,12 @@ export const installTerminalAction = protectedClient
     const { payload } = ctx
 
     // Fetch server details from the database
-    const { id, ip, username, port, sshKey } = await payload.findByID({
-      collection: 'servers',
-      id: serverId,
-      depth: 5,
-    })
+    const { id, ip, username, port, sshKey, tenant } =
+      await payload.findByID({
+        collection: 'servers',
+        id: serverId,
+        depth: 5,
+      })
 
     if (!id) {
       throw new Error('Server not found')
@@ -67,7 +69,8 @@ export const installTerminalAction = protectedClient
     // })
 
     // Refresh the server details page
-    revalidatePath(`/servers/${serverId}`)
+    const tenantSlug = extractTenantSlug(tenant)
+    if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${serverId}`)
 
     return {
       success: true,
@@ -150,7 +153,8 @@ export const startTerminalAction = protectedClient
     })
 
     if (startResponse.id) {
-      revalidatePath(`/servers/${serverId}`)
+      const tenantSlug = extractTenantSlug(serverDetails.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${serverId}`)
       return { success: true, message: 'Terminal start initiated' }
     }
 
@@ -186,7 +190,8 @@ export const stopTerminalAction = protectedClient
     })
 
     if (stopResponse.id) {
-      revalidatePath(`/servers/${serverId}`)
+      const tenantSlug = extractTenantSlug(serverDetails.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${serverId}`)
       return { success: true, message: 'Terminal stop initiated' }
     }
 
@@ -222,7 +227,8 @@ export const restartTerminalAction = protectedClient
     })
 
     if (restartResponse.id) {
-      revalidatePath(`/servers/${serverId}`)
+      const tenantSlug = extractTenantSlug(serverDetails.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${serverId}`)
       return { success: true, message: 'Terminal restart initiated' }
     }
 

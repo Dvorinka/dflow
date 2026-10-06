@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import * as ssh2 from 'ssh2'
 
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient, userClient } from '@/lib/safe-action'
 
 import {
@@ -80,7 +81,8 @@ export const updateSSHKeyAction = protectedClient
     })
 
     if (response) {
-      revalidatePath('/security')
+      const tenantSlug = extractTenantSlug(response.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/security`)
     }
 
     return response

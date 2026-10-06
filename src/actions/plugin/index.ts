@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { NodeSSH } from 'node-ssh'
 
 import { dokku } from '@/lib/dokku'
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
 import { addLetsencryptPluginConfigureQueue } from '@/queues/letsencrypt/configure'
@@ -153,7 +154,10 @@ export const syncPluginAction = protectedClient
         },
       })
 
-      revalidatePath(`/servers/${serverId}`)
+      const tenantSlug = extractTenantSlug(server.tenant)
+      if (tenantSlug) {
+        revalidatePath(`/${tenantSlug}/servers/${serverId}`)
+      }
       return { success: true, plugins: updatedServerResponse.plugins ?? [] }
     } catch (error) {
       let message = ''
