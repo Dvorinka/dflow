@@ -25,6 +25,8 @@ import { auth } from '@/lib/dokku/git/auth'
 import { deployImage } from '@/lib/dokku/git/deployImage'
 import { sync } from '@/lib/dokku/git/sync'
 import { unlock } from '@/lib/dokku/git/unlock'
+import { off as httpAuthOff, on as httpAuthOn } from '@/lib/dokku/httpAuth'
+import { off as maintenanceOff, on as maintenanceOn, status as maintenanceStatus } from '@/lib/dokku/maintenance'
 import { auth as DatabaseAuth } from '@/lib/dokku/plugin/database/backup/auth'
 import { deleteBackup } from '@/lib/dokku/plugin/database/backup/internal/delete'
 import { exportDB } from '@/lib/dokku/plugin/database/backup/internal/export'
@@ -165,6 +167,15 @@ export const dokku = {
     unlock,
     auth,
     deployImage,
+  },
+  maintenance: {
+    on: maintenanceOn,
+    off: maintenanceOff,
+    status: maintenanceStatus,
+  },
+  httpAuth: {
+    on: httpAuthOn,
+    off: httpAuthOff,
   },
   version: {
     info: dokkuVersionInfo,
