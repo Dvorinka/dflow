@@ -137,6 +137,18 @@ export const restartServiceSchema = z.object({
   id: z.string(),
 })
 
+export const toggleMaintenanceSchema = z.object({
+  id: z.string(),
+  enabled: z.boolean(),
+})
+
+export const toggleHttpAuthSchema = z.object({
+  id: z.string(),
+  enabled: z.boolean(),
+  username: z.string().min(1).max(128).optional(),
+  password: z.string().min(1).max(256).optional(),
+})
+
 export const stopServiceSchema = z.object({
   id: z.string(),
 })

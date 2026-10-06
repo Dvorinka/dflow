@@ -9,6 +9,7 @@ import { Project, Service } from '@/payload-types'
 
 import DeleteServiceDialog from './DeleteServiceDialog'
 import SwitchServiceProjectDialog from './SwitchServiceProjectDialog'
+import AppAccessControls from './AppAccessControls'
 
 const ServiceSettingsTab: React.FC<{
   service: Service
@@ -56,9 +57,10 @@ const ServiceSettingsTab: React.FC<{
         </CardContent>
       </Card>
 
+      <AppAccessControls service={service} />
+
       {/* Danger Zone */}
-      <Card className='border-destructive/40 bg-destructive/10 hover:border-destructive/60'>
-        <CardHeader className='pb-4'>
+      <Card className='border-destructive/40 bg-destructive/10 hover:border-destructive/60'>        <CardHeader className='pb-4'>
           <CardTitle className='text-destructive flex items-center gap-2'>
             <AlertTriangle className='h-5 w-5' />
             Danger Zone

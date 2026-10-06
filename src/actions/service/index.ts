@@ -43,6 +43,8 @@ import {
   setServiceResourceLimitSchema,
   setServiceResourceReserveSchema,
   stopServiceSchema,
+  toggleHttpAuthSchema,
+  toggleMaintenanceSchema,
   updateServiceDomainSchema,
   updateServiceSchema,
   updateVolumesSchema,
@@ -570,6 +572,116 @@ export const stopServiceAction = protectedClient
         return { success: true }
       }
     }
+  })
+
+export const toggleMaintenanceAction = protectedClient
+  .metadata({
+    actionName: 'toggleMaintenanceAction',
+  })
+  .inputSchema(toggleMaintenanceSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { id, enabled } = clientInput
+    const { payload } = ctx
+
+    const { project, type, ...serviceDetails } = await payload.findByID({
+      collection: 'services',
+      depth: 3,
+      id,
+    })
+
+    if (type !== 'app' && type !== 'docker') {
+      throw new Error('Maintenance mode is only available for app services')
+    }
+
+    if (typeof project === 'object' && typeof project?.server === 'object') {
+      const sshDetails = extractSSHDetails({ project })
+      const ssh = await dynamicSSH(sshDetails)
+
+      try {
+        if (enabled) {
+          await dokku.maintenance.on(ssh, serviceDetails.name)
+        } else {
+          await dokku.maintenance.off(ssh, serviceDetails.name)
+        }
+        return { success: true }
+      } finally {
+        ssh.dispose()
+      }
+    }
+
+    throw new Error('Server details not found')
+  })
+
+export const getMaintenanceStatusAction = protectedClient
+  .metadata({
+    actionName: 'getMaintenanceStatusAction',
+  })
+  .inputSchema(restartServiceSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { id } = clientInput
+    const { payload } = ctx
+
+    const { project, ...serviceDetails } = await payload.findByID({
+      collection: 'services',
+      depth: 3,
+      id,
+    })
+
+    if (typeof project === 'object' && typeof project?.server === 'object') {
+      const sshDetails = extractSSHDetails({ project })
+      const ssh = await dynamicSSH(sshDetails)
+
+      try {
+        const enabled = await dokku.maintenance.status(ssh, serviceDetails.name)
+        return { success: true, enabled }
+      } finally {
+        ssh.dispose()
+      }
+    }
+
+    throw new Error('Server details not found')
+  })
+
+export const toggleHttpAuthAction = protectedClient
+  .metadata({
+    actionName: 'toggleHttpAuthAction',
+  })
+  .inputSchema(toggleHttpAuthSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { id, enabled, username, password } = clientInput
+    const { payload } = ctx
+
+    const { project, type, ...serviceDetails } = await payload.findByID({
+      collection: 'services',
+      depth: 3,
+      id,
+    })
+
+    if (type !== 'app' && type !== 'docker') {
+      throw new Error('HTTP auth is only available for app services')
+    }
+
+    if (enabled && (!username || !password)) {
+      throw new Error('Username and password are required to enable HTTP auth')
+    }
+
+    if (typeof project === 'object' && typeof project?.server === 'object') {
+      const sshDetails = extractSSHDetails({ project })
+      const ssh = await dynamicSSH(sshDetails)
+
+      try {
+        if (enabled) {
+          await dokku.httpAuth.on(ssh, serviceDetails.name, username!, password!)
+        } else {
+          await dokku.httpAuth.off(ssh, serviceDetails.name)
+        }
+        return { success: true }
+      } finally {
+        ssh.dispose()
+      }
+    }
+
+    throw new Error('Server details not found')
   })
 
 export const exposeDatabasePortAction = protectedClient
