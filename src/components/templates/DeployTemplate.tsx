@@ -16,6 +16,7 @@ import { useRouter } from '@bprogress/next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Check, Database, Github, Loader2, Rocket } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { JSX, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -188,9 +189,11 @@ const TemplateCard = ({
         <div className='flex items-center gap-3'>
           {/* Template Image */}
           <div className='shrink-0'>
-            <img
+            <Image
               src={imageUrl || '/images/favicon.ico'}
               alt={`${name} template`}
+              width={40}
+              height={40}
               className='size-10 rounded-md object-cover'
             />
           </div>

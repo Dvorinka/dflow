@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-  serverExternalPackages: ['bullmq', 'ssh2', 'node-ssh'],
+  serverExternalPackages: ['bullmq', 'ssh2', 'node-ssh', 'nunjucks'],
   experimental: {
     authInterrupts: true,
     globalNotFound: true,
@@ -55,6 +55,7 @@ const nextConfig: NextConfig = {
         bullmq: false,
         ssh2: false,
         'node-ssh': false,
+        nunjucks: false,
       }
     }
 
