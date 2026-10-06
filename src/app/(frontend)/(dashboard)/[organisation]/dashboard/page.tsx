@@ -7,6 +7,7 @@ import { getProjectsAndServers } from '@/actions/pages/dashboard'
 import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import CreateProjectButton from '@/components/project/CreateProjectButton'
 import { DashboardMetricsStrip } from '@/components/project/DashboardMetricsStrip'
+import { getCurrentUser } from '@/lib/auth/getCurrentUser'
 import ProjectFiltersSection from '@/components/project/ProjectFiltersSection'
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeletons'
 import DashboardServersEmptyState from '@/components/states/DashboardServersEmptyState'
@@ -29,6 +30,8 @@ const SuspendedDashboard = async ({
 
   const servers = result?.data?.serversRes.docs ?? []
   const projects = result?.data?.projectsRes.docs ?? []
+  const currentUser = await getCurrentUser()
+  const isAdmin = !!currentUser?.role?.includes('admin')
 
   // Separate hidden and visible projects
   const hiddenProjects = projects.filter(project => project.hidden)
@@ -87,6 +90,13 @@ const SuspendedDashboard = async ({
               servers={servers as ServerType[]}
               projects={visibleProjects}
             />
+            {isAdmin && (
+              <Link
+                href={`/${organisationSlug}/admin`}
+                className='text-primary text-sm underline'>
+                View platform metrics
+              </Link>
+            )}
             {/* Server Status Alerts */}
             {notOnboardedServers.length > 0 && (
               <Alert variant='warning' className='mb-4'>
