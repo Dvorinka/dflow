@@ -1,4 +1,4 @@
-import { Skeleton } from '../../ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, CheckCircle, RefreshCw, XCircle } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { useEffect, useState } from 'react'
