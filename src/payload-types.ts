@@ -83,6 +83,7 @@ export interface Config {
     traefik: Traefik;
     roles: Role;
     banners: Banner;
+    media: Media;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -114,6 +115,7 @@ export interface Config {
     traefik: TraefikSelect<false> | TraefikSelect<true>;
     roles: RolesSelect<false> | RolesSelect<true>;
     banners: BannersSelect<false> | BannersSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -122,8 +124,14 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    theme: Theme;
+    branding: Branding;
+  };
+  globalsSelect: {
+    theme: ThemeSelect<false> | ThemeSelect<true>;
+    branding: BrandingSelect<false> | BrandingSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -1117,6 +1125,83 @@ export interface Banner {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    square?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    small?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    medium?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    xlarge?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    og?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs".
  */
 export interface PayloadJob {
@@ -1277,6 +1362,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'banners';
         value: string | Banner;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
       } | null)
     | ({
         relationTo: 'payload-jobs';
@@ -1991,6 +2080,98 @@ export interface BannersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        square?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        small?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        medium?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        xlarge?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        og?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs_select".
  */
 export interface PayloadJobsSelect<T extends boolean = true> {
@@ -2051,6 +2232,241 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "theme".
+ */
+export interface Theme {
+  id: string;
+  lightMode: {
+    background: string;
+    foreground: string;
+    card: string;
+    cardForeground: string;
+    popover: string;
+    popoverForeground: string;
+    primary: string;
+    primaryForeground: string;
+    secondary: string;
+    secondaryForeground: string;
+    muted: string;
+    mutedForeground: string;
+    accent: string;
+    accentForeground: string;
+    destructive: string;
+    destructiveForeground: string;
+    border: string;
+    input: string;
+    ring: string;
+    sidebar: string;
+    sidebarForeground: string;
+    sidebarPrimary: string;
+    sidebarPrimaryForeground: string;
+    sidebarAccent: string;
+    sidebarAccentForeground: string;
+    sidebarBorder: string;
+    sidebarRing: string;
+  };
+  darkMode: {
+    background: string;
+    foreground: string;
+    card: string;
+    cardForeground: string;
+    popover: string;
+    popoverForeground: string;
+    primary: string;
+    primaryForeground: string;
+    secondary: string;
+    secondaryForeground: string;
+    muted: string;
+    mutedForeground: string;
+    accent: string;
+    accentForeground: string;
+    destructive: string;
+    destructiveForeground: string;
+    border: string;
+    input: string;
+    ring: string;
+    sidebar: string;
+    sidebarForeground: string;
+    sidebarPrimary: string;
+    sidebarPrimaryForeground: string;
+    sidebarAccent: string;
+    sidebarAccentForeground: string;
+    sidebarBorder: string;
+    sidebarRing: string;
+  };
+  fonts: {
+    display: {
+      type: 'customFont' | 'googleFont';
+      customFont?: (string | null) | Media;
+      remoteFont?: string | null;
+      fontName?: string | null;
+    };
+    body: {
+      type: 'customFont' | 'googleFont';
+      customFont?: (string | null) | Media;
+      remoteFont?: string | null;
+      fontName?: string | null;
+    };
+  };
+  radius: 'none' | 'small' | 'medium' | 'large' | 'full';
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branding".
+ */
+export interface Branding {
+  id: string;
+  /**
+   * The title of your site, displayed in the browser tab and search results.
+   */
+  title: string;
+  /**
+   * A self-hosted platform for deploying and managing applications, similar to Vercel, Railway, or Heroku. dFlow provides automated deployment workflows, container orchestration, and infrastructure management capabilities while giving you full control over your infrastructure and data.
+   */
+  description: string;
+  /**
+   * Keywords for SEO, separated by commas. These help search engines understand the content of your site.
+   */
+  keywords?: string[] | null;
+  /**
+   * Recommended size: 32x32px
+   */
+  favicon?: {
+    lightMode?: (string | null) | Media;
+    darkMode?: (string | null) | Media;
+  };
+  logo?: {
+    lightMode?: (string | null) | Media;
+    darkMode?: (string | null) | Media;
+  };
+  /**
+   * Recommended size: 1200x630px
+   */
+  ogImage?: (string | null) | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "theme_select".
+ */
+export interface ThemeSelect<T extends boolean = true> {
+  lightMode?:
+    | T
+    | {
+        background?: T;
+        foreground?: T;
+        card?: T;
+        cardForeground?: T;
+        popover?: T;
+        popoverForeground?: T;
+        primary?: T;
+        primaryForeground?: T;
+        secondary?: T;
+        secondaryForeground?: T;
+        muted?: T;
+        mutedForeground?: T;
+        accent?: T;
+        accentForeground?: T;
+        destructive?: T;
+        destructiveForeground?: T;
+        border?: T;
+        input?: T;
+        ring?: T;
+        sidebar?: T;
+        sidebarForeground?: T;
+        sidebarPrimary?: T;
+        sidebarPrimaryForeground?: T;
+        sidebarAccent?: T;
+        sidebarAccentForeground?: T;
+        sidebarBorder?: T;
+        sidebarRing?: T;
+      };
+  darkMode?:
+    | T
+    | {
+        background?: T;
+        foreground?: T;
+        card?: T;
+        cardForeground?: T;
+        popover?: T;
+        popoverForeground?: T;
+        primary?: T;
+        primaryForeground?: T;
+        secondary?: T;
+        secondaryForeground?: T;
+        muted?: T;
+        mutedForeground?: T;
+        accent?: T;
+        accentForeground?: T;
+        destructive?: T;
+        destructiveForeground?: T;
+        border?: T;
+        input?: T;
+        ring?: T;
+        sidebar?: T;
+        sidebarForeground?: T;
+        sidebarPrimary?: T;
+        sidebarPrimaryForeground?: T;
+        sidebarAccent?: T;
+        sidebarAccentForeground?: T;
+        sidebarBorder?: T;
+        sidebarRing?: T;
+      };
+  fonts?:
+    | T
+    | {
+        display?:
+          | T
+          | {
+              type?: T;
+              customFont?: T;
+              remoteFont?: T;
+              fontName?: T;
+            };
+        body?:
+          | T
+          | {
+              type?: T;
+              customFont?: T;
+              remoteFont?: T;
+              fontName?: T;
+            };
+      };
+  radius?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "branding_select".
+ */
+export interface BrandingSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  keywords?: T;
+  favicon?:
+    | T
+    | {
+        lightMode?: T;
+        darkMode?: T;
+      };
+  logo?:
+    | T
+    | {
+        lightMode?: T;
+        darkMode?: T;
+      };
+  ogImage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
