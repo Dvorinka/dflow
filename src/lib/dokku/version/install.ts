@@ -1,6 +1,6 @@
 import { NodeSSH, SSHExecOptions } from 'node-ssh'
 
-import { supportedDokkuVersion } from '@/lib/constants'
+import { packageVersions } from '@/lib/packageVersions'
 import checkDpkgLock from '@/lib/utils/checkDpkgLock'
 
 export const install = async (ssh: NodeSSH, options?: SSHExecOptions) => {
@@ -17,7 +17,7 @@ export const install = async (ssh: NodeSSH, options?: SSHExecOptions) => {
   }
 
   const dokkuInstallationResult = await ssh.execCommand(
-    `sudo DOKKU_TAG=v${supportedDokkuVersion} bash bootstrap.sh`,
+    `sudo DOKKU_TAG=v${packageVersions.dokku} bash bootstrap.sh`,
     options,
   )
 

@@ -1,0 +1,20 @@
+{
+  "$comment": "Authoritative package versions for server provisioning and updates (#387). Bump a version here to roll it out; install/update flows read this file instead of hardcoded values. null = track upstream latest.",
+  "dokku": "0.35.15",
+  "railpack": null,
+  "netdata": null,
+  "beszel": {
+    "hub": null,
+    "agent": null
+  },
+  "dokkuPlugins": {
+    "postgres": null,
+    "mongo": null,
+    "mysql": null,
+    "mariadb": null,
+    "redis": null,
+    "clickhouse": null,
+    "rabbitmq": null,
+    "letsencrypt": null
+  }
+}

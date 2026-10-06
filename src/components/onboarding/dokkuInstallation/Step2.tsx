@@ -6,7 +6,9 @@ import { toast } from 'sonner'
 import { installDokkuAction } from '@/actions/server'
 import Loader from '@/components/Loader'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { supportedDokkuVersion, supportedLinuxVersions } from '@/lib/constants'
+import { supportedLinuxVersions } from '@/lib/constants'
+import { packageVersions } from '@/lib/packageVersions'
+import { isVersionNewer } from '@/lib/version'
 import { ServerType } from '@/payload-types-overrides'
 
 import { useDokkuInstallationStep } from './DokkuInstallationStepContext'
@@ -44,7 +46,7 @@ const Step2 = ({ server }: { server: ServerType }) => {
       if (
         server.version &&
         server.version !== 'not-installed' &&
-        server.version < supportedDokkuVersion
+        isVersionNewer(packageVersions.dokku, server.version)
       ) {
         return setOutdatedDokku(true)
       }
@@ -52,7 +54,7 @@ const Step2 = ({ server }: { server: ServerType }) => {
       if (
         server.version &&
         server.version !== 'not-installed' &&
-        server.version >= supportedDokkuVersion
+        !isVersionNewer(packageVersions.dokku, server.version)
       ) {
         return setDokkuInstallationStep(3)
       }
@@ -77,7 +79,7 @@ const Step2 = ({ server }: { server: ServerType }) => {
         <AlertTitle>Upgrade dokku version!</AlertTitle>
         <AlertDescription className='flex w-full flex-col justify-between gap-2 md:flex-row'>
           <p>
-            {` ${server?.version} is not supported! please upgrade ${supportedDokkuVersion} for more information check `}
+            {` ${server?.version} is not supported! please upgrade ${packageVersions.dokku} for more information check `}
             <a
               href='https://dokku.com/docs/getting-started/upgrading/'
               target='_blank'
