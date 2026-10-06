@@ -19,11 +19,13 @@ import { addInstallRailpackQueue } from '@/queues/builder/installRailpack'
 import { addInstallDokkuQueue } from '@/queues/dokku/install'
 import { addManageServerDomainQueue } from '@/queues/domain/manageGlobal'
 import { addDeleteProjectsQueue } from '@/queues/project/deleteProjects'
+import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { addResetServerQueue } from '@/queues/server/reset'
 
 import {
   checkDNSConfigSchema,
   checkServerConnectionSchema,
+  cleanupServerSchema,
   completeServerOnboardingSchema,
   configureGlobalBuildDirSchema,
   createServerSchema,
@@ -1190,4 +1192,44 @@ export const resetServerOnboardingAction = protectedClient
 
     revalidatePath(`/${userTenant.tenant.slug}/servers/${serverId}`)
     return { success: true }
+  })
+
+export const cleanupServerAction = protectedClient
+  .metadata({
+    actionName: 'cleanupServerAction',
+  })
+  .inputSchema(cleanupServerSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const {
+      serverId,
+      olderThanHours = 168,
+      pruneVolumes = false,
+      dokkuCleanup = true,
+    } = clientInput
+    const { payload, userTenant } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+
+    const cleanupResult = await addCleanupServerQueue({
+      sshDetails,
+      serverDetails: {
+        id: serverId,
+      },
+      tenant: {
+        slug: userTenant.tenant.slug,
+        id: userTenant.tenant.id,
+      },
+      options: { olderThanHours, pruneVolumes, dokkuCleanup },
+    })
+
+    if (cleanupResult.id) {
+      return { success: true }
+    }
+
+    return { success: false }
   })
