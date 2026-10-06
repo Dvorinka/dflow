@@ -433,6 +433,43 @@ export const installDokkuAction = protectedClient
     }
   })
 
+// Re-runs the dokku bootstrap at the pinned version, which upgrades an
+// existing install in place (#319). Full removal stays under Reset Server.
+export const updateDokkuAction = protectedClient
+  .metadata({
+    actionName: 'updateDokkuAction',
+  })
+  .inputSchema(installDokkuSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId } = clientInput
+    const { payload, userTenant } = ctx
+
+    const serverDetails = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    const sshDetails = extractSSHDetails({ server: serverDetails })
+
+    const installationResponse = await addInstallDokkuQueue({
+      serverDetails: {
+        id: serverId,
+        provider: serverDetails.provider,
+      },
+      sshDetails,
+      tenant: {
+        slug: userTenant.tenant.slug,
+      },
+    })
+
+    if (installationResponse.id) {
+      return { success: true, message: 'Dokku update queued' }
+    }
+
+    return { success: false, message: 'Failed to queue dokku update' }
+  })
+
 export const updateServerDomainAction = protectedClient
   .metadata({
     actionName: 'updateServerDomainAction',
