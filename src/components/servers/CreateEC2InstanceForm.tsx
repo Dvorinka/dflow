@@ -476,6 +476,12 @@ const CreateEC2InstanceForm = ({
                     cloudProvider: 'aws',
                     cloudProviderAccount: form.watch('accountId'),
                   }}
+                  onCreated={id => {
+                    const current = form.getValues('securityGroupIds') ?? []
+                    if (!current.includes(id)) {
+                      form.setValue('securityGroupIds', [...current, id])
+                    }
+                  }}
                   trigger={
                     <Button
                       onClick={e => e.stopPropagation()}

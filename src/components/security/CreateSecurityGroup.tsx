@@ -22,12 +22,14 @@ const CreateSecurityGroup = ({
   securityGroup,
   cloudProviderAccounts,
   trigger,
+  onCreated,
 }: {
   type?: 'create' | 'update'
   description?: string
   securityGroup?: Partial<SecurityGroup>
   cloudProviderAccounts: CloudProviderAccount[]
   trigger?: React.ReactNode
+  onCreated?: (id: string) => void
 }) => {
   const [open, setOpen] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -90,6 +92,7 @@ const CreateSecurityGroup = ({
               open={open}
               setOpen={setOpen}
               isFullScreen={isFullScreen}
+              onCreated={onCreated}
             />
           </div>
         </div>
