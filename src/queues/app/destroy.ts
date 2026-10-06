@@ -14,7 +14,12 @@ interface QueueArgs {
   serverDetails: {
     id: string
   }
+  deleteVolumes?: boolean
 }
+
+// Only dokku-managed storage is removed. Arbitrary bind mounts are left
+// untouched (their data may be shared) and reported in the event log.
+const DOKKU_STORAGE_PATH = '/var/lib/dokku/data/storage/'
 
 export const addDestroyApplicationQueue = async (data: QueueArgs) => {
   const QUEUE_NAME = `server-${data?.serverDetails.id}-destroy-application`
@@ -36,6 +41,24 @@ export const addDestroyApplicationQueue = async (data: QueueArgs) => {
 
       try {
         ssh = await dynamicSSH(sshDetails)
+
+        // Snapshot storage mounts before destroy: afterwards the app (and
+        // its storage list) no longer exists.
+        let storageMounts: { host_path: string; container_path: string }[] =
+          []
+        if (job.data.deleteVolumes) {
+          try {
+            storageMounts = (await dokku.volumes.list(
+              ssh,
+              serviceDetails.name,
+            )) as { host_path: string; container_path: string }[]
+          } catch (listError) {
+            console.warn(
+              `Could not list storage for ${serviceDetails.name}, skipping volume removal:`,
+              listError instanceof Error ? listError.message : listError,
+            )
+          }
+        }
 
         const deletedResponse = await dokku.apps.destroy(
           ssh,
@@ -71,6 +94,35 @@ export const addDestroyApplicationQueue = async (data: QueueArgs) => {
             message: `✅ Successfully deleted ${serviceDetails.name}`,
             serverId: serverDetails.id,
           })
+
+          // ponytail: bind mounts outside dokku storage are reported, not
+          // removed; docker named-volume orphans are out of scope.
+          for (const mount of storageMounts) {
+            const hostPath = mount.host_path
+            // Guard: only touch dokku-managed paths with safe characters —
+            // the value comes from server output, never trust it blindly.
+            const safePath =
+              typeof hostPath === 'string' &&
+              hostPath.startsWith(DOKKU_STORAGE_PATH) &&
+              /^[A-Za-z0-9/_\-.]+$/.test(hostPath)
+            if (safePath) {
+              const rm = await ssh.execCommand(`rm -rf "${hostPath}"`)
+              sendEvent({
+                pub,
+                message:
+                  rm.code === 0
+                    ? `🗑️ Removed storage volume ${hostPath}`
+                    : `⚠️ Could not remove storage volume ${hostPath}: ${rm.stderr}`,
+                serverId: serverDetails.id,
+              })
+            } else if (hostPath) {
+              sendEvent({
+                pub,
+                message: `⚠️ Kept bind mount ${hostPath} (outside dokku storage, remove manually if needed)`,
+                serverId: serverDetails.id,
+              })
+            }
+          }
         }
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
