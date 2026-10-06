@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '../ui/button'
-import { Ban, Database, DatabaseBackup, RefreshCcw, Rocket } from 'lucide-react'
+import { Ban, Database, DatabaseBackup, Info, RefreshCcw, Rocket } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 
 import { createDeploymentAction } from '@/actions/deployment'
 import { restartServiceAction, stopServiceAction } from '@/actions/service'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,15 @@ const Deploy = ({ service }: { service: Service }) => {
   )
   const router = useRouter()
   const { disable: deploymentDisabled } = useDisableDeploymentContext()
+
+  // Docker services redeploy by re-pulling the image, so Without Cache is
+  // the only meaningful option (#343)
+  const isDockerService = service.type === 'docker'
+
+  const openRedeployDialog = () => {
+    if (isDockerService) setCacheOption('no-cache')
+    setShowRedeploymentDialog(true)
+  }
 
   const { execute: createDeployment, isPending } = useAction(
     createDeploymentAction,
@@ -87,7 +97,7 @@ const Deploy = ({ service }: { service: Service }) => {
         onClick={() => {
           // once app is deployed user should select with or without cache for deployment
           if (deploymentSucceed) {
-            setShowRedeploymentDialog(true)
+            openRedeployDialog()
             return
           }
 
@@ -114,6 +124,16 @@ const Deploy = ({ service }: { service: Service }) => {
               Select an option for redeployment of app
             </DialogDescription>
           </DialogHeader>
+
+          {isDockerService && (
+            <Alert variant='info'>
+              <Info className='h-4 w-4' />
+              <AlertDescription>
+                Docker services redeploy by pulling a fresh image, so Without
+                Cache is preselected.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <RadioGroup
             className='gap-2'

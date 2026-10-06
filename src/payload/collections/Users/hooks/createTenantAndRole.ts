@@ -1,5 +1,6 @@
-import { CollectionBeforeChangeHook } from 'payload'
+import { CollectionBeforeChangeHook, ValidationError } from 'payload'
 
+import { isReservedSlug } from '@/lib/reservedSlugs'
 import { User } from '@/payload-types'
 
 export const createTenantAndRole: CollectionBeforeChangeHook<User> = async ({
@@ -11,6 +12,18 @@ export const createTenantAndRole: CollectionBeforeChangeHook<User> = async ({
   if (operation === 'create') {
     const { payload } = req
 
+    // Usernames become tenant slugs (/[organisation]); reject reserved
+    // route names even for direct API creates (#172)
+    if (data?.username && isReservedSlug(data.username)) {
+      throw new ValidationError({
+        errors: [
+          {
+            message: `"${data.username}" is a reserved name, please choose another username`,
+            path: 'username',
+          },
+        ],
+      })
+    }
     try {
       const tenant = await payload.create({
         collection: 'tenants',

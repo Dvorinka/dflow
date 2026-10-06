@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { isReservedSlug } from '@/lib/reservedSlugs'
+
 export const signInSchema = z.object({
   email: z
     .string({ message: 'Email is required' })
@@ -32,6 +34,10 @@ export const signUpSchema = z
   .refine(data => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine(data => !isReservedSlug(data.username), {
+    message: 'This username is reserved, please choose another one',
+    path: ['username'],
   })
 
 export const forgotPasswordSchema = z.object({

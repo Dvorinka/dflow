@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle, RefreshCw, XCircle } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -56,7 +56,7 @@ const DFlowForm = ({
   refetch?: RefetchType
   existingAccountsCount?: number
 }) => {
-  const dialogFooterRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus>(null)
   const [hasTestedConnection, setHasTestedConnection] = useState(false)
@@ -71,7 +71,7 @@ const DFlowForm = ({
       onSuccess: ({ data }) => {
         if (data?.id) {
           refetch?.({ type: 'dFlow' })
-          dialogFooterRef.current?.click()
+          setOpen(false)
         }
       },
       onError: ({ error }) => {
@@ -103,7 +103,7 @@ const DFlowForm = ({
       onSuccess: ({ data }) => {
         if (data?.id) {
           refetch?.({ type: 'dFlow' })
-          dialogFooterRef.current?.click()
+          setOpen(false)
         }
       },
       onError: ({ error }) => {
@@ -174,6 +174,8 @@ const DFlowForm = ({
   }
 
   const handleDialogOpenChange = (open: boolean) => {
+    if (!open && (connectingAccount || updatingAccount)) return
+    setOpen(open)
     if (!open) {
       form.reset()
       setConnectionStatus(null)
@@ -217,7 +219,7 @@ const DFlowForm = ({
   }
 
   return (
-    <Dialog onOpenChange={handleDialogOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent className='sm:max-w-lg'>
