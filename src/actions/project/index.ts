@@ -22,7 +22,13 @@ export const createProjectAction = protectedClient
   })
   .schema(createProjectSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { name, description, serverId } = clientInput
+    const {
+      name = '',
+      description = '',
+      serverId,
+      revalidate = true,
+      hidden = false,
+    } = clientInput
 
     // Fetching the server details before creating the project
     const {
@@ -78,11 +84,13 @@ export const createProjectAction = protectedClient
         description,
         server: serverId,
         tenant,
+        hidden,
       },
       user: ctx.user,
+      depth: 2,
     })
 
-    if (response) {
+    if (response && revalidate) {
       revalidatePath(`/${tenant.slug}/dashboard`)
     }
 
