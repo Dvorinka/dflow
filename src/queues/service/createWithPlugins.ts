@@ -21,6 +21,7 @@ interface QueueArgs {
   projectId: string
   type: ServiceCreateData['type']
   databaseType?: ServiceCreateData['databaseType']
+  databaseVersion?: ServiceCreateData['databaseVersion']
   userId: string
   tenantId: string
   tenantSlug: string
@@ -71,6 +72,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
         projectId,
         type,
         databaseType,
+        databaseVersion,
         userId,
         tenantId,
         tenantSlug,
@@ -293,6 +295,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
                 type,
                 databaseDetails: {
                   type: databaseType,
+                  version: databaseVersion,
                 },
                 tenant: tenantId,
               },

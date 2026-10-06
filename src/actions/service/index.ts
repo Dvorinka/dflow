@@ -65,7 +65,8 @@ export const createServiceAction = protectedClient
   })
   .inputSchema(createServiceSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { name, description, projectId, type, databaseType } = clientInput
+    const { name, description, projectId, type, databaseType, databaseVersion } =
+      clientInput
     const {
       userTenant: { tenant },
       payload,
@@ -138,6 +139,7 @@ export const createServiceAction = protectedClient
               type,
               databaseDetails: {
                 type: databaseType,
+                version: databaseVersion,
               },
               tenant,
             },
@@ -193,6 +195,7 @@ export const createServiceAction = protectedClient
             type,
             databaseDetails: {
               type: databaseType,
+              version: databaseVersion,
             },
             tenant,
           },
@@ -230,7 +233,8 @@ export const createServiceWithPluginAction = protectedClient
   })
   .inputSchema(createServiceSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { name, description, projectId, type, databaseType } = clientInput
+    const { name, description, projectId, type, databaseType, databaseVersion } =
+      clientInput
     const {
       userTenant: { tenant },
       user,
@@ -250,6 +254,7 @@ export const createServiceWithPluginAction = protectedClient
         projectId,
         type,
         databaseType,
+        databaseVersion,
         userId: user.id,
         tenantId: tenant.id,
         tenantSlug: tenant.slug,
