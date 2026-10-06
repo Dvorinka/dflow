@@ -2,6 +2,7 @@
 
 import { Activity, CloudUpload, Hammer, HardDrive, Plug2 } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
+import dynamic from 'next/dynamic'
 import { useEffect, useMemo } from 'react'
 
 import { getUserAction } from '@/actions/auth'
@@ -10,15 +11,35 @@ import TimeLineComponent, {
 } from '@/components/TimeLineComponent'
 import { Dokku } from '@/components/icons'
 import { useDokkuInstallationStep } from '@/components/onboarding/dokkuInstallation/DokkuInstallationStepContext'
-import Step1 from '@/components/onboarding/dokkuInstallation/Step1'
-import Step2 from '@/components/onboarding/dokkuInstallation/Step2'
-import Step3 from '@/components/onboarding/dokkuInstallation/Step3'
-import Step4 from '@/components/onboarding/dokkuInstallation/Step4'
-import Step5 from '@/components/onboarding/dokkuInstallation/Step5'
-import Step6 from '@/components/onboarding/dokkuInstallation/Step6'
 import { ServerType } from '@/payload-types-overrides'
 
+import { OnboardingStepSkeleton } from '@/components/onboarding/OnboardingStepSkeleton'
 import ServerOnboardingLayout from './ServerOnboardingLayout'
+
+const Step1 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step1'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
+const Step2 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step2'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
+const Step3 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step3'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
+const Step4 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step4'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
+const Step5 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step5'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
+const Step6 = dynamic(
+  () => import('@/components/onboarding/dokkuInstallation/Step6'),
+  { loading: () => <OnboardingStepSkeleton />, ssr: false },
+)
 
 const ServerSetup = ({
   server,
