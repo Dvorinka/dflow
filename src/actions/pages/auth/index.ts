@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { publicClient } from '@/lib/safe-action'
+import { effectiveAuthMethod } from '@/lib/authMethod'
 
 export const getAuthConfigAction = publicClient
   .metadata({ actionName: 'fetchAuthConfigAction' })
@@ -16,9 +17,14 @@ export const getAuthConfigAction = publicClient
         depth: 0,
       })
 
+      // Env override + Resend guard applied in one place; all auth
+      // pages consume this action so the method is consistent.
       return {
         success: true,
-        authConfig,
+        authConfig: {
+          ...authConfig,
+          authMethod: effectiveAuthMethod(authConfig?.authMethod),
+        },
       }
     } catch (error) {
       // Return default config if global not found or error occurs

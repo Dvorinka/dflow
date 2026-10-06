@@ -42,6 +42,22 @@ export const autoLogin: PayloadHandler = async (req: PayloadRequest) => {
     // CHECK: Only send email if this is a magic link token
     const isMagicLink = decodedToken?.isMagicLink === true
 
+    // Env-gated kill switch: reject magic-link tokens when disabled
+    // (AUTH_METHOD=email-password or Resend unconfigured).
+    if (isMagicLink) {
+      const { isMagicLinkAllowed } = await import('@/lib/authMethod')
+      let dbMethod: unknown
+      try {
+        const cfg = await payload.findGlobal({ slug: 'auth-config', req })
+        dbMethod = (cfg as { authMethod?: unknown })?.authMethod
+      } catch {
+        dbMethod = undefined // fall back to env-only resolution
+      }
+      if (!isMagicLinkAllowed(dbMethod)) {
+        throw new APIError('Magic link authentication is disabled', 403)
+      }
+    }
+
     if (!userEmail || !code) {
       throw new APIError('Invalid token payload', 401)
     }

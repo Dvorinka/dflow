@@ -29,6 +29,7 @@ export const env = createEnv({
     S3_REGION: z.string().min(1).optional(),
     S3_ACCESS_KEY_ID: z.string().min(1).optional(),
     S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    AUTH_METHOD: z.enum(['email-password', 'magic-link', 'both']).optional(),
   },
   client: {
     NEXT_PUBLIC_WEBSITE_URL: z.string().url(),
@@ -71,6 +72,7 @@ export const env = createEnv({
     S3_REGION: process.env.S3_REGION,
     S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+    AUTH_METHOD: process.env.AUTH_METHOD,
   },
   emptyStringAsUndefined: true,
   skipValidation: !!process.env.SKIP_VALIDATION,

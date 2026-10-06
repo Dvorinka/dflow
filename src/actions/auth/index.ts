@@ -10,6 +10,7 @@ import { getPayload } from 'payload'
 
 import { renderMagicLinkEmail } from '@/emails/magic-link'
 import { createSession } from '@/lib/createSession'
+import { isMagicLinkAllowed, isPasswordAllowed } from '@/lib/authMethod'
 import { protectedClient, publicClient, userClient } from '@/lib/safe-action'
 
 import {
@@ -31,10 +32,10 @@ export const signInAction = publicClient
       const { email, password } = clientInput
       const payload = await getPayload({ config: configPromise })
 
-      // Check if email/password auth is enabled
+      // Check if email/password auth is enabled (env override wins)
       try {
         const authConfig = await payload.findGlobal({ slug: 'auth-config' })
-        if (authConfig?.authMethod === 'magic-link') {
+        if (!isPasswordAllowed(authConfig?.authMethod)) {
           return {
             success: false,
             error:
@@ -399,10 +400,10 @@ export const requestMagicLinkAction = publicClient
       // Initialize Payload
       const payload = await getPayload({ config: configPromise })
 
-      // Check if Magic Link is enabled in global config
+      // Check if Magic Link is enabled (env override + Resend guard)
       try {
         const authConfig = await payload.findGlobal({ slug: 'auth-config' })
-        if (authConfig?.authMethod === 'email-password') {
+        if (!isMagicLinkAllowed(authConfig?.authMethod)) {
           return {
             success: false,
             error:
@@ -411,7 +412,14 @@ export const requestMagicLinkAction = publicClient
         }
       } catch (configError) {
         console.error('Error fetching auth configuration:', configError)
-        // Continue with magic link if config check fails (fallback behavior)
+        if (!isMagicLinkAllowed(undefined)) {
+          return {
+            success: false,
+            error:
+              'Magic Link authentication is currently disabled. Please use email and password to sign in.',
+          }
+        }
+        // Continue with magic link if config check fails and env allows it (fallback behavior)
       }
 
       // Generate unique code and JWT token
