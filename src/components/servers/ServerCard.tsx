@@ -559,6 +559,19 @@ const ServerCard = ({
                 </Badge>
               </div>
 
+              {/* Source (#256) */}
+              <div className='flex items-center justify-between'>
+                <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+                  <ServerIcon className='h-4 w-4' />
+                  <span>Source</span>
+                </div>
+                <Badge variant='secondary' className='text-xs'>
+                  {server?.provider.toLowerCase() === 'dflow'
+                    ? 'Created via Dflow Cloud'
+                    : 'Manually Added'}
+                </Badge>
+              </div>
+
               {/* Dflow Expiry Date */}
               {server?.provider.toLowerCase() === 'dflow' &&
                 server?.dflowVpsDetails?.next_billing_date && (
