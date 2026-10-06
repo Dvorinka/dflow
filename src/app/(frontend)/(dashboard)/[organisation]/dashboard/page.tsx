@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { getProjectsAndServers } from '@/actions/pages/dashboard'
 import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import CreateProjectButton from '@/components/project/CreateProjectButton'
+import { DashboardMetricsStrip } from '@/components/project/DashboardMetricsStrip'
 import ProjectFiltersSection from '@/components/project/ProjectFiltersSection'
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeletons'
 import DashboardServersEmptyState from '@/components/states/DashboardServersEmptyState'
@@ -82,6 +83,10 @@ const SuspendedDashboard = async ({
           <AccessDeniedAlert error={result?.serverError} />
         ) : (
           <>
+            <DashboardMetricsStrip
+              servers={servers as ServerType[]}
+              projects={visibleProjects}
+            />
             {/* Server Status Alerts */}
             {notOnboardedServers.length > 0 && (
               <Alert variant='warning' className='mb-4'>
