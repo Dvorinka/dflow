@@ -122,6 +122,83 @@ export const createServerAction = protectedClient
       }
     }
 
+    // Reconnecting a previously removed server restores it with its
+    // projects and services instead of creating a duplicate (#150)
+    const { docs: deletedServers } = await payload.find({
+      collection: 'servers',
+      pagination: false,
+      limit: 1,
+      sort: '-updatedAt',
+      depth: 0,
+      where: {
+        and: [
+          { ip: { equals: ip } },
+          { tenant: { equals: tenant.id } },
+          { deletedAt: { exists: true } },
+        ],
+      },
+    })
+
+    const restoredServer = deletedServers.at(0)
+    if (restoredServer) {
+      await payload.update({
+        collection: 'servers',
+        id: restoredServer.id,
+        data: {
+          deletedAt: null,
+          name,
+          description,
+          port,
+          username,
+          sshKey,
+          onboarded: false,
+        },
+      })
+
+      const { docs: deletedProjects } = await payload.update({
+        collection: 'projects',
+        where: {
+          and: [
+            { server: { equals: restoredServer.id } },
+            { deletedAt: { exists: true } },
+          ],
+        },
+        data: { deletedAt: null },
+        depth: 0,
+      })
+
+      // Services hang off projects; restore those of revived projects
+      for (const project of deletedProjects) {
+        await payload.update({
+          collection: 'services',
+          where: {
+            and: [
+              { project: { equals: project.id } },
+              { deletedAt: { exists: true } },
+            ],
+          },
+          data: { deletedAt: null },
+          depth: 0,
+        })
+      }
+
+      revalidatePath(`/${tenant.slug}/servers`)
+
+      const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
+      await invalidateServerCache(tenant.slug)
+
+      await checkServersSSHConnectionQueue({
+        tenant: { slug: tenant.slug, id: tenant.id },
+        refreshServerDetails: true,
+      })
+
+      return {
+        success: true,
+        server: { ...restoredServer, name },
+        restored: true,
+      }
+    }
+
     const response = await payload.create({
       collection: 'servers',
       data: {

@@ -129,9 +129,14 @@ const AttachCustomServerForm = ({
     {
       onSuccess: ({ data, input }) => {
         if (data?.success) {
-          toast.success(`Successfully created ${input.name} server`, {
-            description: `Redirecting to server-details page`,
-          })
+          toast.success(
+            data?.restored
+              ? `Reconnected ${input.name}: previous projects restored`
+              : `Successfully created ${input.name} server`,
+            {
+              description: `Redirecting to server-details page`,
+            },
+          )
 
           form.reset()
           setConnectionStatus(null)
