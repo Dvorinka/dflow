@@ -108,6 +108,7 @@ export const triggerDeployment = async ({
       const databaseQueueResponse = await addCreateDatabaseWithPluginsQueue({
         databaseName: serviceDetails.name,
         databaseType: serviceDetails.databaseDetails?.type,
+        imageVersion: serviceDetails.databaseDetails?.version ?? undefined,
         sshDetails,
         serviceDetails: {
           id: serviceDetails.id,

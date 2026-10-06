@@ -597,6 +597,35 @@ const CreateService = ({
                 />
               )}
 
+              {type === 'database' && (
+                <FormField
+                  control={form.control}
+                  name='databaseVersion'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Version{' '}
+                        <span className='text-muted-foreground text-sm font-normal'>
+                          (optional)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ''}
+                          placeholder='e.g. 16, 15.4, 8.0.36'
+                        />
+                      </FormControl>
+                      <p className='text-muted-foreground text-xs'>
+                        Passed as --image-version to dokku {databaseType}{' '}
+                        creation. Leave empty for the plugin default.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name='description'

@@ -21,6 +21,7 @@ export type DatabaseType = Exclude<
 interface QueueArgs {
   databaseName: string
   databaseType: DatabaseType
+  imageVersion?: string
   sshDetails: SSHType
   serviceDetails: {
     id: string
@@ -68,7 +69,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
     connection: queueConnection,
     processor: async job => {
       const payload = await getPayload({ config: configPromise })
-      const { databaseName, databaseType, sshDetails, serviceDetails, tenant } =
+      const { databaseName, databaseType, imageVersion, sshDetails, serviceDetails, tenant } =
         job.data
       const { id: serviceId, serverId, deploymentId } = serviceDetails
 
@@ -264,6 +265,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
               })
             },
           },
+          imageVersion ? { imageVersion } : undefined,
         )
 
         sendEvent({

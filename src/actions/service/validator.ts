@@ -12,6 +12,13 @@ export const createServiceSchema = z
       .enum(['postgres', 'mongo', 'mysql', 'redis', 'mariadb', 'clickhouse'])
       .optional(),
     projectId: z.string(),
+    databaseVersion: z
+      .string()
+      .regex(
+        /^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$/,
+        'Invalid version format (e.g. 16, 15.4, 8.0.36)',
+      )
+      .optional(),
     cpuLimit: z.string().optional(),
     memoryLimit: z.string().optional(),
   })
