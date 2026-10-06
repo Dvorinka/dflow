@@ -136,6 +136,9 @@ export const createServerAction = protectedClient
       revalidatePath(`/${tenant.slug}/servers`)
     }
 
+    const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
+    await invalidateServerCache(tenant.slug)
+
     return { success: true, server: response }
   })
 
@@ -194,6 +197,9 @@ export const createTailscaleServerAction = protectedClient
       user,
     })
 
+    const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
+    await invalidateServerCache(tenant.slug)
+
     if (response) {
       redirect(`/${tenant.slug}/servers`)
     }
@@ -244,6 +250,14 @@ export const updateServerAction = protectedClient
       revalidatePath(`/servers/${id}`)
       revalidatePath(`/onboarding/add-server`)
     }
+
+    const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
+    await invalidateServerCache(
+      typeof response.tenant === 'object'
+        ? response.tenant?.slug
+        : undefined,
+      id,
+    )
 
     return { success: true, server: response }
   })
@@ -376,6 +390,11 @@ export const deleteServerAction = protectedClient
     if (server && installationResponse.id) {
       revalidatePath(`/${userTenant.tenant.slug}/servers`)
       revalidatePath(`/${userTenant.tenant.slug}/servers/${id}`)
+
+      const { invalidateServerCache } = await import(
+        '@/lib/serverDetailsCache'
+      )
+      await invalidateServerCache(userTenant.tenant.slug, id)
 
       return { deleted: true }
     }

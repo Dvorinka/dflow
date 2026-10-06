@@ -108,6 +108,34 @@ export const getServerBreadcrumbs = protectedClient
       userTenant: { tenant, role },
     } = ctx
 
+    // Per-user restrictions must never be served from the shared cache
+    const restricted = role?.servers?.readLimit === 'createdByUser'
+    const cacheable =
+      !restricted && !!populateServerDetails && !refreshServerDetails
+
+    if (cacheable) {
+      const { getCachedServerDetails, getCachedTenantServers } = await import(
+        '@/lib/serverDetailsCache'
+      )
+      const [cachedServers, cachedServer] = await Promise.all([
+        getCachedTenantServers<ServerType[]>(tenant.slug),
+        getCachedServerDetails<ServerType>(id),
+      ])
+      if (cachedServers && cachedServer) {
+        return {
+          server: cachedServer,
+          servers: cachedServers,
+        }
+      }
+    }
+
+    if (refreshServerDetails) {
+      const { invalidateServerCache } = await import(
+        '@/lib/serverDetailsCache'
+      )
+      await invalidateServerCache(tenant.slug, id)
+    }
+
     const [{ docs: servers }, { docs: serverDetails }] = await Promise.all([
       payload.find({
         collection: 'servers',
@@ -162,6 +190,17 @@ export const getServerBreadcrumbs = protectedClient
     ])
 
     const server = serverDetails.at(0) as ServerType
+
+    if (cacheable && server) {
+      const { setCachedServerDetails, setCachedTenantServers } = await import(
+        '@/lib/serverDetailsCache'
+      )
+      await Promise.all([
+        setCachedTenantServers(tenant.slug, servers),
+        setCachedServerDetails(id, server),
+      ])
+    }
+
     return { server, servers }
   })
 
