@@ -50,9 +50,9 @@ check_root() {
 }
 
 validate_args() {
-    if [[ $# -ne 2 ]]; then
-        log_error "Usage: $0 <TAILSCALE_AUTH_KEY> <DOKKU_VERSION>"
-        log_error "Example: $0 tskey-auth-xxxxx 0.34.6"
+    if [[ $# -lt 2 ]]; then
+        log_error "Usage: $0 <TAILSCALE_AUTH_KEY> <DOKKU_VERSION> [STEP FLAGS]"
+        log_error "Example: $0 tskey-auth-xxxxx 0.34.6 --skip-motd"
         exit 1
     fi
     
@@ -74,6 +74,64 @@ validate_args() {
         log_error "Dokku version must be in format X.Y.Z (e.g., 0.34.6)"
         exit 1
     fi
+}
+
+# Step-skipping flags (#370). Each --skip-<step> omits one setup stage;
+# combinations are allowed. Unknown flags are rejected.
+parse_skip_flags() {
+    SKIP_TAILSCALE_INSTALL=0
+    SKIP_TAILSCALE_CONFIGURE=0
+    SKIP_DOKKU_INSTALL=0
+    SKIP_DOKKU_HOOKS=0
+    SKIP_DOKKU_CONFIGURE=0
+    SKIP_MOTD=0
+
+    shift 2 || true
+    for flag in "$@"; do
+        case "$flag" in
+            --skip-tailscale-install) SKIP_TAILSCALE_INSTALL=1 ;;
+            --skip-tailscale-configure) SKIP_TAILSCALE_CONFIGURE=1 ;;
+            --skip-dokku-install) SKIP_DOKKU_INSTALL=1 ;;
+            --skip-dokku-hooks) SKIP_DOKKU_HOOKS=1 ;;
+            --skip-dokku-configure) SKIP_DOKKU_CONFIGURE=1 ;;
+            --skip-motd) SKIP_MOTD=1 ;;
+            --skip-all)
+                SKIP_TAILSCALE_INSTALL=1
+                SKIP_TAILSCALE_CONFIGURE=1
+                SKIP_DOKKU_INSTALL=1
+                SKIP_DOKKU_HOOKS=1
+                SKIP_DOKKU_CONFIGURE=1
+                SKIP_MOTD=1
+                ;;
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown flag: $flag"
+                print_usage
+                exit 1
+                ;;
+        esac
+    done
+}
+
+print_usage() {
+    cat <<'USAGE'
+Usage: cloud-init.sh <TAILSCALE_AUTH_KEY> <DOKKU_VERSION> [STEP FLAGS]
+
+Step flags (skippable independently, combinable):
+  --skip-tailscale-install    Skip Tailscale installation
+  --skip-tailscale-configure  Skip `tailscale up` configuration
+  --skip-dokku-install        Skip Dokku installation
+  --skip-dokku-hooks         Skip Dokku pre-deploy hook installation
+  --skip-dokku-configure      Skip Dokku global-domain configuration
+  --skip-motd                Skip MOTD banner setup
+  --skip-all                 Skip every setup step (dry validation only)
+  -h, --help                 Show this help
+
+Example: cloud-init.sh tskey-auth-xxxxx 0.34.6 --skip-motd --skip-dokku-hooks
+USAGE
 }
 
 install_tailscale() {
@@ -226,28 +284,43 @@ setup_motd() {
 main() {
     local tailscale_auth_key="$1"
     local dokku_version="$2"
-    
+
     log_info "Starting dFlow bootstrap process..."
     log_info "Dokku version: $dokku_version"
     log_info "Log file: $LOG_FILE"
-    
+
     # Setup logging
     exec > >(tee -a "$LOG_FILE" | logger -t dflow-init -s) 2>&1
-    
-    # Run setup steps
-    install_tailscale
-    configure_tailscale "$tailscale_auth_key"
+
+    # Run setup steps (each skippable via flags, see print_usage)
+    if [[ "$SKIP_TAILSCALE_INSTALL" -eq 0 ]]; then
+        install_tailscale
+    else
+        log_info "Skipping Tailscale installation (--skip-tailscale-install)"
+    fi
+    if [[ "$SKIP_TAILSCALE_CONFIGURE" -eq 0 ]]; then
+        configure_tailscale "$tailscale_auth_key"
+    else
+        log_info "Skipping Tailscale configuration (--skip-tailscale-configure)"
+    fi
     # install_dokku "$dokku_version"
     # install_dokku_hooks
     # configure_dokku
-    setup_motd
-    
+    if [[ "$SKIP_MOTD" -eq 0 ]]; then
+        setup_motd
+    else
+        log_info "Skipping MOTD setup (--skip-motd)"
+    fi
+
     log_info "✅ dFlow bootstrap completed successfully!"
     log_info "System is ready for deployment"
 }
 
 # Script execution
 trap cleanup EXIT
+
+# Parse step flags first so --help works without root
+parse_skip_flags "$@"
 
 # Validate environment and arguments
 check_root
