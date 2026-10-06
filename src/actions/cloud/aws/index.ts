@@ -15,6 +15,7 @@ import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 
 import { awsRegions } from '@/lib/constants'
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { CloudProviderAccount } from '@/payload-types'
 
@@ -262,7 +263,7 @@ export const createEC2InstanceAction = protectedClient
       })
 
       if (serverResponse.id) {
-        revalidatePath('/servers')
+        revalidatePath(`/${tenant.slug}/servers`)
         return { success: true, server: serverResponse }
       }
     }
@@ -487,8 +488,8 @@ export const updateEC2InstanceAction = protectedClient
     })
 
     if (response) {
-      revalidatePath(`/servers/${server.id}`)
-      revalidatePath(`/onboarding/add-server`)
+      const tenantSlug = extractTenantSlug(server.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${server.id}`)
     }
 
     return { success: true, server: response }

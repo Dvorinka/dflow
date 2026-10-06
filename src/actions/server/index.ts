@@ -9,6 +9,7 @@ import { extractID } from 'payload/shared'
 
 import updateRailpack from '@/lib/axios/updateRailpack'
 import { dokku } from '@/lib/dokku'
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient, userClient } from '@/lib/safe-action'
 import { server } from '@/lib/server'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
@@ -319,7 +320,8 @@ export const updateTailscaleServerAction = protectedClient
     })
 
     if (response) {
-      revalidatePath(`/servers/${id}`)
+      const tenantSlug = extractTenantSlug(response.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${id}`)
       revalidatePath(`/onboarding/add-server`)
     }
 
@@ -343,7 +345,8 @@ export const updateServerAction = protectedClient
     })
 
     if (response) {
-      revalidatePath(`/servers/${id}`)
+      const tenantSlug = extractTenantSlug(response.tenant)
+      if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${id}`)
       revalidatePath(`/onboarding/add-server`)
     }
 
@@ -376,7 +379,8 @@ export const updateServerResourceLimitsAction = protectedClient
       })
 
       if (response) {
-        revalidatePath(`/servers/${id}`)
+        const tenantSlug = extractTenantSlug(response.tenant)
+        if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${id}`)
       }
 
       return { success: true, server: response }
@@ -884,7 +888,7 @@ export const updateServerDomainAction = protectedClient
       })
     }
 
-    revalidatePath(`/servers/${id}`)
+    revalidatePath(`/${userTenant.tenant.slug}/servers/${id}`)
     return { success: true }
   })
 
@@ -974,7 +978,7 @@ export const completeServerOnboardingAction = protectedClient
     })
 
     if (response) {
-      revalidatePath(`${userTenant.tenant}/servers/${serverId}`)
+      revalidatePath(`/${userTenant.tenant.slug}/servers/${serverId}`)
       return { success: true, server: response }
     }
 
