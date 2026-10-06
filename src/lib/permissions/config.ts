@@ -18,6 +18,7 @@ export const getActionAccess = {
   checkServerConnection: ['servers.read'],
   configureGlobalBuildDirAction: ['servers.read', 'servers.update'],
   resetServerAction: ['servers.read', 'servers.update'],
+  updateDokkuAction: ['servers.read', 'servers.update'],
   resetServerOnboardingAction: ['servers.read', 'servers.update'],
   cleanupServerAction: ['servers.read', 'servers.update'],
   getServersDetailsAction: ['servers.read'],

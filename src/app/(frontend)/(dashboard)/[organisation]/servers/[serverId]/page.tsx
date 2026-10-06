@@ -290,7 +290,11 @@ const ServerSettingsTab = ({ server }: { server: ServerType }) => {
         <DefaultResourceLimitsForm server={server} />
       </div>
 
-      <Packages railpack={server.railpack} serverId={server.id} />
+      <Packages
+        railpack={server.railpack}
+        dokkuVersion={server.version}
+        serverId={server.id}
+      />
 
       <Danger server={server} />
     </div>
