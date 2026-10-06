@@ -1,6 +1,6 @@
 import { Webhooks } from '@octokit/webhooks'
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import { triggerDeployment } from '@/actions/deployment/deploy'
 
@@ -12,8 +12,11 @@ export async function POST(request: Request) {
   const body = await request.json()
 
   const installationId = body.installation?.id
-  const branchName = body?.ref?.replace('refs/heads/', '')
   const repositoryName = body?.repository?.name
+  // push payloads carry ref; fork-sync payloads may not, in which case each
+  // matching service deploys its own tracked branch (resolved per service)
+  const branchName = body?.ref?.replace('refs/heads/', '')
+  const matchAnyBranch = event === 'fork-sync' && !branchName
 
   const payload = await getPayload({ config: configPromise })
 
@@ -98,31 +101,60 @@ export async function POST(request: Request) {
     )
   }
 
+  const where: Where = matchAnyBranch
+    ? {
+        and: [
+          {
+            'githubSettings.repository': {
+              equals: repositoryName,
+            },
+          },
+          {
+            provider: {
+              equals: githubAppDetails.id,
+            },
+          },
+        ],
+      }
+    : {
+        and: [
+          {
+            'githubSettings.branch': {
+              equals: branchName,
+            },
+          },
+          {
+            'githubSettings.repository': {
+              equals: repositoryName,
+            },
+          },
+          {
+            provider: {
+              equals: githubAppDetails.id,
+            },
+          },
+        ],
+      }
+
   const { docs: services } = await payload.find({
     collection: 'services',
-    where: {
-      and: [
-        {
-          'githubSettings.branch': {
-            equals: branchName,
-          },
-        },
-        {
-          'githubSettings.repository': {
-            equals: repositoryName,
-          },
-        },
-        {
-          provider: {
-            equals: githubAppDetails.id,
-          },
-        },
-      ],
-    },
+    where,
   })
 
   // on push event triggering a deployment
   if (event === 'push') {
+    for await (const service of services) {
+      await triggerDeployment({
+        serviceId: service.id,
+        cache: 'no-cache',
+        tenantSlug,
+      })
+    }
+  }
+
+  // fork-sync carries the same repo payload without branch scope; deploy
+  // matching services on their tracked branches (#422)
+  if (event === 'fork-sync') {
     for await (const service of services) {
       await triggerDeployment({
         serviceId: service.id,
