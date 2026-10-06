@@ -8,6 +8,13 @@
 
 <h3 align="center" style="text-wrap: balance;">dFlow is a platform for deploying, managing, and scaling git apps, Docker images, and databases on your own infrastructure.</h3>
 
+> **Community-maintained fork.** The upstream repository
+> ([dflow-sh/dflow](https://github.com/dflow-sh/dflow)) is no longer
+> maintained. This fork is developed independently by the community — all
+> original issues and pull requests were migrated here and development
+> continues in this repository. It is not affiliated with or endorsed by
+> dFlow Cloud ([dflow.sh](https://dflow.sh)).
+
 > This repository is a public snapshot of older dFlow code. It is not dFlow
 > Cloud, and it is not a supported self-host product. You may fork and modify it
 > for your own use under [license.md](./license.md). That license does not apply
