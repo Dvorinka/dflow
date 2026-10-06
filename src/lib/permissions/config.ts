@@ -19,6 +19,7 @@ export const getActionAccess = {
   configureGlobalBuildDirAction: ['servers.read', 'servers.update'],
   resetServerAction: ['servers.read', 'servers.update'],
   resetServerOnboardingAction: ['servers.read', 'servers.update'],
+  cleanupServerAction: ['servers.read', 'servers.update'],
   getServersDetailsAction: ['servers.read'],
   getAddServerDetails: ['sshKeys.read', 'securityGroups.read'],
   getServerBreadcrumbs: ['servers.read'],

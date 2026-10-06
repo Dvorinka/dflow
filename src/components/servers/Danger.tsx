@@ -3,11 +3,12 @@
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Dialog } from '../ui/dialog'
-import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertTriangle, Brush, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { ServerType } from '@/payload-types-overrides'
 
+import CleanupServerDialog from './CleanupServerDialog'
 import DeleteServerDialog from './DeleteServerDialog'
 import ResetOnboardingDialog from './ResetOnboardingDialog'
 import ResetServerDialog from './ResetServerDialog'
@@ -77,6 +78,31 @@ const Danger = ({ server }: { server: ServerType }) => {
                   Reset Server
                 </Button>
               </ResetServerDialog>
+            </div>
+          </div>
+
+          {/* Cleanup Server Section */}
+          <div className='bg-background rounded-lg border p-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-start gap-3'>
+                <div className='bg-muted flex h-10 w-10 items-center justify-center rounded-md'>
+                  <Brush className='text-muted-foreground h-5 w-5' />
+                </div>
+                <div className='flex-1'>
+                  <h3 className='font-semibold'>Cleanup Server</h3>
+                  <p className='text-muted-foreground text-sm'>
+                    Run dokku cleanup and prune unused Docker objects older
+                    than a selected age to free disk space.
+                  </p>
+                </div>
+              </div>
+
+              <CleanupServerDialog>
+                <Button variant='secondary'>
+                  <Brush className='h-4 w-4' />
+                  Cleanup
+                </Button>
+              </CleanupServerDialog>
             </div>
           </div>
 

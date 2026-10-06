@@ -83,6 +83,16 @@ export const uninstallDokkuSchema = z.object({
   serverId: z.string(),
 })
 
+export const cleanupServerSchema = z.object({
+  serverId: z.string(),
+  // Safe mode: only prune Docker objects older than this (hours, 1-8760)
+  olderThanHours: z.number().int().min(1).max(8760).default(168),
+  // Include `docker volume prune` (off by default: volumes may hold data)
+  pruneVolumes: z.boolean().default(false),
+  // Run `dokku cleanup` for exited containers/dangling images
+  dokkuCleanup: z.boolean().default(true),
+})
+
 export const updateServerDomainSchema = z.object({
   domains: z.array(z.string()),
   operation: z.enum(['add', 'remove', 'set']),
