@@ -138,38 +138,45 @@ export const Template: CollectionConfig = {
         },
 
         {
-          type: 'select',
-          name: 'databaseType',
-          label: 'Database Type',
-          required: true,
-          options: [
-            {
-              label: 'MongoDB',
-              value: 'MONGODB',
-            },
-            {
-              label: 'Redis',
-              value: 'REDIS',
-            },
-            {
-              label: 'MySQL',
-              value: 'MYSQL',
-            },
-            {
-              label: 'PostgreSQL',
-              value: 'POSTGRESQL',
-            },
-            {
-              label: 'MariaDB',
-              value: 'MARIADB',
-            },
-          ],
+          type: 'group',
+          name: 'databaseDetails',
+          label: 'Database Details',
           admin: {
             description: 'select database you want',
             condition: (data, siblingsData) => {
               return siblingsData.type === 'database'
             },
           },
+          fields: [
+            {
+              type: 'select',
+              name: 'type',
+              label: 'Database Type',
+              required: true,
+              options: [
+                {
+                  label: 'Postgres',
+                  value: 'postgres',
+                },
+                {
+                  label: 'MongoDB',
+                  value: 'mongo',
+                },
+                {
+                  label: 'MySQL',
+                  value: 'mysql',
+                },
+                {
+                  label: 'Redis',
+                  value: 'redis',
+                },
+                {
+                  label: 'MariaDB',
+                  value: 'mariadb',
+                },
+              ],
+            },
+          ],
         },
         {
           type: 'text',
@@ -177,22 +184,9 @@ export const Template: CollectionConfig = {
           label: 'Name',
         },
         {
-          name: 'variables',
+          name: 'environmentVariables',
           label: 'Environment Variables',
-          type: 'array',
-          fields: [
-            {
-              name: 'key',
-              label: 'Key',
-              type: 'text',
-              required: true,
-            },
-            {
-              name: 'value',
-              label: 'Value',
-              type: 'text',
-            },
-          ],
+          type: 'json',
         },
       ],
     },

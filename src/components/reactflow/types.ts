@@ -1,3 +1,5 @@
+import { GitProvider } from '@/payload-types'
+
 export interface DatabaseDetails {
   type?: 'postgres' | 'mongo' | 'mysql' | 'redis' | 'mariadb' | null
   username?: string | null
@@ -11,9 +13,26 @@ export interface DatabaseDetails {
 
 export interface ServiceNode {
   id: string
+  name: string
   type: 'database' | 'app' | 'docker'
-  createdAt: string
+  createdAt?: string
   databaseDetails?: DatabaseDetails
+  builder?:
+    | 'railpack'
+    | 'nixpacks'
+    | 'dockerfile'
+    | 'herokuBuildPacks'
+    | 'buildPacks'
+    | null
+  provider?: string | GitProvider | null
+  providerType?: 'github' | 'gitlab' | 'bitbucket' | null
+  githubSettings?: {
+    repository: string
+    owner: string
+    branch: string
+    buildPath: string
+    port?: number | null
+  }
   environmentVariables:
     | string
     | Record<string, unknown>

@@ -532,14 +532,18 @@ export interface Template {
         /**
          * select database you want
          */
-        databaseType?: ('MONGODB' | 'REDIS' | 'MYSQL' | 'POSTGRESQL' | 'MARIADB') | null;
+        databaseDetails?: {
+          type: 'postgres' | 'mongo' | 'mysql' | 'redis' | 'mariadb';
+        };
         name?: string | null;
-        variables?:
+        environmentVariables?:
           | {
-              key: string;
-              value?: string | null;
-              id?: string | null;
-            }[]
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
           | null;
         id?: string | null;
       }[]
@@ -853,15 +857,13 @@ export interface TemplatesSelect<T extends boolean = true> {
               buildPath?: T;
               port?: T;
             };
-        databaseType?: T;
-        name?: T;
-        variables?:
+        databaseDetails?:
           | T
           | {
-              key?: T;
-              value?: T;
-              id?: T;
+              type?: T;
             };
+        name?: T;
+        environmentVariables?: T;
         id?: T;
       };
   updatedAt?: T;
