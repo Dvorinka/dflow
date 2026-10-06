@@ -48,6 +48,28 @@
 
 <br/>
 
+## Configuration
+
+Copy `.env.example` to `.env` and fill in secrets (never commit `.env`).
+Key variables introduced by this fork:
+
+- `AUTH_METHOD` — `email-password` disables magic links (e.g. no email
+  provider), `magic-link` for passwordless-only, `both` (default) allows
+  either. Unset = Admin UI AuthConfig global decides. Magic links also
+  require Resend; without it the app degrades to email-password.
+- `NEXT_PUBLIC_APP_VERSION` — build version (e.g. git SHA) for stale-build
+  detection. Unset = version check silent.
+- `NEXT_PUBLIC_AUTH_SYNC_DOMAINS` — comma-separated sibling domains for
+  cross-app logout sync. Unset = disabled.
+- `SERVER_DETAILS_CACHE_TTL` — seconds to cache populated server details
+  in Redis (default 300).
+- `AUTH_METHOD`, package pins in `config/package-versions.json` (dokku,
+  plugins, infra versions), Dependabot runs grouped weekly updates.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full dev workflow.
+
+<br/>
+
 ## Community support
 
 For general help using dFlow, please refer to
@@ -56,7 +78,7 @@ you can use one of these channels to ask a question:
 
 - [Discord](https://discord.gg/5w7JUQYaAD) (For live discussion with the
   Community and dFlow team)
-- [GitHub](https://github.com/dflow-sh/dflow)
+- [GitHub](https://github.com/Dvorinka/dflow)
 - [X](https://x.com/dflow_sh) (Get the news fast)
 - [YouTube Channel](https://www.youtube.com/@paas-dflow-sh) (Learn from Video
   Tutorials)
