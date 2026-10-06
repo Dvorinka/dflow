@@ -24,6 +24,7 @@ import ConnectionErrorBanner from '@/components/servers/ConnectionErrorBanner'
 import UpdateEC2InstanceForm from '@/components/servers/CreateEC2InstanceForm'
 import Danger from '@/components/servers/Danger'
 import DanglingVolumesCard from '@/components/servers/DanglingVolumesCard'
+import RemoteCommandCard from '@/components/servers/RemoteCommandCard'
 import SyncAppsCard from '@/components/servers/SyncAppsCard'
 import DefaultResourceLimitsForm from '@/components/servers/DefaultResourceLimitsForm'
 import DomainForm from '@/components/servers/DomainForm'
@@ -146,6 +147,8 @@ const GeneralTab = ({ server }: { server: ServerType }) => {
       <SyncAppsCard serverId={server.id} />
 
       <DanglingVolumesCard serverId={server.id} />
+
+      <RemoteCommandCard serverId={server.id} />
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <div className='md:col-span-2'>
