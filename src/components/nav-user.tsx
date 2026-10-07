@@ -25,12 +25,20 @@ export function NavUser({ user }: { user: User }) {
   const params = useParams<{ organisation: string }>()
   const router = useRouter()
   const initial = user.email.slice(0, 1)
-  const { crossDomainLogout } = useCrossDomainAuthContext()
+  const { crossDomainLogout, logoutSyncRedirectUrl } =
+    useCrossDomainAuthContext()
 
   const { execute } = useAction(logoutAction, {
     onSuccess: async () => {
       toast.success('Logged out successfully')
-      // Clear sibling-app sessions when configured, then leave (#364)
+      // Redirect chain clears sibling-app cookies in first-party context
+      // when sync domains are configured; iframe sync stays as fallback
+      // for cookie-less signalling (#364).
+      const syncUrl = logoutSyncRedirectUrl('/sign-in')
+      if (syncUrl) {
+        window.location.assign(syncUrl)
+        return
+      }
       await crossDomainLogout().catch(() => {})
       // Client navigation: the action only clears the cookie, so route
       // here explicitly instead of relying on middleware/reload (#465).

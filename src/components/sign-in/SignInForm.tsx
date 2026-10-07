@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { AuthConfig } from '@/payload-types'
+import { useCrossDomainAuthContext } from '@/providers/CrossDomainAuthProvider'
 
 // Dynamic schema that validates based on auth method
 const dynamicSignInSchema = z.object({
@@ -50,6 +51,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const method = authMethod as AuthConfig['authMethod']
+  const { loginSyncRedirectUrl } = useCrossDomainAuthContext()
 
   const form = useForm<z.infer<typeof dynamicSignInSchema>>({
     resolver: zodResolver(dynamicSignInSchema),
@@ -84,11 +86,20 @@ const SignInForm: React.FC<SignInFormProps> = ({
       if (data?.success && data?.redirectUrl) {
         toast.success('Successfully signed in!')
 
-        // Handle redirect based on token presence
-        if (token) {
-          router.push(`/invite?token=${token}`)
+        const returnUrl = token
+          ? `/invite?token=${token}`
+          : data.redirectUrl
+
+        // Propagate the new session to sibling apps via a redirect chain
+        // when NEXT_PUBLIC_AUTH_SYNC_DOMAINS is configured (#364).
+        const syncUrl = data.syncToken
+          ? loginSyncRedirectUrl(data.syncToken, returnUrl)
+          : null
+
+        if (syncUrl) {
+          window.location.assign(syncUrl)
         } else {
-          router.push(data.redirectUrl)
+          router.push(returnUrl)
         }
       } else if (data?.error) {
         toast.error(data.error, { duration: 5000 })

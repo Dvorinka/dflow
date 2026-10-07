@@ -9,6 +9,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { autoLogin } from '@/payload/endpoints/auto-login'
+import { loginSync } from '@/payload/endpoints/login-sync'
 import { logs } from '@/payload/endpoints/logs'
 import { serverEvents } from '@/payload/endpoints/server-events'
 
@@ -136,6 +137,11 @@ export default buildConfig({
       method: 'get',
       path: '/auto-login',
       handler: autoLogin,
+    },
+    {
+      method: 'get',
+      path: '/login-sync',
+      handler: loginSync,
     },
     {
       path: '/logout',

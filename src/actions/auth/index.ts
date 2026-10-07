@@ -116,9 +116,19 @@ export const signInAction = publicClient
           : ''
       const redirectUrl = `/${tenantSlug || user.username}/dashboard`
 
+      // Short-lived, single-purpose token for cross-domain session sync
+      // (#364). /api/login-sync exchanges it for a session cookie on each
+      // sibling domain via a redirect chain.
+      const syncToken = jwt.sign(
+        { email: user.email, purpose: 'auth-sync' },
+        env.PAYLOAD_SECRET,
+        { algorithm: 'HS256', expiresIn: 60 },
+      )
+
       return {
         success: true,
         redirectUrl, // Return the URL for client-side redirect
+        syncToken,
         user: {
           id: user.id,
           email: user.email,
