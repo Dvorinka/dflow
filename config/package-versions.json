@@ -15,6 +15,25 @@
     "redis": null,
     "clickhouse": null,
     "rabbitmq": null,
-    "letsencrypt": null
+    "letsencrypt": null,
+    "couchdb": null,
+    "elasticsearch": null,
+    "meilisearch": null,
+    "memcached": null,
+    "rethinkdb": null,
+    "omnisci": null,
+    "solr": null,
+    "typesense": null,
+    "nats": null,
+    "pushpin": null,
+    "http-auth": null,
+    "maintenance": null,
+    "redirect": null,
+    "registry": null,
+    "graphite": null,
+    "scheduler-kubernetes": null,
+    "scheduler-nomad": null,
+    "cron-restart": null,
+    "copy-files-to-image": null
   }
 }
