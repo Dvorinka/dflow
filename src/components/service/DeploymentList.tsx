@@ -1,6 +1,5 @@
 'use client'
 
-import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { format, formatDistanceToNow } from 'date-fns'
 import { Rocket, ServerCog, X } from 'lucide-react'
@@ -10,7 +9,6 @@ import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
 
 import { cancelDeploymentAction } from '@/actions/deployment'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Tooltip,
   TooltipContent,
@@ -23,12 +21,12 @@ const DeploymentTerminal = dynamic(() => import('./DeploymentTerminal'), {
   ssr: false,
 })
 
-const variant = {
-  building: 'info',
-  failed: 'destructive',
-  success: 'success',
-  queued: 'warning',
-} as const
+const statusColor: Record<string, string> = {
+  success: '#4ade80',
+  building: '#facc15',
+  queued: '#facc15',
+  failed: '#f87171',
+}
 
 const DeploymentList = ({
   deployments,
@@ -67,32 +65,35 @@ const DeploymentList = ({
         <h4 className='text-lg font-semibold'>Deployments</h4>
       </div>
       {filteredDeployments.length ? (
-        filteredDeployments?.map(deploymentDetails => {
-          const { id, status, createdAt, logs } = deploymentDetails
-          const deployedLogs = Array.isArray(logs) ? logs : []
+        <div className='divide-y divide-border rounded-md border border-border'>
+          {filteredDeployments?.map(deploymentDetails => {
+            const { id, status, createdAt, logs } = deploymentDetails
+            const deployedLogs = Array.isArray(logs) ? logs : []
 
-          return (
-            <Card key={id} className='text-sm'>
-              <CardContent className='flex w-full items-center justify-between pt-4'>
-                <div className='flex items-center gap-6'>
-                  <Badge
-                    className='inline-block rounded-md px-2 py-1 text-[0.75rem] font-semibold uppercase'
-                    variant={status ? variant[status] : 'default'}>
+            return (
+              <div
+                key={id}
+                className='hover:bg-muted/40 flex w-full items-center justify-between px-4 py-3 text-sm'>
+                <div className='flex items-center gap-5'>
+                  <span
+                    className='w-20 text-xs font-semibold tracking-wide uppercase'
+                    style={{
+                      color: status ? statusColor[status] : undefined,
+                    }}>
                     {status}
-                  </Badge>
+                  </span>
 
                   <div>
-                    <p>{`# ${id}`}</p>
+                    <p className='text-foreground'>{`# ${id.slice(0, 8)}`}</p>
 
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <time>{`Triggered ${formatDistanceToNow(
-                            new Date(createdAt),
-                            {
+                          <time className='text-muted-foreground text-xs'>
+                            {`${formatDistanceToNow(new Date(createdAt), {
                               addSuffix: true,
-                            },
-                          )}`}</time>
+                            })}`}
+                          </time>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>
@@ -111,7 +112,9 @@ const DeploymentList = ({
                     serverId={serverId}
                     serviceId={serviceId}
                     live={status === 'building' || status === 'queued'}>
-                    <Button variant='outline'>View Logs</Button>
+                    <Button variant='outline' size='sm'>
+                      View logs
+                    </Button>
                   </DeploymentTerminal>
 
                   {/* Only queued deployments can be cancelled; building holds
@@ -119,6 +122,7 @@ const DeploymentList = ({
                   {status === 'queued' && (
                     <Button
                       variant='outline'
+                      size='sm'
                       disabled={isCancelling}
                       isLoading={isCancelling}
                       onClick={() => cancelDeployment({ deploymentId: id })}>
@@ -127,10 +131,10 @@ const DeploymentList = ({
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <div className='bg-muted/10 rounded-2xl border p-8 text-center shadow-xs'>
           <div className='grid min-h-[40vh] place-items-center'>

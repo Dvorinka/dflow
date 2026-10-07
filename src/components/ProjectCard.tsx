@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Project, Server, Service } from '@/payload-types'
 
+import { serviceIcon } from './service/serviceIcon'
 import DeleteProjectDialog from './DeleteProjectDialog'
 import UpdateProject from './project/CreateProject'
 import { Badge } from './ui/badge'
@@ -166,7 +167,25 @@ export function ProjectCard({
             </DropdownMenu>
           </CardHeader>
 
-          <CardContent className='flex flex-col gap-2'>
+          <CardContent className='flex flex-col gap-3 pt-0'>
+            {services.length > 0 && (
+              <div className='flex items-center gap-1.5'>
+                {services.slice(0, 6).map(service => (
+                  <span
+                    key={service.id}
+                    title={service.name}
+                    className='bg-muted text-muted-foreground flex h-8 w-8 items-center justify-center rounded-md border border-border/60 [&>*]:size-5'>
+                    {serviceIcon(service, 'size-5')}
+                  </span>
+                ))}
+                {services.length > 6 && (
+                  <span className='text-muted-foreground pl-1 text-xs'>
+                    +{services.length - 6}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className='flex justify-end'>
               <Badge
                 className='z-10'
@@ -185,7 +204,9 @@ export function ProjectCard({
           </CardContent>
 
           <CardFooter className='justify-between'>
-            <div>{services.length} services</div>
+            <div className='text-muted-foreground text-sm'>
+              {services.length} {services.length === 1 ? 'service' : 'services'}
+            </div>
 
             <TooltipProvider>
               <Tooltip>

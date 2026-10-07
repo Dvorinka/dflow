@@ -1,80 +1,34 @@
 import { ServiceNode } from '../types'
 import { Handle, Position } from '@xyflow/react'
-import { formatDistanceToNow } from 'date-fns'
-import {
-  AlertCircle,
-  CircleCheckBig,
-  CircleDashed,
-  CircleX,
-  Clock,
-  Database,
-  Hammer,
-  Package2,
-} from 'lucide-react'
+import { Clock, Hammer, Moon, Package2 } from 'lucide-react'
 import { JSX, useEffect, useState } from 'react'
 
-import {
-  Bitbucket,
-  ClickHouse,
-  Docker,
-  Git,
-  GitLab,
-  Gitea,
-  Github,
-  MariaDB,
-  MicrosoftAzure,
-  MongoDB,
-  MySQL,
-  PostgreSQL,
-  Redis,
-} from '@/components/icons'
-import { Badge } from '@/components/ui/badge'
+import { serviceIcon } from '@/components/service/serviceIcon'
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { getSessionValue } from '@/lib/auth/getSessionValue'
-import { Service } from '@/payload-types'
 import { useArchitectureContext } from '@/providers/ArchitectureProvider'
 
-const icon: { [key in ServiceNode['type']]: JSX.Element } = {
-  app: <Git className='size-6' />,
-  database: <Database className='size-6' />,
-  docker: <Docker className='size-6' />,
+const statusLine: Record<
+  string,
+  { label: string; color: string; icon?: JSX.Element }
+> = {
+  success: { label: 'Online', color: '#4ade80' },
+  building: { label: 'Building', color: '#facc15', icon: <Hammer size={13} /> },
+  queued: { label: 'Queued', color: '#facc15', icon: <Clock size={13} /> },
+  failed: { label: 'Failed', color: '#f87171' },
+  sleeping: {
+    label: 'Sleeping',
+    color: '#4ade80',
+    icon: <Moon size={13} />,
+  },
+  none: { label: 'No deployment', color: '#71717a', icon: <Moon size={13} /> },
+  disabled: { label: 'Node disabled', color: '#71717a' },
 }
-
-type StatusType = NonNullable<NonNullable<Service['databaseDetails']>['type']>
-
-const databaseIcons: {
-  [key in StatusType]: JSX.Element
-} = {
-  postgres: <PostgreSQL className='size-6' />,
-  mariadb: <MariaDB className='size-6' />,
-  mongo: <MongoDB className='size-6' />,
-  mysql: <MySQL className='size-6' />,
-  redis: <Redis className='size-6' />,
-  clickhouse: <ClickHouse className='size-6' />,
-}
-
-const ProviderTypeIcons: {
-  [key in NonNullable<Service['providerType']>]: JSX.Element
-} = {
-  github: <Github className='size-6' />,
-  gitlab: <GitLab className='size-6' />,
-  bitbucket: <Bitbucket className='size-6' />,
-  azureDevOps: <MicrosoftAzure className='size-6' />,
-  gitea: <Gitea className='size-6' />,
-}
-
-const statusMapping = {
-  building: { status: 'info', icon: <Hammer /> },
-  queued: { status: 'warning', icon: <Clock /> },
-  success: { status: 'success', icon: <CircleCheckBig /> },
-  failed: { status: 'destructive', icon: <CircleX /> },
-} as const
 
 const CustomNode = ({
   data,
@@ -84,7 +38,6 @@ const CustomNode = ({
   menuOptions?: (node: any) => React.ReactNode
 }) => {
   const deployment = data?.deployments?.[0]
-  const createdAt = data?.createdAt
   const isDisabled = !!data.disableNode
 
   const [nodeId, setNodeId] = useState<string | null>()
@@ -101,29 +54,45 @@ const CustomNode = ({
     }
   }
 
-  const DeploymentBadge = () => {
-    if (deployment) {
-      return (
-        <Badge
-          variant={statusMapping[deployment.status].status}
-          className='gap-1 capitalize [&_svg]:size-4'>
-          {statusMapping[deployment.status].icon}
-          {deployment.status}
-        </Badge>
-      )
-    }
+  const subtitle =
+    data?.domains?.[0]?.domain ||
+    data?.githubSettings?.repository ||
+    data?.gitlabSettings?.repository ||
+    data?.giteaSettings?.repository ||
+    data?.bitbucketSettings?.repository ||
+    data?.azureSettings?.repository ||
+    data?.dockerDetails?.url ||
+    (data?.type === 'database' ? data?.databaseDetails?.type : undefined)
 
-    if (createdAt && !deployment) {
-      return (
-        <Badge variant='secondary' className='gap-1 capitalize [&_svg]:size-4'>
-          <CircleDashed />
-          No deployment
-        </Badge>
-      )
-    }
+  const statusKey = isDisabled
+    ? 'disabled'
+    : deployment?.status === 'success'
+      ? 'success'
+      : deployment?.status === 'building'
+        ? 'building'
+        : deployment?.status === 'queued'
+          ? 'queued'
+          : deployment?.status === 'failed'
+            ? 'failed'
+            : 'none'
 
-    return null
-  }
+  const status = statusLine[statusKey]
+
+  const StatusLine = () => (
+    <div className='flex items-center gap-1.5'>
+      {status.icon ? (
+        <span style={{ color: status.color }}>{status.icon}</span>
+      ) : (
+        <span
+          className='h-[7px] w-[7px] rounded-full'
+          style={{ background: status.color }}
+        />
+      )}
+      <span className='text-sm' style={{ color: status.color }}>
+        {status.label}
+      </span>
+    </div>
+  )
 
   return (
     <div className='w-64 cursor-pointer'>
@@ -146,50 +115,38 @@ const CustomNode = ({
 
           data?.onClick?.()
         }}
-        className={`relative z-10 h-full min-h-36 backdrop-blur-md ${
+        className={`relative z-10 h-full min-h-20 backdrop-blur-md ${
           isDisabled
-            ? 'cursor-not-allowed'
+            ? 'cursor-not-allowed opacity-70'
             : nodeId === data.id
               ? 'bg-primary/5 border-primary shadow-md'
               : 'hover:border-primary/50 hover:bg-primary/5 cursor-pointer hover:shadow-md'
         }`}>
         {/* {menuOptions && menuOptions(data)} */}
-        <CardHeader className='w-64 flex-row justify-between pb-2'>
-          <div className='flex items-center gap-x-3'>
-            {data.type === 'database' && data.databaseDetails?.type
-              ? databaseIcons[data?.databaseDetails?.type]
-              : data.type === 'app' && data?.providerType
-                ? ProviderTypeIcons[data?.providerType]
-                : icon[data.type]}
+        <CardHeader className='w-64 flex-row justify-between gap-0 pb-2'>
+          <div className='flex min-w-0 items-center gap-x-3'>
+            <span className='shrink-0'>{serviceIcon(data)}</span>
 
-            <div className='flex-1 items-start'>
-              <CardTitle className='line-clamp-1' title={data.name}>
+            <div className='min-w-0 flex-1'>
+              <CardTitle
+                className='line-clamp-1 text-[15px] font-semibold'
+                title={data.displayName ? data.displayName : data.name}>
                 {data.displayName ? data.displayName : data.name}
               </CardTitle>
+              {subtitle && (
+                <p
+                  className='text-muted-foreground line-clamp-1 text-xs'
+                  title={subtitle}>
+                  {subtitle}
+                </p>
+              )}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className='pb-3'>
-          {isDisabled && (
-            <div className='bg-muted text-muted-foreground mb-1 flex items-center gap-2 rounded-md px-2 py-1 text-sm'>
-              <AlertCircle size={16} />
-              <span>Node disabled</span>
-            </div>
-          )}
-          <DeploymentBadge />
+        <CardContent className='pt-0 pb-3'>
+          <StatusLine />
         </CardContent>
-
-        <CardFooter>
-          {data?.createdAt && (
-            <time className='text-muted-foreground flex items-center gap-1.5 text-sm'>
-              <Clock size={14} />
-              {`Created ${formatDistanceToNow(new Date(data?.createdAt), {
-                addSuffix: true,
-              })}`}
-            </time>
-          )}
-        </CardFooter>
       </Card>
       {data.volumes && data.volumes.length > 0 && (
         <div className='bg-muted/30 text-muted-foreground z-0 -mt-6 w-full items-start gap-x-2 rounded-md border px-2 pt-8 pb-2 text-sm backdrop-blur-xs'>

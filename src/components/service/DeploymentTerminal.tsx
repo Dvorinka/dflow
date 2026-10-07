@@ -1,9 +1,9 @@
 'use client'
 
-import XTermTerminal from '../XTermTerminal'
 import { SquareTerminal } from 'lucide-react'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
+import LogTable from '@/components/service/LogTable'
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import useXterm from '@/hooks/use-xterm'
 import { Deployment } from '@/payload-types'
 
 const TerminalContent = ({
@@ -28,14 +27,16 @@ const TerminalContent = ({
   deploymentId: string
   live: boolean
 }) => {
-  const eventSourceRef = useRef<EventSource>(null)
   const previousLogsRef = useRef(false)
-  const { terminalRef, writeLog, terminalInstance } = useXterm()
+  const tailRef = useRef('')
+  const [lines, setLines] = useState<string[]>([])
+  const [streaming, setStreaming] = useState<boolean | undefined>(undefined)
+  const [status, setStatus] = useState('')
 
   useEffect(() => {
     // Finished deployments render persisted logs below; only live ones
     // need the SSE stream (which replays Redis history first, #311)
-    if (!live || !terminalInstance) {
+    if (!live) {
       return
     }
 
@@ -44,42 +45,63 @@ const TerminalContent = ({
     )
 
     eventSource.onmessage = event => {
-      const data = JSON.parse(event.data) ?? {}
-      const logs = data?.logs ?? []
+      let data: { message?: unknown; logs?: unknown[] } = {}
+      try {
+        data = JSON.parse(event.data) ?? {}
+      } catch {
+        data = { message: event.data }
+      }
+      const replayed = data?.logs ?? []
       const updatedPreviousLogs = previousLogsRef.current
 
+      setStreaming(true)
+
       if (data?.message) {
-        const formattedLog = `${data?.message}`
-        writeLog({ message: formattedLog })
+        const text = tailRef.current + `${data.message}`
+        const parts = text.split('\n')
+        tailRef.current = parts.pop() ?? ''
+        if (parts.length) {
+          setLines(previous => [...previous.slice(-2999), ...parts])
+        }
       }
 
-      if (!!logs?.length && !updatedPreviousLogs) {
-        logs.forEach((log: any) => {
-          writeLog({ message: `${log}` })
-        })
-
+      if (!!replayed?.length && !updatedPreviousLogs) {
+        setLines(previous => [
+          ...replayed.map((log: unknown) => `${log}`),
+          ...previous,
+        ])
         previousLogsRef.current = true
       }
     }
 
-    eventSourceRef.current = eventSource
+    eventSource.onerror = () => {
+      setStreaming(false)
+    }
 
     return () => {
       eventSource.close()
     }
-  }, [terminalInstance, live, serviceId, serverId, deploymentId, writeLog])
+  }, [live, serviceId, serverId, deploymentId])
 
   useEffect(() => {
-    if (!live && !!logs.length && terminalInstance) {
-      if (terminalRef.current) {
-        logs.forEach(log => {
-          writeLog({ message: `${log}` })
-        })
-      }
+    if (!live && !!logs.length) {
+      setLines(logs.map(log => `${log}`))
+      setStreaming(undefined)
+      setStatus('')
     }
-  }, [terminalInstance, logs, writeLog, live, terminalRef])
+  }, [logs, live])
 
-  return <XTermTerminal ref={terminalRef} />
+  return (
+    <div className='flex h-[60vh] flex-col'>
+      <LogTable
+        lines={lines}
+        streaming={live ? streaming : undefined}
+        status={status}
+        emptyTitle='No deployment logs'
+        emptyDescription='This deployment has not produced any log output.'
+      />
+    </div>
+  )
 }
 
 const DeploymentTerminal = ({

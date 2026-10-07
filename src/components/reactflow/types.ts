@@ -83,6 +83,16 @@ export interface ServiceNode {
         containerPath: string
       }[]
     | null
+  domains?:
+    | {
+        domain: string
+        default: boolean
+        synced: boolean
+        autoRegenerateSSL?: boolean | null
+        certificateType?: 'letsencrypt' | 'cloudflare-origin' | null
+        id?: string | null
+      }[]
+    | null
   deployments?: {
     id: string
     status: Deployment['status']
