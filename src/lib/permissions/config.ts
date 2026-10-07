@@ -179,6 +179,13 @@ export const getActionAccess = {
   getMaintenanceStatusAction: ['services.read'],
   toggleHttpAuthAction: ['services.read', 'services.update'],
   exposeDatabasePortAction: ['services.read', 'services.update'],
+  migrateDatabaseAction: [
+    'services.read',
+    'services.create',
+    'services.update',
+    'projects.read',
+    'servers.read',
+  ],
   updateServiceDomainAction: ['services.read', 'services.update'],
   regenerateSSLAction: ['services.read', 'services.update'],
   syncServiceDomainAction: ['services.read', 'services.update'],
