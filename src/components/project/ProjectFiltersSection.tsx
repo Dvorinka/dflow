@@ -4,6 +4,7 @@ import { Docker } from '../icons'
 import { Button } from '../ui/button'
 import {
   AlertCircle,
+  ArrowDownUp,
   CheckCircle,
   Clock,
   Code,
@@ -13,6 +14,8 @@ import {
   FileCode2,
   Filter,
   Globe,
+  LayoutGrid,
+  List,
   Pause,
   Play,
   Server as ServerIcon,
@@ -20,11 +23,21 @@ import {
   Zap,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useMemo } from 'react'
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
 
 import { DynamicFilterPanel } from '@/components/DynamicFilter/DynamicFilterPanel'
 import { useDynamicFilter } from '@/components/DynamicFilter/useDynamicFilter'
 import { ProjectCard } from '@/components/ProjectCard'
+import { serviceIcon } from '@/components/service/serviceIcon'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 import { FilterConfig } from '@/lib/filter.utils'
 import { Project, Server, Service } from '@/payload-types'
 
@@ -241,6 +254,30 @@ const ProjectFiltersSection = ({
     autoGenerateSchema: false,
   })
 
+  const [sortMode, setSortMode] = useState<'recent' | 'created' | 'name'>(
+    'recent',
+  )
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  const sortedProjects = useMemo(() => {
+    const items = [...filteredProjects]
+    if (sortMode === 'name') {
+      items.sort((a, b) => a.name.localeCompare(b.name))
+    } else if (sortMode === 'created') {
+      items.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+    } else {
+      items.sort(
+        (a, b) =>
+          new Date(b.updatedAt ?? b.createdAt).getTime() -
+          new Date(a.updatedAt ?? a.createdAt).getTime(),
+      )
+    }
+    return items
+  }, [filteredProjects, sortMode])
+
   return (
     <div className='space-y-4'>
       <DynamicFilterPanel
@@ -250,45 +287,137 @@ const ProjectFiltersSection = ({
         onFiltersChange={setFilters}
       />
 
+      {filteredProjects.length > 0 && (
+        <div className='flex items-center justify-end gap-2'>
+          <Select
+            value={sortMode}
+            onValueChange={value =>
+              setSortMode(value as typeof sortMode)
+            }>
+            <SelectTrigger className='h-8 w-44 gap-1.5 text-xs'>
+              <ArrowDownUp size={13} className='text-muted-foreground' />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align='end'>
+              <SelectItem value='recent'>Recent activity</SelectItem>
+              <SelectItem value='created'>Creation date</SelectItem>
+              <SelectItem value='name'>Alphabetical</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className='border-border flex overflow-hidden rounded-md border'>
+            <button
+              type='button'
+              title='Grid view'
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                'px-2 py-1.5',
+                viewMode === 'grid'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}>
+              <LayoutGrid size={14} />
+            </button>
+            <button
+              type='button'
+              title='List view'
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'border-border border-l px-2 py-1.5',
+                viewMode === 'list'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}>
+              <List size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className='space-y-4'>
-        {filteredProjects.length > 0 ? (
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            <AnimatePresence mode='popLayout'>
-              {filteredProjects.map((project, index) => {
+        {sortedProjects.length > 0 ? (
+          viewMode === 'grid' ? (
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              <AnimatePresence mode='popLayout'>
+                {sortedProjects.map((project, index) => {
+                  const services = getProjectServices(project)
+
+                  return (
+                    <motion.div
+                      key={project.id}
+                      initial={{
+                        opacity: 0,
+                        y: 20,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      exit={{
+                        opacity: 0,
+                        y: -20,
+                        transition: { duration: 0.2 },
+                      }}
+                      transition={{
+                        duration: 0.4,
+                        delay: index * 0.05,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}>
+                      <ProjectCard
+                        organisationSlug={organisationSlug}
+                        project={project}
+                        servers={servers}
+                        services={services}
+                      />
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div className='border-border divide-border overflow-hidden rounded-md border divide-y'>
+              {sortedProjects.map(project => {
                 const services = getProjectServices(project)
 
                 return (
-                  <motion.div
+                  <Link
                     key={project.id}
-                    initial={{
-                      opacity: 0,
-                      y: 20,
-                    }}
-                    animate={{
-                      opacity: 1,
-                      y: 0,
-                    }}
-                    exit={{
-                      opacity: 0,
-                      y: -20,
-                      transition: { duration: 0.2 },
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      delay: index * 0.05,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}>
-                    <ProjectCard
-                      organisationSlug={organisationSlug}
-                      project={project}
-                      servers={servers}
-                      services={services}
-                    />
-                  </motion.div>
+                    href={`/${organisationSlug}/dashboard/project/${project.id}`}
+                    className='hover:bg-muted/40 flex items-center gap-4 px-4 py-3'>
+                    <div className='bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-md'>
+                      {project.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate text-sm font-medium'>
+                        {project.name}
+                      </p>
+                      <p className='text-muted-foreground truncate text-xs'>
+                        {project.description || 'No description'}
+                      </p>
+                    </div>
+                    <div className='flex shrink-0 items-center -space-x-1'>
+                      {services.slice(0, 4).map(service => (
+                        <span
+                          key={service.id}
+                          className='bg-muted ring-background flex size-6 items-center justify-center rounded-full ring-2'
+                          title={service.name}>
+                          {serviceIcon(service, 'size-3')}
+                        </span>
+                      ))}
+                      {services.length === 0 && (
+                        <span className='text-muted-foreground text-xs'>
+                          No services
+                        </span>
+                      )}
+                    </div>
+                    <span className='text-muted-foreground hidden w-24 shrink-0 text-right text-xs sm:block'>
+                      {services.length} service{services.length === 1 ? '' : 's'}
+                    </span>
+                  </Link>
                 )
               })}
-            </AnimatePresence>
-          </div>
+            </div>
+          )
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
