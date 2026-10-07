@@ -50,8 +50,8 @@ const Logo = ({
       <Image
         src={logoUrl?.url || '/images/dflow-no-bg.png'}
         alt={'logo'}
-        width={200}
-        height={32}
+        width={500}
+        height={500}
         key={theme}
         className={cn(
           `h-full max-h-8 w-full max-w-24 object-contain`,

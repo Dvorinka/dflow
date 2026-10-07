@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import FloatingEdge from '@/components/reactflow/FloatingEdges'
 import FloatingConnectionLine from '@/components/reactflow/FloatingEdges/FloatingConnectionLine'
@@ -24,6 +24,11 @@ enum BackgroundVariant {
   Lines = 'lines',
   Dots = 'dots',
   Cross = 'cross',
+}
+
+//floating edges
+const edgeTypes = {
+  floating: FloatingEdge,
 }
 
 const ReactFlowConfig = ({
@@ -48,14 +53,14 @@ const ReactFlowConfig = ({
   menuOptions?: (node: Node) => React.ReactNode
 }) => {
   //custom nodes
-  const nodeTypes = {
-    custom: (props: any) => <CustomNode {...props} menuOptions={menuOptions} />,
-  }
-
-  //floating edges
-  const edgeTypes = {
-    floating: FloatingEdge,
-  }
+  const nodeTypes = useMemo(
+    () => ({
+      custom: (props: any) => (
+        <CustomNode {...props} menuOptions={menuOptions} />
+      ),
+    }),
+    [menuOptions],
+  )
 
   const { setCenter, getNode, getViewport, fitView } = useReactFlow()
 
