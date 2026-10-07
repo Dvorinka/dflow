@@ -138,6 +138,17 @@ const LayoutClient = ({
 
   const { fitView } = useReactFlow()
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (document.querySelector('[role="dialog"]')) return
+      onCloseService()
+      router.push(`/${organisation}/dashboard/project/${projectId}`)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [organisation, projectId, router])
+
   return (
     <>
       <main className='mx-auto'>

@@ -11,6 +11,7 @@ import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import SidebarToggleButton from '@/components/SidebarToggleButton'
 import CreateTemplateFromProject from '@/components/project/CreateTemplateFromProject'
 import ProjectOptionsDropdown from '@/components/project/ProjectOptionsDropdown'
+import ProjectSettingsMenu from '@/components/project/ProjectSettingsMenu'
 import CreateService from '@/components/service/CreateService'
 import ServiceList from '@/components/service/ServiceList'
 import ServicesArchitecture from '@/components/service/ServicesArchitecture'
@@ -93,6 +94,12 @@ const GeneralTab: React.FC<{
                   />
                 </>
               ) : null}
+
+              <ProjectSettingsMenu
+                project={project}
+                services={services}
+                isServerConnected={isServerConnected}
+              />
             </div>
           </>
         )}
