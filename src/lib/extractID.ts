@@ -19,3 +19,26 @@ export const extractTenantSlug = (tenant: unknown): string | undefined => {
   }
   return undefined
 }
+
+// IDOR guard for actions that fetch by raw id. payload.findByID runs with
+// overrideAccess — it does not scope to the caller's tenant. Actions must
+// verify the fetched document's tenant matches ctx.userTenant.tenant.id
+// before trusting it, especially before SSH/destructive work.
+export const extractTenantId = (tenant: unknown): string | undefined => {
+  if (tenant && typeof tenant === 'object' && 'id' in tenant) {
+    const id = (tenant as { id?: unknown }).id
+    return typeof id === 'string' ? id : undefined
+  }
+  return typeof tenant === 'string' ? tenant : undefined
+}
+
+export const assertTenantOwnership = (
+  docTenant: unknown,
+  tenantId: string,
+  resource = 'Resource',
+) => {
+  const docTenantId = extractTenantId(docTenant)
+  if (!docTenantId || docTenantId !== tenantId) {
+    throw new Error(`${resource} not found`)
+  }
+}

@@ -1,5 +1,6 @@
 'use server'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { extractSSHDetails } from '@/lib/ssh'
 import { addInternalBackupQueue } from '@/queues/database/backup/internalBackup'
@@ -46,6 +47,11 @@ export const internalBackupAction = protectedClient
       depth: 3,
       id: serviceId,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     const now = new Date()
 
@@ -121,6 +127,12 @@ export const internalRestoreAction = protectedClient
         id: backupId,
       }),
     ])
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      userTenant.tenant.id,
+      'Service',
+    )
+    assertTenantOwnership(backup.tenant, userTenant.tenant.id, 'Backup')
 
     // Refuse cross-type restores (e.g. mongo dump into postgres, #484).
     // Legacy backups without a recorded type can't be verified, allow those.
@@ -175,6 +187,11 @@ export const internalDbDeleteAction = protectedClient
       depth: 3,
       id: serviceId,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     let queueResponseId: string | undefined = ''
 

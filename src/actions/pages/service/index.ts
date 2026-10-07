@@ -1,5 +1,6 @@
 'use server'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 
 import { getServiceDetailsSchema } from './validator'
@@ -163,6 +164,7 @@ export const getRestorableBackups = protectedClient
       id,
       depth: 2,
     })
+    assertTenantOwnership(target.tenant, ctx.userTenant.tenant.id, 'Service')
     const targetType = target?.databaseDetails?.type ?? null
     const targetServerId =
       typeof target?.project === 'object' &&
@@ -196,9 +198,7 @@ export const getRestorableBackups = protectedClient
       const project = backup.service.project
       if (typeof project !== 'object' || !project) return false
       const serverId =
-        typeof project.server === 'object'
-          ? project.server.id
-          : project.server
+        typeof project.server === 'object' ? project.server.id : project.server
       return serverId === targetServerId
     })
   })

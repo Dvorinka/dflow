@@ -3,6 +3,7 @@
 import { BeszelClient } from '@/lib/beszel/client/BeszelClient'
 import { TypedBeszelHelpers } from '@/lib/beszel/client/typedHelpers'
 import { Alert, Collections } from '@/lib/beszel/types'
+import { assertTenantOwnership } from '@/lib/extractID'
 import { pub } from '@/lib/redis'
 import { protectedClient, userClient } from '@/lib/safe-action'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
@@ -37,6 +38,11 @@ export const installMonitoringToolsAction = protectedClient
       depth: 1,
       context: { populateServerDetails: true },
     })) as ServerType
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     try {
       // Check environment configuration
@@ -287,9 +293,7 @@ export const getSystemAlertsAction = userClient
       // ponytail: filter in code; the helper has no per-system filter param
       return {
         success: true,
-        data: alerts.filter(
-          (alert: Alert) => alert.system === systemId,
-        ),
+        data: alerts.filter((alert: Alert) => alert.system === systemId),
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'

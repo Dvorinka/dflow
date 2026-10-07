@@ -6,7 +6,7 @@ import { NodeSSH } from 'node-ssh'
 import { extractID } from 'payload/shared'
 
 import { dokku } from '@/lib/dokku'
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { checkServerResources } from '@/lib/server/resourceCheck'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
@@ -70,19 +70,30 @@ export const createServiceAction = protectedClient
   })
   .inputSchema(createServiceSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { name, description, projectId, type, databaseType, databaseVersion } =
-      clientInput
+    const {
+      name,
+      description,
+      projectId,
+      type,
+      databaseType,
+      databaseVersion,
+    } = clientInput
     const {
       userTenant: { tenant },
       payload,
       user,
     } = ctx
 
-    const { server, name: projectName } = await payload.findByID({
+    const {
+      server,
+      name: projectName,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'projects',
       id: projectId,
       depth: 2,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Project')
 
     const slicedName = name.slice(0, 10)
 
@@ -228,8 +239,14 @@ export const createServiceWithPluginAction = protectedClient
   })
   .inputSchema(createServiceSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { name, description, projectId, type, databaseType, databaseVersion } =
-      clientInput
+    const {
+      name,
+      description,
+      projectId,
+      type,
+      databaseType,
+      databaseVersion,
+    } = clientInput
     const {
       userTenant: { tenant },
       user,
@@ -242,6 +259,7 @@ export const createServiceWithPluginAction = protectedClient
         id: projectId,
         depth: 0,
       })
+      assertTenantOwnership(project.tenant, ctx.userTenant.tenant.id, 'Project')
 
       const job = await addCreateServiceWithPluginsQueue({
         name,
@@ -289,6 +307,11 @@ export const deleteServiceAction = protectedClient
       id,
       depth: 3,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (typeof project === 'object') {
       const serverId =
@@ -299,6 +322,11 @@ export const deleteServiceAction = protectedClient
         collection: 'servers',
         id: serverId,
       })
+      assertTenantOwnership(
+        serverDetails.tenant,
+        ctx.userTenant.tenant.id,
+        'Server',
+      )
 
       // Only delete from server if the option is enabled
       if (deleteFromServer && serverDetails.id) {
@@ -400,6 +428,11 @@ export const updateServiceAction = protectedClient
       collection: 'services',
       id,
     })
+    assertTenantOwnership(
+      previousDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     const response = await payload.update({
       collection: 'services',
@@ -470,6 +503,11 @@ export const restartServiceAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     // A if check for getting all ssh keys & server details
     if (typeof project === 'object' && typeof project?.server === 'object') {
@@ -531,6 +569,11 @@ export const stopServiceAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     // A if check for getting all ssh keys & server details
     if (typeof project === 'object' && typeof project?.server === 'object') {
@@ -591,6 +634,11 @@ export const toggleMaintenanceAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (type !== 'app' && type !== 'docker') {
       throw new Error('Maintenance mode is only available for app services')
@@ -629,6 +677,11 @@ export const getMaintenanceStatusAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (typeof project === 'object' && typeof project?.server === 'object') {
       const sshDetails = extractSSHDetails({ project })
@@ -659,6 +712,11 @@ export const toggleHttpAuthAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (type !== 'app' && type !== 'docker') {
       throw new Error('HTTP auth is only available for app services')
@@ -674,7 +732,12 @@ export const toggleHttpAuthAction = protectedClient
 
       try {
         if (enabled) {
-          await dokku.httpAuth.on(ssh, serviceDetails.name, username!, password!)
+          await dokku.httpAuth.on(
+            ssh,
+            serviceDetails.name,
+            username!,
+            password!,
+          )
         } else {
           await dokku.httpAuth.off(ssh, serviceDetails.name)
         }
@@ -701,6 +764,11 @@ export const exposeDatabasePortAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     // A if check for getting all ssh keys & server details
     if (typeof project === 'object' && typeof project?.server === 'object') {
@@ -751,12 +819,15 @@ export const updateServiceDomainAction = protectedClient
     } = ctx
 
     // Fetching service-details for showing previous details
-    const { domains: servicePreviousDomains, project } = await payload.findByID(
-      {
-        id,
-        collection: 'services',
-      },
-    )
+    const {
+      domains: servicePreviousDomains,
+      project,
+      tenant: docTenant,
+    } = await payload.findByID({
+      id,
+      collection: 'services',
+    })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     let updatedDomains = servicePreviousDomains ?? []
 
@@ -856,6 +927,11 @@ export const regenerateSSLAction = protectedClient
       depth: 3,
       id,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (typeof project === 'object' && typeof project?.server === 'object') {
       const sshDetails = extractSSHDetails({ project })
@@ -892,6 +968,11 @@ export const syncServiceDomainAction = protectedClient
       collection: 'services',
       depth: 3,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
 
     if (typeof project === 'object' && typeof project.server === 'object') {
       const sshDetails = extractSSHDetails({ project })
@@ -940,6 +1021,11 @@ export const markDefaultServiceDomainAction = protectedClient
       collection: 'services',
       id: serviceId,
     })
+    assertTenantOwnership(
+      serviceDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Service',
+    )
     const domainsList = serviceDetails?.domains ?? []
 
     const updatedService = await payload.update({
@@ -995,6 +1081,12 @@ export const updateVolumesAction = protectedClient
     } = ctx
     const { id, volumes } = clientInput
 
+    const existingService = await payload.findByID({
+      collection: 'services',
+      id,
+    })
+    assertTenantOwnership(existingService.tenant, tenant.id, 'Service')
+
     const updatedService = await payload.update({
       collection: 'services',
       id: id,
@@ -1032,11 +1124,16 @@ export const scaleServiceAction = protectedClient
     const { id, scaleArgs } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
     const serverId = getServerIdFromProject(project)
@@ -1062,11 +1159,16 @@ export const fetchServiceScaleStatusAction = protectedClient
     const { id, parse = true } = clientInput
     const { payload } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
 
@@ -1095,11 +1197,16 @@ export const setServiceResourceLimitAction = protectedClient
     const { id, resourceArgs, processType } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
     const serverId = getServerIdFromProject(project)
@@ -1127,11 +1234,16 @@ export const setServiceResourceReserveAction = protectedClient
     const { id, resourceArgs, processType } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
     const serverId = getServerIdFromProject(project)
@@ -1159,11 +1271,16 @@ export const fetchServiceResourceStatusAction = protectedClient
     const { id } = clientInput
     const { payload } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
 
@@ -1188,11 +1305,16 @@ export const clearServiceResourceLimitAction = protectedClient
     const { id, processType } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
     const serverId = getServerIdFromProject(project)
@@ -1220,11 +1342,16 @@ export const clearServiceResourceReserveAction = protectedClient
     const { id, processType } = clientInput
     const { payload, userTenant } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
     const serverId = getServerIdFromProject(project)
@@ -1255,6 +1382,7 @@ export const checkServerResourcesAction = protectedClient
       collection: 'servers',
       id: serverId,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const ssh = await dynamicSSH(sshDetails)
@@ -1273,11 +1401,16 @@ export const getServiceNginxConfigAction = protectedClient
     const { id } = clientInput
     const { payload } = ctx
 
-    const { project, name } = await payload.findByID({
+    const {
+      project,
+      name,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
 
@@ -1304,11 +1437,17 @@ export const setServiceNginxConfigAction = protectedClient
     const { key, value, serviceId } = clientInput
     const { payload } = ctx
 
-    const { project, name, type } = await payload.findByID({
+    const {
+      project,
+      name,
+      type,
+      tenant: docTenant,
+    } = await payload.findByID({
       collection: 'services',
       id: serviceId,
       depth: 3,
     })
+    assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Service')
 
     const sshDetails = extractSSHDetails({ project })
 

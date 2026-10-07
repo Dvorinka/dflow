@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 // import { addInstallTerminalQueue } from '@/queues/terminal/install'
 // import { addUninstallTerminalQueue } from '@/queues/terminal/uninstall'
@@ -29,19 +29,20 @@ export const installTerminalAction = protectedClient
   .inputSchema(installTerminalSchema)
   .action(async ({ clientInput, ctx }) => {
     const { serverId } = clientInput
-    const { payload } = ctx
+    const { payload, userTenant } = ctx
 
     // Fetch server details from the database
-    const { id, ip, username, port, sshKey, tenant } =
-      await payload.findByID({
-        collection: 'servers',
-        id: serverId,
-        depth: 5,
-      })
+    const { id, ip, username, port, sshKey, tenant } = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 5,
+    })
 
     if (!id) {
       throw new Error('Server not found')
     }
+
+    assertTenantOwnership(tenant, userTenant.tenant.id, 'Server')
 
     if (typeof sshKey !== 'object') {
       throw new Error('SSH key not found')
@@ -93,6 +94,11 @@ export const uninstallTerminalAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     if (typeof serverDetails.sshKey !== 'object') {
       throw new Error('SSH key not found')
@@ -138,6 +144,11 @@ export const startTerminalAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
@@ -175,6 +186,11 @@ export const stopTerminalAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
@@ -212,6 +228,11 @@ export const restartTerminalAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     const sshDetails = extractSSHDetails({ server: serverDetails })
 

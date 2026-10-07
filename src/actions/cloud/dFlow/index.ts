@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { RequiredDataFromCollection } from 'payload'
 
 import { DFLOW_CONFIG } from '@/lib/constants'
+import { assertTenantOwnership } from '@/lib/extractID'
 import { dFlowRestSdk } from '@/lib/restSDK/utils'
 import { protectedClient, publicClient } from '@/lib/safe-action'
 import { CloudProviderAccount, Server } from '@/payload-types'
@@ -56,6 +57,16 @@ export const updateDFlowAccountAction = protectedClient
 
     const { userTenant, payload } = ctx
     let response: CloudProviderAccount
+
+    const existing = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id,
+    })
+    assertTenantOwnership(
+      existing.tenant,
+      userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     response = await payload.update({
       collection: 'cloudProviderAccounts',
@@ -459,7 +470,17 @@ export const deleteDFlowAccountAction = protectedClient
   .inputSchema(deleteDFlowAccountSchema)
   .action(async ({ clientInput, ctx }) => {
     const { id } = clientInput
-    const { payload } = ctx
+    const { payload, userTenant } = ctx
+
+    const existing = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id,
+    })
+    assertTenantOwnership(
+      existing.tenant,
+      userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     const response = await payload.update({
       collection: 'cloudProviderAccounts',

@@ -3,6 +3,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { extractSSHDetails } from '@/lib/ssh'
 import { addDeployQueue } from '@/queues/app/deploy'
 import { addDockerImageDeploymentQueue } from '@/queues/app/dockerImage-deployment'
@@ -13,10 +14,12 @@ export const triggerDeployment = async ({
   serviceId,
   cache,
   tenantSlug,
+  tenantId,
 }: {
   serviceId: string
   cache: 'cache' | 'no-cache'
   tenantSlug: string
+  tenantId?: string
 }) => {
   const payload = await getPayload({ config: configPromise })
 
@@ -38,6 +41,12 @@ export const triggerDeployment = async ({
     depth: 3,
     id: serviceId,
   })
+
+  // Callers with a user context pass tenantId; the webhook path is
+  // signature-verified and its service lookup is repo-scoped.
+  if (tenantId) {
+    assertTenantOwnership(serviceDetails.tenant, tenantId, 'Service')
+  }
 
   let queueResponseId: string | undefined = ''
 

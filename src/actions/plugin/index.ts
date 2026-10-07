@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { NodeSSH } from 'node-ssh'
 
 import { dokku } from '@/lib/dokku'
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
 import { addLetsencryptPluginConfigureQueue } from '@/queues/letsencrypt/configure'
@@ -38,6 +38,7 @@ export const installPluginAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const queueResponse = await addInstallPluginQueue({
@@ -77,6 +78,7 @@ export const installCustomPluginAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const queueResponse = await addInstallPluginQueue({
@@ -114,6 +116,7 @@ export const syncPluginAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({
       server,
@@ -188,6 +191,7 @@ export const togglePluginStatusAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const queueResponse = await addTogglePluginQueue({
@@ -225,6 +229,7 @@ export const deletePluginAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
 
@@ -310,6 +315,7 @@ export const configureLetsencryptPluginAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const queueResponse = await addLetsencryptPluginConfigureQueue({
@@ -361,6 +367,7 @@ export const installAndConfigureLetsencryptPluginAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     const sshDetails = extractSSHDetails({ server })
     const queueResponse = await addInstallLetsencryptAndConfigureQueue({

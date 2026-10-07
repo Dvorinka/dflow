@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 
 import {
@@ -76,6 +77,12 @@ export const updateSecurityGroupAction = protectedClient
       tags,
     } = clientInput
 
+    const existingSG = await payload.findByID({
+      collection: 'securityGroups',
+      id,
+    })
+    assertTenantOwnership(existingSG.tenant, tenant.id, 'Security group')
+
     const updatedSecurityGroup = await payload.update({
       collection: 'securityGroups',
       id,
@@ -114,6 +121,12 @@ export const deleteSecurityGroupAction = protectedClient
       payload,
     } = ctx
 
+    const existingSG = await payload.findByID({
+      collection: 'securityGroups',
+      id,
+    })
+    assertTenantOwnership(existingSG.tenant, tenant.id, 'Security group')
+
     const deleteSecurityGroup = await payload.update({
       collection: 'securityGroups',
       id,
@@ -146,6 +159,12 @@ export const syncSecurityGroupAction = protectedClient
       payload,
     } = ctx
 
+    const existingSG = await payload.findByID({
+      collection: 'securityGroups',
+      id,
+    })
+    assertTenantOwnership(existingSG.tenant, tenant.id, 'Security group')
+
     const updatedSecurityGroup = await payload.update({
       collection: 'securityGroups',
       id,
@@ -170,13 +189,21 @@ export const getSecurityGroupsAction = protectedClient
   .inputSchema(getSecurityGroupsSchema)
   .action(async ({ clientInput, ctx }) => {
     const { cloudProviderAccountId } = clientInput
-    const { payload } = ctx
+    const {
+      userTenant: { tenant },
+      payload,
+    } = ctx
 
     const { docs: securityGroups } = await payload.find({
       collection: 'securityGroups',
       pagination: false,
       where: {
         and: [
+          {
+            'tenant.slug': {
+              equals: tenant.slug,
+            },
+          },
           {
             cloudProvider: {
               equals: 'aws',
