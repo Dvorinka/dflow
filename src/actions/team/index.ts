@@ -84,8 +84,6 @@ export const removeUserFromTeamAction = protectedClient
     const updatedTenants = (user?.tenants || []).filter((tenantData: any) => {
       return (tenantData.tenant as Tenant).slug !== tenant.slug
     })
-    console.dir(user?.tenants, 10)
-    console.log(updatedTenants?.at(0)?.tenant)
     const response = await payload.update({
       collection: 'users',
       id: user.id,

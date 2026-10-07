@@ -256,8 +256,6 @@ export const checkPluginUsageAction = protectedClient
     const { payload } = ctx
     const { serverId, connectionType, pluginName, category } = clientInput
 
-    console.log({ serverId, pluginName, category })
-
     if (category === 'database') {
       const { docs: services } = await payload.find({
         collection: 'services',
