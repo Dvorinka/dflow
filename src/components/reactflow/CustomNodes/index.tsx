@@ -1,6 +1,17 @@
 import { ServiceNode } from '../types'
 import { Handle, Position } from '@xyflow/react'
-import { Clock, Hammer, Moon, Package2 } from 'lucide-react'
+import {
+  Clock,
+  ExternalLink,
+  FileText,
+  Hammer,
+  Moon,
+  MoreHorizontal,
+  Package2,
+  Settings,
+} from 'lucide-react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { JSX, useEffect, useState } from 'react'
 
 import { serviceIcon } from '@/components/service/serviceIcon'
@@ -10,6 +21,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { getSessionValue } from '@/lib/auth/getSessionValue'
 import { useArchitectureContext } from '@/providers/ArchitectureProvider'
 
@@ -78,6 +95,46 @@ const CustomNode = ({
 
   const status = statusLine[statusKey]
 
+  const params = useParams<{ organisation: string; projectId: string }>()
+  const serviceHref = data?.id
+    ? `/${params.organisation}/dashboard/project/${params.projectId}/service/${data.id}`
+    : undefined
+
+  const NodeMenu = () => {
+    if (!serviceHref || !data?.onClick || isDisabled) return null
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type='button'
+            aria-label='Service actions'
+            onClick={e => e.stopPropagation()}
+            onPointerDown={e => e.stopPropagation()}
+            className='nodrag text-muted-foreground hover:bg-muted hover:text-foreground -mt-0.5 -mr-1 shrink-0 rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100'>
+            <MoreHorizontal size={15} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align='end' className='w-40'>
+          <DropdownMenuItem asChild>
+            <Link href={serviceHref}>
+              <ExternalLink size={14} /> Open service
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`${serviceHref}/logs`}>
+              <FileText size={14} /> View logs
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`${serviceHref}/settings`}>
+              <Settings size={14} /> Settings
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
   const StatusLine = () => (
     <div className='flex items-center gap-1.5'>
       {status.icon ? (
@@ -115,7 +172,7 @@ const CustomNode = ({
 
           data?.onClick?.()
         }}
-        className={`relative z-10 h-full min-h-20 backdrop-blur-md ${
+        className={`group relative z-10 h-full min-h-20 backdrop-blur-md ${
           isDisabled
             ? 'cursor-not-allowed opacity-70'
             : nodeId === data.id
@@ -123,7 +180,7 @@ const CustomNode = ({
               : 'hover:border-primary/50 hover:bg-primary/5 cursor-pointer hover:shadow-md'
         }`}>
         {/* {menuOptions && menuOptions(data)} */}
-        <CardHeader className='w-64 flex-row justify-between gap-0 pb-2'>
+        <CardHeader className='w-64 flex-row items-start justify-between gap-0 pb-2'>
           <div className='flex min-w-0 items-center gap-x-3'>
             <span className='shrink-0'>{serviceIcon(data)}</span>
 
@@ -142,6 +199,7 @@ const CustomNode = ({
               )}
             </div>
           </div>
+          <NodeMenu />
         </CardHeader>
 
         <CardContent className='pt-0 pb-3'>
