@@ -71,6 +71,11 @@ export const updateEC2InstanceSchema = z.object({
   securityGroupsIds: z.array(z.string()).optional(),
 })
 
+export const upgradeEC2InstanceTypeSchema = z.object({
+  serverId: z.string(),
+  instanceType: z.string().min(1, 'Instance type is required'),
+})
+
 export const checkAWSConnectionSchema = z.object({
   accessKeyId: z.string().min(1, 'Access Key ID is required'),
   secretAccessKey: z.string().min(1, 'Secret Access Key is required'),
