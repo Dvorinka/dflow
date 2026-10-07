@@ -503,7 +503,7 @@ export interface Server {
       }[]
     | null;
   onboarded?: boolean | null;
-  provider: 'digitalocean' | 'aws' | 'gcp' | 'azure' | 'dflow' | 'other';
+  provider: 'digitalocean' | 'aws' | 'gcp' | 'azure' | 'other';
   cloudProviderAccount?: (string | null) | CloudProviderAccount;
   /**
    * AWS EC2 instance details
@@ -575,32 +575,6 @@ export interface Server {
     architecture?: string | null;
   };
   /**
-   * dFlow Vps details
-   */
-  dflowVpsDetails?: {
-    orderId?: string | null;
-    instanceId?: number | null;
-    status?:
-      | (
-          | 'provisioning'
-          | 'uninstalled'
-          | 'running'
-          | 'stopped'
-          | 'error'
-          | 'installing'
-          | 'unknown'
-          | 'manual_provisioning'
-          | 'product_not_available'
-          | 'verification_required'
-          | 'rescue'
-          | 'pending_payment'
-          | 'other'
-          | 'reset_password'
-        )
-      | null;
-    next_billing_date?: string | null;
-  };
-  /**
    * Status of the cloud-init process for this server.
    */
   cloudInitStatus?: ('running' | 'other') | null;
@@ -611,10 +585,6 @@ export interface Server {
     status?: ('success' | 'failed' | 'not-checked-yet') | null;
     lastChecked?: string | null;
   };
-  /**
-   * Number of times connection to the server has been attempted (DFlow only).
-   */
-  connectionAttempts?: number | null;
   /**
    * Default build directory for all Dokku applications on this server. Leave empty to use repository root.
    */
@@ -661,10 +631,7 @@ export interface CloudProviderAccount {
   id: string;
   tenant?: (string | null) | Tenant;
   name: string;
-  type: 'dFlow' | 'aws' | 'azure' | 'gcp' | 'digitalocean';
-  dFlowDetails?: {
-    accessToken: string;
-  };
+  type: 'aws' | 'azure' | 'gcp' | 'digitalocean';
   awsDetails?: {
     accessKeyId: string;
     secretAccessKey: string;
@@ -1972,14 +1939,6 @@ export interface ServersSelect<T extends boolean = true> {
         keyName?: T;
         architecture?: T;
       };
-  dflowVpsDetails?:
-    | T
-    | {
-        orderId?: T;
-        instanceId?: T;
-        status?: T;
-        next_billing_date?: T;
-      };
   cloudInitStatus?: T;
   connection?:
     | T
@@ -1987,7 +1946,6 @@ export interface ServersSelect<T extends boolean = true> {
         status?: T;
         lastChecked?: T;
       };
-  connectionAttempts?: T;
   globalBuildPath?: T;
   autoCleanup?:
     | T
@@ -2060,11 +2018,6 @@ export interface CloudProviderAccountsSelect<T extends boolean = true> {
   tenant?: T;
   name?: T;
   type?: T;
-  dFlowDetails?:
-    | T
-    | {
-        accessToken?: T;
-      };
   awsDetails?:
     | T
     | {

@@ -78,7 +78,6 @@ const filterConfig = {
     { value: 'aws', label: 'AWS', icon: ServerIcon },
     { value: 'gcp', label: 'Google Cloud', icon: ServerIcon },
     { value: 'azure', label: 'Azure', icon: ServerIcon },
-    { value: 'dflow', label: 'dFlow', icon: ServerIcon },
     { value: 'other', label: 'Other', icon: ServerIcon },
   ],
   visibility: [

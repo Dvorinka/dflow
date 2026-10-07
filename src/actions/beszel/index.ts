@@ -102,6 +102,9 @@ export const installMonitoringToolsAction = protectedClient
 
       // Get template and configure services
       const template = await fetchBeszelTemplate()
+      if (!template) {
+        throw new Error('Bundled Beszel Agent template not found')
+      }
       const configuredServices = configureTemplateServices(
         template.services,
         config,

@@ -14,7 +14,7 @@ export default function PosthogProvider({
     // skipping posthog loading for development and when telemetry is disabled
     if (
       process.env.NODE_ENV === 'development' ||
-      env.NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED ||
+      env.NEXT_PUBLIC_TELEMETRY_DISABLED ||
       !env.NEXT_PUBLIC_POSTHOG_KEY
     ) {
       return

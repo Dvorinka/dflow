@@ -6,13 +6,6 @@ import {
   uniqueNamesGenerator,
 } from 'unique-names-generator'
 
-export const formatValue = (value: number, currency?: string): string =>
-  Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-    maximumFractionDigits: 2,
-  }).format(value)
-
 export const handleGenerateName = (length: number = 4): string => {
   const numberDictionary = NumberDictionary.generate({ min: 100, max: 999 })
 

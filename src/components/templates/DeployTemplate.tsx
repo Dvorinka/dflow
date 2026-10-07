@@ -56,7 +56,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Template as DFlowTemplateType } from '@/lib/restSDK/types'
+import { CatalogTemplate as DFlowTemplateType } from '@/lib/templates/types'
 import { cn } from '@/lib/utils'
 import { Server, Service, Template } from '@/payload-types'
 import { useArchitectureContext } from '@/providers/ArchitectureProvider'

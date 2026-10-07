@@ -4,15 +4,14 @@ import configPromise from '@payload-config'
 import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 
-import { DFLOW_CONFIG, TEMPLATE_EXPR } from '@/lib/constants'
+import { TEMPLATE_EXPR } from '@/lib/constants'
 import { assertTenantOwnership } from '@/lib/extractID'
 import {
   OFFICIAL_TEMPLATES,
   findBundledTemplate,
 } from '@/lib/officialTemplates'
-import { Template as DFlowTemplate } from '@/lib/restSDK/types'
-import { dFlowRestSdk } from '@/lib/restSDK/utils'
 import { protectedClient, publicClient } from '@/lib/safe-action'
+import { CatalogTemplate } from '@/lib/templates/types'
 import { generateRandomString } from '@/lib/utils'
 import { Project, Server, Service, Template } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'
@@ -25,7 +24,6 @@ import {
   getAllTemplatesSchema,
   getPersonalTemplateByIdSchema,
   getTemplateByIdSchema,
-  publicTemplateSchema,
   updateTemplateSchema,
 } from './validator'
 
@@ -90,58 +88,28 @@ export const deleteTemplateAction = protectedClient
   })
   .inputSchema(DeleteTemplateSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { id, accountId } = clientInput
+    const { id } = clientInput
     const {
       userTenant: { tenant },
       payload,
     } = ctx
-    const { docs: dFlowAccounts } = await payload.find({
-      collection: 'cloudProviderAccounts',
-      pagination: false,
-      where: {
-        and: [
-          { id: { equals: accountId } },
-          { type: { equals: 'dFlow' } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
 
-    if (!dFlowAccounts?.length) {
-      throw new Error('No dFlow account found with the specified ID')
-    }
-
-    const dFlowAccount = dFlowAccounts[0]
-    const token = dFlowAccount.dFlowDetails?.accessToken
-
-    if (!token) {
-      throw new Error('Invalid dFlow account: No access token found')
-    }
     const response = await payload.update({
       collection: 'templates',
-      id,
+      where: {
+        and: [{ id: { equals: id } }, { 'tenant.slug': { equals: tenant.slug } }],
+      },
       data: {
         deletedAt: new Date().toISOString(),
       },
     })
 
-    if (response.isPublished && response.publishedTemplateId) {
-      await dFlowRestSdk.delete(
-        {
-          collection: 'templates',
-          id: response.publishedTemplateId,
-        },
-        {
-          headers: {
-            Authorization: `${DFLOW_CONFIG.AUTH_SLUG} API-Key ${token}`,
-          },
-        },
-      )
-    }
-    if (response) {
+    if (response?.docs?.length) {
       revalidatePath(`${tenant.slug}/templates`)
       return { deleted: true }
     }
+
+    throw new Error('Template not found')
   })
 
 export const getTemplateByIdAction = protectedClient
@@ -210,10 +178,9 @@ export const updateTemplateAction = protectedClient
     return response
   })
 
-// Official/community templates are served from the local catalog (#218) —
-// the upstream dflow.sh catalog is no longer reachable, so seeded local
-// documents are now the source of truth. The remote community catalog is
-// still merged best-effort in case it ever comes back.
+// Official/community templates come from this instance only: the bundled
+// catalog plus documents in the local `templates` collection marked with a
+// `type` (#218).
 export const getAllOfficialTemplatesAction = publicClient
   .metadata({ actionName: 'getAllOfficialTemplatesAction' })
   .inputSchema(getAllTemplatesSchema)
@@ -229,26 +196,13 @@ export const getAllOfficialTemplatesAction = publicClient
       },
     })
 
-    // Components type the catalog by the remote SDK shape; local docs are
-    // structurally compatible.
-    const local = localTemplates as unknown as DFlowTemplate[]
+    const local = localTemplates as unknown as CatalogTemplate[]
 
     if (type === 'official') {
       return [...OFFICIAL_TEMPLATES, ...local]
     }
 
-    try {
-      const res = await dFlowRestSdk.find({
-        collection: 'templates',
-        limit: 1000,
-        where: {
-          type: { equals: 'community' },
-        },
-      })
-      return [...local, ...res.docs]
-    } catch {
-      return local
-    }
+    return local
   })
 
 export const getPersonalTemplatesAction = protectedClient
@@ -286,267 +240,11 @@ export const getOfficialTemplateByIdAction = publicClient
     const bundled = findBundledTemplate(templateId)
     if (bundled) return bundled
 
-    try {
-      return (await payload.findByID({
-        collection: 'templates',
-        id: templateId,
-        depth: 3,
-      })) as unknown as DFlowTemplate
-    } catch {
-      // not a local document id — try the remote catalog
-    }
-
-    const templateDetails = await dFlowRestSdk.findByID({
+    return (await payload.findByID({
       collection: 'templates',
       id: templateId,
-    })
-
-    return templateDetails
-  })
-
-export const publishTemplateAction = protectedClient
-  .metadata({
-    actionName: 'publishTemplateAction',
-  })
-  .inputSchema(publicTemplateSchema)
-  .action(async ({ ctx, clientInput }) => {
-    const {
-      userTenant: { tenant },
-      payload,
-    } = ctx
-
-    const { accountId, templateId } = clientInput
-
-    const { docs: dFlowAccounts } = await payload.find({
-      collection: 'cloudProviderAccounts',
-      pagination: false,
-      where: {
-        and: [
-          { id: { equals: accountId } },
-          { type: { equals: 'dFlow' } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-
-    if (!dFlowAccounts?.length) {
-      throw new Error('No dFlow account found with the specified ID')
-    }
-
-    const dFlowAccount = dFlowAccounts[0]
-    const token = dFlowAccount.dFlowDetails?.accessToken
-
-    if (!token) {
-      throw new Error('Invalid dFlow account: No access token found')
-    }
-
-    const { docs: templates } = await payload.find({
-      collection: 'templates',
-      where: {
-        and: [
-          { id: { equals: templateId } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-
-    const template = templates.at(0)
-    if (!template) {
-      throw new Error('Invalid templateId: No access template.')
-    }
-
-    const response = await dFlowRestSdk.create(
-      {
-        collection: 'templates',
-        data: {
-          name: template.name,
-          description: template.description,
-          imageUrl: template.imageUrl,
-          services: template.services,
-        },
-      },
-      {
-        headers: {
-          Authorization: `${DFLOW_CONFIG.AUTH_SLUG} API-Key ${token}`,
-        },
-      },
-    )
-
-    if (response) {
-      try {
-        await payload.update({
-          collection: 'templates',
-          id: templateId,
-          data: {
-            isPublished: true,
-            publishedTemplateId: response.id,
-          },
-        })
-      } catch (err) {
-        await dFlowRestSdk.delete(
-          {
-            collection: 'templates',
-            id: response.id,
-          },
-          {
-            headers: {
-              Authorization: `${DFLOW_CONFIG.AUTH_SLUG} API-Key ${token}`,
-            },
-          },
-        )
-        throw new Error('Failed to update template')
-      }
-    }
-    revalidatePath(`/${tenant.slug}/templates`)
-    return { success: true }
-  })
-
-export const unPublishTemplateAction = protectedClient
-  .metadata({
-    actionName: 'unPublishTemplateAction',
-  })
-  .inputSchema(publicTemplateSchema)
-  .action(async ({ ctx, clientInput }) => {
-    const {
-      userTenant: { tenant },
-      payload,
-    } = ctx
-
-    const { accountId, templateId } = clientInput
-
-    const { docs: dFlowAccounts } = await payload.find({
-      collection: 'cloudProviderAccounts',
-      pagination: false,
-      where: {
-        and: [
-          { id: { equals: accountId } },
-          { type: { equals: 'dFlow' } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-
-    if (!dFlowAccounts?.length) {
-      throw new Error('No dFlow account found with the specified ID')
-    }
-
-    const dFlowAccount = dFlowAccounts[0]
-    const token = dFlowAccount.dFlowDetails?.accessToken
-
-    if (!token) {
-      throw new Error('Invalid dFlow account: No access token found')
-    }
-    const { docs: templates } = await payload.find({
-      collection: 'templates',
-      where: {
-        and: [
-          { id: { equals: templateId } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-    const template = templates.at(0)
-    if (!template) {
-      throw new Error('Invalid templateId: No access template.')
-    }
-    const templateData = await payload.update({
-      collection: 'templates',
-      id: templateId,
-      data: {
-        isPublished: false,
-        publishedTemplateId: '',
-      },
-    })
-    if (templateData && template.publishedTemplateId) {
-      await dFlowRestSdk.delete(
-        {
-          collection: 'templates',
-          id: template.publishedTemplateId,
-        },
-        {
-          headers: {
-            Authorization: `${DFLOW_CONFIG.AUTH_SLUG} API-Key ${token}`,
-          },
-        },
-      )
-    }
-    revalidatePath(`/${tenant.slug}/templates`)
-    return { success: true }
-  })
-
-export const syncWithPublicTemplateAction = protectedClient
-  .metadata({
-    actionName: 'syncWithPublicTemplateAction',
-  })
-  .inputSchema(publicTemplateSchema)
-  .action(async ({ ctx, clientInput }) => {
-    const {
-      userTenant: { tenant },
-      payload,
-    } = ctx
-
-    const { accountId, templateId } = clientInput
-
-    const { docs: dFlowAccounts } = await payload.find({
-      collection: 'cloudProviderAccounts',
-      pagination: false,
-      where: {
-        and: [
-          { id: { equals: accountId } },
-          { type: { equals: 'dFlow' } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-
-    if (!dFlowAccounts?.length) {
-      throw new Error('No dFlow account found with the specified ID')
-    }
-
-    const dFlowAccount = dFlowAccounts[0]
-    const token = dFlowAccount.dFlowDetails?.accessToken
-
-    if (!token) {
-      throw new Error('Invalid dFlow account: No access token found')
-    }
-    const { docs: templates } = await payload.find({
-      collection: 'templates',
-      where: {
-        and: [
-          { id: { equals: templateId } },
-          { 'tenant.slug': { equals: tenant?.slug } },
-        ],
-      },
-    })
-    const template = templates.at(0)
-    if (!template) {
-      throw new Error('Invalid templateId: No access to template.')
-    }
-
-    try {
-      await dFlowRestSdk.update(
-        {
-          collection: 'templates',
-          id: template.publishedTemplateId!,
-          data: {
-            name: template.name,
-            description: template.description,
-            imageUrl: template.imageUrl,
-            services: template.services,
-          },
-        },
-        {
-          headers: {
-            Authorization: `${DFLOW_CONFIG.AUTH_SLUG} API-Key ${token}`,
-          },
-        },
-      )
-      revalidatePath(`/${tenant.slug}/templates`)
-      return { success: true }
-    } catch (error) {
-      console.error('Error syncing with public template:', error)
-      throw new Error('Failed to sync with public template')
-    }
+      depth: 3,
+    })) as unknown as CatalogTemplate
   })
 
 export const templateDeployAction = protectedClient

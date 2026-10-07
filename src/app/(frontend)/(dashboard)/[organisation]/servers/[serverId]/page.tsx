@@ -19,8 +19,6 @@ import RefreshButton from '@/components/RefreshButton'
 import SidebarToggleButton from '@/components/SidebarToggleButton'
 import UpdateManualServerFrom from '@/components/servers/AttachCustomServerForm'
 import CloudInitStatusBanner from '@/components/servers/CloudInitStatusBanner'
-import ConnectingStatusBanner from '@/components/servers/ConnectingStatusBanner'
-import ConnectionErrorBanner from '@/components/servers/ConnectionErrorBanner'
 import UpdateEC2InstanceForm from '@/components/servers/CreateEC2InstanceForm'
 import Danger from '@/components/servers/Danger'
 import DanglingVolumesCard from '@/components/servers/DanglingVolumesCard'
@@ -35,7 +33,6 @@ import KubernetesTab from '@/components/servers/KubernetesTab'
 import Packages from '@/components/servers/Packages'
 import PluginsList from '@/components/servers/PluginsList'
 import { ProjectsAndServicesSection } from '@/components/servers/ProjectsAndServices'
-import ProvisioningBanner from '@/components/servers/ProvisioningBanner'
 import ServerDetails from '@/components/servers/ServerDetails'
 import ServerQueuesTab from '@/components/servers/ServerQueuesTab'
 import UpdateTailscaleServerForm from '@/components/servers/UpdateTailscaleServerForm'
@@ -390,55 +387,12 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
 
   // Get complete server status logic
   const getServerStatus = (server: ServerType) => {
-    const isDflow = server?.provider?.toLowerCase() === 'dflow'
-    const dflowStatus = server.dflowVpsDetails?.status
-    const connectionAttempts = server.connectionAttempts ?? 0
     const connectionStatus = server.connection?.status || 'unknown'
     const isConnected = connectionStatus === 'success'
     const isOnboarded = server.onboarded === true
     const isCloudInitRunning = server.cloudInitStatus === 'running'
 
-    // 1. DFlow provisioning state
-    if (isDflow && dflowStatus === 'provisioning') {
-      return {
-        type: 'provisioning' as const,
-        bannerProps: {
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 2. DFlow connecting state (attempting to connect)
-    if (
-      isDflow &&
-      dflowStatus === 'running' &&
-      connectionAttempts < 30 &&
-      connectionStatus === 'not-checked-yet'
-    ) {
-      return {
-        type: 'connecting' as const,
-        bannerProps: {
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 3. Connection error state (30+ attempts failed)
-    if (
-      isDflow &&
-      dflowStatus === 'running' &&
-      connectionAttempts >= 30 &&
-      connectionStatus === 'not-checked-yet'
-    ) {
-      return {
-        type: 'connection-error' as const,
-        bannerProps: {
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 4. Disconnected state (non-DFlow or general connection failure)
+    // 1. Disconnected state
     if (!isConnected) {
       return {
         type: 'disconnected' as const,
@@ -448,7 +402,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       }
     }
 
-    // 5. Cloud-init running state
+    // 2. Cloud-init running state
     if (isConnected && isCloudInitRunning) {
       return {
         type: 'cloud-init' as const,
@@ -458,7 +412,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       }
     }
 
-    // 6. Onboarding required state
+    // 3. Onboarding required state
     if (isConnected && !isCloudInitRunning && !isOnboarded) {
       return {
         type: 'onboarding' as const,
@@ -468,7 +422,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       }
     }
 
-    // 7. dpkg locked state (after onboarding check)
+    // 4. dpkg locked state (after onboarding check)
     if (
       isConnected &&
       !isCloudInitRunning &&
@@ -483,7 +437,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       }
     }
 
-    // 8. Onboarded but dpkg locked
+    // 5. Onboarded but dpkg locked
     if (
       isConnected &&
       !isCloudInitRunning &&
@@ -524,38 +478,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
     syncSearchParams['onboarding-reset'] === '1' && server.onboarded !== true
 
   const renderContent = () => {
-    // 1. Show provisioning banner for DFlow provisioning state
-    if (serverStatus.type === 'provisioning') {
-      return (
-        <BannerLayout server={server}>
-          <ProvisioningBanner
-            serverName={serverStatus.bannerProps?.serverName}
-          />
-        </BannerLayout>
-      )
-    }
-
-    // 2. Show connection attempts banner for DFlow connecting state
-    if (serverStatus.type === 'connecting') {
-      return (
-        <BannerLayout server={server}>
-          <ConnectingStatusBanner {...serverStatus.bannerProps} />
-        </BannerLayout>
-      )
-    }
-
-    // 3. Show connection error banner for connection error state
-    if (serverStatus.type === 'connection-error') {
-      return (
-        <BannerLayout server={server}>
-          <ConnectionErrorBanner
-            serverName={serverStatus.bannerProps?.serverName}
-          />
-        </BannerLayout>
-      )
-    }
-
-    // 4. Show cloud-init banner for cloud-init running state
+    // 1. Show cloud-init banner for cloud-init running state
     if (serverStatus.type === 'cloud-init') {
       return (
         <BannerLayout server={server}>
@@ -567,7 +490,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       )
     }
 
-    // 5. Show dpkg lock banner for dpkg-locked state
+    // 2. Show dpkg lock banner for dpkg-locked state
     if (serverStatus.type === 'dpkg-locked') {
       return (
         <BannerLayout server={server}>
@@ -576,7 +499,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       )
     }
 
-    // 6. In renderContent, show a simple Alert for dpkg-locked-onboarded, but do not block the rest of the UI
+    // 3. In renderContent, show a simple Alert for dpkg-locked-onboarded, but do not block the rest of the UI
     if (serverStatus.type === 'dpkg-locked-onboarded') {
       return (
         <div className='space-y-6'>
@@ -596,7 +519,7 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
       )
     }
 
-    // 7. Show onboarding for onboarding required state
+    // 4. Show onboarding for onboarding required state
     if (serverStatus.type === 'onboarding') {
       return (
         <BannerLayout server={server}>

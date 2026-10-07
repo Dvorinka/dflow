@@ -4,8 +4,8 @@ import { Payload } from 'payload'
 import { BeszelClient } from '@/lib/beszel/client/BeszelClient'
 import { Collections } from '@/lib/beszel/types'
 import { pub } from '@/lib/redis'
-import { Template as DFlowTemplateType } from '@/lib/restSDK/types'
-import { dFlowRestSdk } from '@/lib/restSDK/utils'
+import { findBundledTemplateByName } from '@/lib/officialTemplates'
+import { CatalogTemplate } from '@/lib/templates/types'
 import { sendEvent } from '@/lib/sendEvent'
 import { generateRandomString } from '@/lib/utils'
 import { ServerType } from '@/payload-types-overrides'
@@ -195,24 +195,14 @@ export async function setupBeszelSystem(
  * Fetch the official Beszel Agent template
  */
 export async function fetchBeszelTemplate() {
-  const { docs: templates } = await dFlowRestSdk.find({
-    collection: 'templates',
-    where: {
-      and: [
-        { name: { equals: 'Beszel Agent' } },
-        { type: { equals: 'official' } },
-      ],
-    },
-  })
-
-  return templates[0]
+  return findBundledTemplateByName('Beszel Agent')
 }
 
 /**
  * Configure template services with Beszel environment variables
  */
 export function configureTemplateServices(
-  services: DFlowTemplateType['services'],
+  services: CatalogTemplate['services'],
   config: any,
   token?: string,
 ) {
@@ -274,7 +264,7 @@ export async function generateUniqueServiceName(
 export async function processServices(
   payload: Payload,
   project: any,
-  templateServices: DFlowTemplateType['services'],
+  templateServices: CatalogTemplate['services'],
   tenantId: string,
   serverId: string,
 ) {

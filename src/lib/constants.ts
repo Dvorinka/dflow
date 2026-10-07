@@ -122,12 +122,6 @@ export const databaseOptions = [
   },
 ]
 
-export const DFLOW_CONFIG = {
-  URL: 'https://dflow.sh',
-  DOMAIN: 'dflow.sh',
-  AUTH_SLUG: 'users',
-}
-
 export const WILD_CARD_DOMAINS = ['nip.io', 'sslip.io']
 export const borderRadius = {
   none: `0rem`,

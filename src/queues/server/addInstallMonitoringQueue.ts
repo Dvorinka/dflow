@@ -8,7 +8,7 @@ import { BeszelClient } from '@/lib/beszel/client/BeszelClient'
 import { Collections, CreateSystemData } from '@/lib/beszel/types'
 import { getQueue, getWorker } from '@/lib/bullmq'
 import { jobOptions, pub, queueConnection } from '@/lib/redis'
-import { dFlowRestSdk } from '@/lib/restSDK/utils'
+import { findBundledTemplateByName } from '@/lib/officialTemplates'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
 import { generateRandomString } from '@/lib/utils'
 import { Project, Server, Service, User } from '@/payload-types'
@@ -207,17 +207,8 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
           serverId: serverDetails.id,
         })
 
-        // Fetch the official Beszel Agent template from the API
-        const { docs: templates } = await dFlowRestSdk.find({
-          collection: 'templates',
-          where: {
-            and: [
-              { name: { equals: 'Beszel Agent' } },
-              { type: { equals: 'official' } },
-            ],
-          },
-        })
-        const template = templates.at(0)
+        // Fetch the bundled Beszel Agent template
+        const template = findBundledTemplateByName('Beszel Agent')
 
         sendEvent({
           pub,

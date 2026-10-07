@@ -1,6 +1,6 @@
 'use client'
 
-import { handleGenerateName } from '../servers/dflowVpsForm/utils'
+import { handleGenerateName } from '@/lib/generateName'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2, WandSparkles } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'

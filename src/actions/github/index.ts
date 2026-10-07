@@ -1,35 +1,36 @@
 'use server'
 
-import { dFlowRestSdk } from '@/lib/restSDK/utils'
+import { unstable_cache } from 'next/cache'
+
 import { publicClient } from '@/lib/safe-action'
+
+const GITHUB_REPO = process.env.GITHUB_REPO ?? 'Dvorinka/dflow'
+
+const getRepoStars = unstable_cache(
+  async () => {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}`, {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+
+    if (!res.ok) {
+      throw new Error(`GitHub API responded with ${res.status}`)
+    }
+
+    const data = await res.json()
+    return data.stargazers_count as number
+  },
+  ['github-repo-stars', GITHUB_REPO],
+  { revalidate: 3600 },
+)
 
 export const getGithubStarsAction = publicClient
   .metadata({
     actionName: 'getGithubStarsAction',
   })
   .action(async () => {
-    const res = await dFlowRestSdk.findGlobal({
-      slug: 'github',
-      depth: 2,
-      draft: false,
-    })
-
-    const stars = res.githubStars
-
-    return {
-      stars,
+    try {
+      return { stars: await getRepoStars() }
+    } catch {
+      return { stars: null }
     }
-  })
-
-export const getTermsUpdatedDateAction = publicClient
-  .metadata({
-    actionName: 'getTermsUpdatedDateAction',
-  })
-  .action(async () => {
-    const res = await dFlowRestSdk.findGlobal({
-      slug: 'terms',
-      depth: 2,
-      draft: false,
-    })
-    return res
   })

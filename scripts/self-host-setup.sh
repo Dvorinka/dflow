@@ -72,7 +72,7 @@ confirm_or_abort() {
     '' \
     '=====================================================' \
     '        🚀 Welcome dFlow self-host setup 🚀' \
-    '        🌐 Website:    https://dflow.sh  ' \
+    '        🌐 GitHub:    https://github.com/Dvorinka/dflow  ' \
     '=====================================================' \
     ''
 }
@@ -93,7 +93,7 @@ printf "${PURPLE}⛓️  Tailscale setup${NC}\n"
 printf "${GRAY}Sign-up for a free account at https://tailscale.com${NC}\n\n"
 
 printf "Access Control:\n"
-printf "${GRAY}▬ Go to Access Control tab, select JSON Editor option paste the configuration: https://github.com/dflow-sh/dflow/blob/main/TAILSCALE.md ${NC}\n"
+printf "${GRAY}▬ Go to Access Control tab, select JSON Editor option paste the configuration: https://github.com/Dvorinka/dflow/blob/main/TAILSCALE.md ${NC}\n"
 confirm_or_abort "Have you updated the Access Control settings? [y/n]:"
 printf "\n"
 

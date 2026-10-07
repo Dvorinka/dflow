@@ -8,7 +8,6 @@ import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import RefreshButton from '@/components/RefreshButton'
 import SidebarToggleButton from '@/components/SidebarToggleButton'
 import ServerCard from '@/components/servers/ServerCard'
-import SyncDFlow from '@/components/servers/SyncDFlow'
 import {
   CreateServerButtonSkeleton,
   ServersSkeleton,
@@ -77,8 +76,6 @@ const ServersPage = async ({ params, searchParams }: PageProps) => {
           <RefreshButton />
 
           <Suspense fallback={<CreateServerButtonSkeleton />}>
-            <SyncDFlow />
-
             <Link href={`/${syncParams.organisation}/servers/add-new-server`}>
               <Button variant={'default'}>
                 <Plus size={16} />

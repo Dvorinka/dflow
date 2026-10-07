@@ -104,7 +104,6 @@ export type CreateTemplateSchemaType = z.infer<typeof createTemplateSchema>
 
 export const DeleteTemplateSchema = z.object({
   id: z.string(),
-  accountId: z.string(),
 })
 
 export const getPersonalTemplateByIdSchema = z.object({
@@ -233,9 +232,4 @@ export type DeployTemplateWithProjectCreateType = z.infer<
 
 export const getTemplateByIdSchema = z.object({
   templateId: z.string(),
-})
-
-export const publicTemplateSchema = z.object({
-  templateId: z.string(),
-  accountId: z.string({ message: 'select an account to publish' }),
 })

@@ -9,21 +9,19 @@ import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import PersonalTemplates from '@/components/templates/PersonalTemplates'
 import TemplateCard from '@/components/templates/TemplateCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Template as TemplateType } from '@/lib/restSDK/types'
-import { CloudProviderAccount, Template } from '@/payload-types'
+import { CatalogTemplate as TemplateType } from '@/lib/templates/types'
+import { Template } from '@/payload-types'
 
 const Templates = ({
   personalTemplates,
   officialTemplates,
   communityTemplates,
   serverError,
-  accounts,
 }: {
   personalTemplates: Template[] | undefined
   officialTemplates: TemplateType[] | undefined
   communityTemplates: TemplateType[] | undefined
   serverError: string | undefined
-  accounts: CloudProviderAccount[] | undefined
 }) => {
   const searchParams = useSearchParams()
   const activeTab = searchParams.get('tab') || 'official'
@@ -160,10 +158,7 @@ const Templates = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}>
-            <PersonalTemplates
-              templates={personalTemplates}
-              accounts={accounts || []}
-            />
+            <PersonalTemplates templates={personalTemplates} />
           </motion.div>
         ) : (
           <motion.div

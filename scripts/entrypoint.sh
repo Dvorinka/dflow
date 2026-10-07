@@ -58,8 +58,8 @@ readonly NC='\033[0m'
     '          A lightweight developer PaaS  ' \
     '             powered by ⚙️  Dokku' \
     '' \
-    '        🌐 Website:    https://dflow.sh  ' \
-    '        🧪 Dashboard:  https://app.dflow.sh  '
+    '        🌐 GitHub:    https://github.com/Dvorinka/dflow  ' \
+    '    '
     printf '%b\n' \
     '====================================================='
 }

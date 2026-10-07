@@ -95,7 +95,7 @@ const BitbucketForm = ({ service }: { service: Service }) => {
                 <FormControl>
                   <Input
                     type='text'
-                    placeholder='ex: https://github.com/akhil-naidu/dflow'
+                    placeholder='ex: https://github.com/Dvorinka/dflow'
                     {...field}
                     value={field.value || ''}
                   />

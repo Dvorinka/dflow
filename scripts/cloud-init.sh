@@ -273,8 +273,8 @@ setup_motd() {
         '          A lightweight developer PaaS  ' \
         '             powered by ⚙️  Dokku' \
         '' \
-        '        🌐 Website:    https://dflow.sh  ' \
-        '        🧪 Dashboard:  https://app.dflow.sh  ' \
+        '        🌐 GitHub:    https://github.com/Dvorinka/dflow  ' \
+        '    ' \
         '====================================================='
     } > "$MOTD_FILE" 2>/dev/null
     

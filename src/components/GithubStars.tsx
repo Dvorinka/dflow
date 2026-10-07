@@ -16,7 +16,7 @@ const GithubStars = ({
 }) => {
   return (
     <Link
-      href='https://github.com/dflow-sh/dflow'
+      href='https://github.com/Dvorinka/dflow'
       target='_blank'
       rel='noopener noreferrer'
       className='hidden sm:block'>

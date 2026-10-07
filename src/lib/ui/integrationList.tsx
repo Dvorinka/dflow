@@ -6,17 +6,9 @@ import {
   DigitalOcean,
   Docker,
   GoogleCloudPlatform,
-  dFlow,
 } from '@/components/icons'
 
 export const integrationsList = [
-  {
-    label: 'dFlow',
-    icon: dFlow,
-    description: 'Manage your dFlow account & servers',
-    slug: 'dflow',
-    live: true,
-  },
   {
     label: 'Amazon Web Services',
     icon: AmazonWebServices,

@@ -1,6 +1,6 @@
 'use client'
 
-import { handleGenerateName } from '../servers/dflowVpsForm/utils'
+import { handleGenerateName } from '@/lib/generateName'
 import SecretContent from '../ui/blur-reveal'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'

@@ -1,4 +1,4 @@
-import { Template as DFlowTemplate } from '@/lib/restSDK/types'
+import { CatalogTemplate } from '@/lib/templates/types'
 
 // Bundled official template catalog (#218). The upstream dflow.sh catalog
 // is unmaintained, so the community fork ships its own definitions. These
@@ -8,7 +8,7 @@ import { Template as DFlowTemplate } from '@/lib/restSDK/types'
 // {{ db.MYSQL_URI }} / {{ db.MONGO_URI }} / {{ db.REDIS_URI }}, plus
 // {{ secret(len, charset) }} generators. There is no docker-to-docker
 // service discovery, so multi-container apps don't belong here yet.
-export const OFFICIAL_TEMPLATES: DFlowTemplate[] = [
+export const OFFICIAL_TEMPLATES: CatalogTemplate[] = [
   {
     id: 'official:n8n',
     name: 'n8n',
@@ -313,7 +313,47 @@ export const OFFICIAL_TEMPLATES: DFlowTemplate[] = [
       },
     ],
   },
+  {
+    id: 'official:beszel-agent',
+    name: 'Beszel Agent',
+    description: 'Lightweight monitoring agent for the Beszel hub',
+    imageUrl: 'https://beszel.dev/favicon.png',
+    type: 'official',
+    createdAt: '2026-10-07T00:00:00.000Z',
+    updatedAt: '2026-10-07T00:00:00.000Z',
+    services: [
+      {
+        type: 'docker',
+        name: 'beszel-agent',
+        description:
+          'Beszel agent reporting host and container metrics to the hub',
+        dockerDetails: {
+          url: 'henrygd/beszel-agent:latest',
+          ports: [{ hostPort: 45876, containerPort: 45876, scheme: 'http' }],
+        },
+        variables: [
+          { key: 'LISTEN', value: ':45876' },
+          { key: 'KEY', value: '' },
+          { key: 'HUB_URL', value: '' },
+          { key: 'TOKEN', value: '' },
+        ],
+        volumes: [
+          {
+            hostPath: '/var/run/docker.sock',
+            containerPath: '/var/run/docker.sock',
+          },
+          {
+            hostPath: '/var/lib/dokku/data/storage/beszel-agent',
+            containerPath: '/var/lib/beszel-agent',
+          },
+        ],
+      },
+    ],
+  },
 ]
 
 export const findBundledTemplate = (id: string) =>
   OFFICIAL_TEMPLATES.find(t => t.id === id)
+
+export const findBundledTemplateByName = (name: string) =>
+  OFFICIAL_TEMPLATES.find(t => t.name.toLowerCase() === name.toLowerCase())

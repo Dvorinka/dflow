@@ -60,87 +60,12 @@ const ServerCard = ({
 
   // Get complete server status logic
   const getServerStatus = (server: Server) => {
-    const isDflow = server?.provider?.toLowerCase() === 'dflow'
-    const dflowStatus = server.dflowVpsDetails?.status
-    const connectionAttempts = server.connectionAttempts ?? 0
     const connectionStatus = server.connection?.status || 'unknown'
     const isConnected = connectionStatus === 'success'
     const isOnboarded = server.onboarded === true
     const isCloudInitRunning = server.cloudInitStatus === 'running'
 
-    // 1. DFlow provisioning state
-    if (isDflow && dflowStatus === 'provisioning') {
-      return {
-        type: 'provisioning' as const,
-        title: 'Server Provisioning',
-        subtitle: `${server.name ? `"${server.name}"` : 'Your dFlow server'} is being provisioned. This may take a few minutes.`,
-        badge: {
-          variant: 'secondary' as const,
-          text: 'Provisioning',
-          tooltip:
-            'dFlow server is being provisioned. This may take a few minutes.',
-        },
-        borderColor: 'border-l-purple-500 hover:border-l-purple-600',
-        showBanner: true,
-        bannerProps: {
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 2. DFlow connecting state (attempting to connect)
-    if (
-      isDflow &&
-      dflowStatus === 'running' &&
-      connectionAttempts < 30 &&
-      connectionStatus === 'not-checked-yet'
-    ) {
-      return {
-        type: 'connecting' as const,
-        title: 'Connecting to Server',
-        subtitle: `${server.name ? `"${server.name}"` : 'Your dFlow server'} is being connected. This may take a few minutes.`,
-        badge: {
-          variant: 'secondary' as const,
-          text: 'Connecting',
-          tooltip:
-            'Attempting to connect to the server. This may take a few minutes.',
-        },
-        borderColor: 'border-l-blue-500 hover:border-l-blue-600',
-        showBanner: true,
-        bannerProps: {
-          attempts: connectionAttempts,
-          maxAttempts: 30,
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 3. Connection error state (30+ attempts failed)
-    if (
-      isDflow &&
-      dflowStatus === 'running' &&
-      connectionAttempts >= 30 &&
-      connectionStatus === 'not-checked-yet'
-    ) {
-      return {
-        type: 'connection-error' as const,
-        title: 'Connection Issue Detected',
-        subtitle: `${server.name ? `"${server.name}"` : 'Your server'} could not be connected after multiple attempts.`,
-        badge: {
-          variant: 'destructive' as const,
-          text: 'Connection Error',
-          tooltip:
-            'Server could not be connected after multiple attempts. Please contact support.',
-        },
-        borderColor: 'border-l-red-500 hover:border-l-red-600',
-        showBanner: true,
-        bannerProps: {
-          serverName: server.name,
-        },
-      }
-    }
-
-    // 4. Disconnected state (non-DFlow or general connection failure)
+    // 1. Disconnected state
     if (!isConnected) {
       return {
         type: 'disconnected' as const,
@@ -159,7 +84,7 @@ const ServerCard = ({
       }
     }
 
-    // 5. Cloud-init running state
+    // 2. Cloud-init running state
     if (isConnected && isCloudInitRunning) {
       return {
         type: 'cloud-init' as const,
@@ -179,7 +104,7 @@ const ServerCard = ({
       }
     }
 
-    // 6. Onboarding required state
+    // 3. Onboarding required state
     if (isConnected && !isCloudInitRunning && !isOnboarded) {
       return {
         type: 'onboarding' as const,
@@ -198,7 +123,7 @@ const ServerCard = ({
       }
     }
 
-    // 7. dpkg locked state (after onboarding check)
+    // 4. dpkg locked state (after onboarding check)
     // if (
     //   isConnected &&
     //   !isCloudInitRunning &&
@@ -223,7 +148,7 @@ const ServerCard = ({
     //   }
     // }
 
-    // 8. Onboarded but dpkg locked
+    // 5. Onboarded but dpkg locked
     // if (
     //   isConnected &&
     //   !isCloudInitRunning &&
@@ -248,7 +173,7 @@ const ServerCard = ({
     //   }
     // }
 
-    // 9. Connected and ready state
+    // 6. Connected and ready state
     if (isConnected && !isCloudInitRunning && isOnboarded) {
       return {
         type: 'connected' as const,
@@ -352,15 +277,11 @@ const ServerCard = ({
   // Get appropriate icon for the status badge
   const getStatusIcon = () => {
     switch (serverStatus.type) {
-      case 'provisioning':
-      case 'connecting':
-        return Cloud
       case 'cloud-init':
         return Settings
       case 'onboarding':
         return AlertCircle
       case 'disconnected':
-      case 'connection-error':
         return WifiOff
       case 'connected':
         return null
@@ -566,43 +487,11 @@ const ServerCard = ({
                   <span>Source</span>
                 </div>
                 <Badge variant='secondary' className='text-xs'>
-                  {server?.provider.toLowerCase() === 'dflow'
-                    ? 'Created via Dflow Cloud'
-                    : 'Manually Added'}
+                  {server?.provider.toLowerCase() === 'other'
+                    ? 'Manually Added'
+                    : 'Cloud Provisioned'}
                 </Badge>
               </div>
-
-              {/* Dflow Expiry Date */}
-              {server?.provider.toLowerCase() === 'dflow' &&
-                server?.dflowVpsDetails?.next_billing_date && (
-                  <div className='flex items-center justify-between'>
-                    <div className='text-muted-foreground flex items-center gap-2 text-sm'>
-                      <Calendar className='h-4 w-4' />
-                      <span>Next Billing</span>
-                    </div>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className='text-muted-foreground z-10 cursor-help text-sm'>
-                            {format(
-                              server?.dflowVpsDetails?.next_billing_date,
-                              'MMM d, yyyy',
-                            )}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            Dflow instance expires on{' '}
-                            {format(
-                              server?.dflowVpsDetails?.next_billing_date,
-                              'MMM d, yyyy',
-                            )}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
             </div>
           </CardContent>
         </Card>

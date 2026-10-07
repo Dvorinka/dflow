@@ -84,24 +84,8 @@ export const getActionAccess = {
   removeUserFromTeamAction: ['team.delete'],
   generateInviteLinkAction: ['team.update'],
 
-  // dFlow cloud actions
+  // cloud provider account actions
   getCloudProvidersAccountsAction: ['cloudProviderAccounts.read'],
-  syncDflowServersAction: [
-    'servers.read',
-    'servers.create',
-    'cloudProviderAccounts.read',
-  ],
-  connectDFlowAccountAction: ['cloudProviderAccounts.create'],
-  checkAccountConnection: ['cloudProviderAccounts.read'],
-  createVPSOrderAction: [
-    'servers.create',
-    'cloudProviderAccounts.read',
-    'sshKeys.read',
-  ],
-  checkPaymentMethodAction: ['cloudProviderAccounts.read'],
-  deleteDFlowAccountAction: ['cloudProviderAccounts.delete'],
-  getDflowUser: ['cloudProviderAccounts.read'],
-  updateDFlowAccountAction: ['cloudProviderAccounts.update'],
 
   // AWS cloud actions
   createEC2InstanceAction: [

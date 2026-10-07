@@ -5,7 +5,6 @@ import { User } from '@/payload-types'
 import { isAdmin } from '@/payload/access/isAdmin'
 
 import { ensureUniqueIP } from './hooks/ensureUniqueIP'
-import { nextBillingDateAfterRead } from './hooks/nextBillingDate'
 import { populateServerDetails } from './hooks/populateServerDetails'
 
 const pluginFields: Field[] = [
@@ -67,11 +66,7 @@ export const Servers: CollectionConfig = {
     readVersions: isAdmin,
   },
   hooks: {
-    afterRead: [
-      populateServerDetails,
-      nextBillingDateAfterRead,
-      // populateDflowVpsDetails,
-    ],
+    afterRead: [populateServerDetails],
     afterChange: [
       async ({ doc, previousDoc, operation, req }) => {
         const { payload, user } = req
@@ -459,10 +454,6 @@ export const Servers: CollectionConfig = {
           value: 'azure',
         },
         {
-          label: 'dFlow',
-          value: 'dflow',
-        },
-        {
           label: 'Other',
           value: 'other',
         },
@@ -636,52 +627,6 @@ export const Servers: CollectionConfig = {
       ],
     },
     {
-      name: 'dflowVpsDetails',
-      type: 'group',
-      admin: {
-        condition: data => data.provider === 'dflow',
-        description: 'dFlow Vps details',
-        position: 'sidebar',
-      },
-      fields: [
-        {
-          name: 'orderId',
-          type: 'text',
-          label: 'Order ID',
-        },
-        {
-          name: 'instanceId',
-          type: 'number',
-          label: 'Instance Id',
-        },
-        {
-          name: 'status',
-          type: 'select',
-          options: [
-            { label: 'Provisioning', value: 'provisioning' },
-            { label: 'Uninstalled', value: 'uninstalled' },
-            { label: 'Running', value: 'running' },
-            { label: 'Stopped', value: 'stopped' },
-            { label: 'Error', value: 'error' },
-            { label: 'Installing', value: 'installing' },
-            { label: 'Unknown', value: 'unknown' },
-            { label: 'Manual Provisioning', value: 'manual_provisioning' },
-            { label: 'Product Not Available', value: 'product_not_available' },
-            { label: 'Verification Required', value: 'verification_required' },
-            { label: 'Rescue', value: 'rescue' },
-            { label: 'Pending Payment', value: 'pending_payment' },
-            { label: 'Other', value: 'other' },
-            { label: 'Reset Password', value: 'reset_password' },
-          ],
-        },
-        {
-          name: 'next_billing_date',
-          type: 'date',
-          label: 'Next Billing Date',
-        },
-      ],
-    },
-    {
       name: 'cloudInitStatus',
       type: 'select',
       label: 'Cloud Init Status',
@@ -735,27 +680,6 @@ export const Servers: CollectionConfig = {
           },
         },
       ],
-    },
-    {
-      name: 'connectionAttempts',
-      type: 'number',
-      label: 'Connection Attempts',
-      defaultValue: 0,
-      admin: {
-        position: 'sidebar',
-        description:
-          'Number of times connection to the server has been attempted (DFlow only).',
-        condition: data => data.provider === 'dflow',
-      },
-      hooks: {
-        beforeValidate: [
-          args => {
-            const { value, data } = args || {}
-
-            return data?.provider === 'dflow' ? (value ?? 0) : undefined
-          },
-        ],
-      },
     },
     {
       name: 'globalBuildPath',

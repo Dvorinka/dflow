@@ -2,7 +2,6 @@ import LayoutClient from '../layout.client'
 import { Plus, Puzzle } from 'lucide-react'
 import Link from 'next/link'
 
-import { getCloudProvidersAccountsAction } from '@/actions/cloud'
 import {
   getAllOfficialTemplatesAction,
   getPersonalTemplatesAction,
@@ -26,10 +25,6 @@ const page = async ({ params }: PageProps) => {
     type: 'community',
   })
 
-  const accounts = await getCloudProvidersAccountsAction({
-    type: 'dFlow',
-  })
-
   return (
     <LayoutClient>
       <section>
@@ -50,7 +45,6 @@ const page = async ({ params }: PageProps) => {
         </div>
 
         <Templates
-          accounts={accounts?.data}
           communityTemplates={communityTemplates?.data}
           officialTemplates={officialTemplates?.data}
           personalTemplates={personalTemplates?.data}

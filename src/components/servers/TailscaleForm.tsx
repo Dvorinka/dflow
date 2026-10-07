@@ -29,7 +29,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
-import { handleGenerateName } from './dflowVpsForm/utils'
+import { handleGenerateName } from '@/lib/generateName'
 
 type TailscaleFormData = z.infer<typeof createTailscaleServerSchema>
 

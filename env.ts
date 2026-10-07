@@ -39,7 +39,7 @@ export const env = createEnv({
     // Unset = sync disabled. Example: "app.dflow.sh"
     NEXT_PUBLIC_AUTH_SYNC_DOMAINS: z.string().optional(),
     NEXT_PUBLIC_WEBHOOK_URL: z.string().url().optional(),
-    NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED: z.literal('1').optional(),
+    NEXT_PUBLIC_TELEMETRY_DISABLED: z.literal('1').optional(),
     NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: z.string().min(1).optional(),
     NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: z.string().min(1).optional(),
     NEXT_PUBLIC_PROXY_DOMAIN_URL: z.string().optional(),
@@ -57,8 +57,8 @@ export const env = createEnv({
     DATABASE_URI: process.env.DATABASE_URI,
     PAYLOAD_SECRET: process.env.PAYLOAD_SECRET,
     REDIS_URI: process.env.REDIS_URI,
-    NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED:
-      process.env.NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED,
+    NEXT_PUBLIC_TELEMETRY_DISABLED:
+      process.env.NEXT_PUBLIC_TELEMETRY_DISABLED,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_SENDER_EMAIL: process.env.RESEND_SENDER_EMAIL,
     RESEND_SENDER_NAME: process.env.RESEND_SENDER_NAME,
