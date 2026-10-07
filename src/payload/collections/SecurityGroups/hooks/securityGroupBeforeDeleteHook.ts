@@ -1,6 +1,7 @@
-import { DeleteSecurityGroupCommand, EC2Client } from '@aws-sdk/client-ec2'
+import { DeleteSecurityGroupCommand } from '@aws-sdk/client-ec2'
 import { CollectionBeforeDeleteHook } from 'payload'
 
+import { createEC2Client } from '@/lib/aws/ec2Client'
 import { awsRegions } from '@/lib/constants'
 
 export const securityGroupBeforeDeleteHook: CollectionBeforeDeleteHook =
@@ -53,21 +54,20 @@ export const securityGroupBeforeDeleteHook: CollectionBeforeDeleteHook =
         return
       }
 
-      const { accessKeyId, secretAccessKey } = account.awsDetails || {}
+      const { accessKeyId, secretAccessKey, authMethod } =
+        account.awsDetails || {}
 
-      if (!accessKeyId || !secretAccessKey) {
+      if (authMethod !== 'ambient' && (!accessKeyId || !secretAccessKey)) {
         console.warn(
           '[SecurityGroup Delete] AWS credentials missing in cloud provider account.',
         )
         return
       }
 
-      const ec2Client = new EC2Client({
+      const ec2Client = createEC2Client({
         region: awsRegions?.[0]?.value || 'ap-south-1',
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-        },
+        accessKeyId,
+        secretAccessKey,
       })
 
       await ec2Client.send(

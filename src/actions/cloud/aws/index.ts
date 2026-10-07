@@ -4,7 +4,6 @@ import {
   DescribeImagesCommand,
   DescribeInstancesCommand,
   DescribeKeyPairsCommand,
-  EC2Client,
   ImportKeyPairCommand,
   ModifyInstanceAttributeCommand,
   RunInstancesCommand,
@@ -18,6 +17,7 @@ import configPromise from '@payload-config'
 import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 
+import { createEC2Client } from '@/lib/aws/ec2Client'
 import { awsRegions } from '@/lib/constants'
 import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
@@ -103,12 +103,10 @@ export const createEC2InstanceAction = protectedClient
       ctx.userTenant.tenant.id,
       'SSH key',
     )
-    const ec2Client = new EC2Client({
+    const ec2Client = createEC2Client({
       region,
-      credentials: {
-        accessKeyId: awsAccountDetails.awsDetails?.accessKeyId!,
-        secretAccessKey: awsAccountDetails.awsDetails?.secretAccessKey!,
-      },
+      accessKeyId: awsAccountDetails.awsDetails?.accessKeyId,
+      secretAccessKey: awsAccountDetails.awsDetails?.secretAccessKey,
     })
 
     const describeKeysCommand = new DescribeKeyPairsCommand()
@@ -291,7 +289,7 @@ export const connectAWSAccountAction = protectedClient
   })
   .inputSchema(connectAWSAccountSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { accessKeyId, secretAccessKey, name } = clientInput
+    const { accessKeyId, secretAccessKey, name, authMethod } = clientInput
     const { userTenant, payload } = ctx
     let response: CloudProviderAccount
 
@@ -300,6 +298,7 @@ export const connectAWSAccountAction = protectedClient
       data: {
         type: 'aws',
         awsDetails: {
+          authMethod,
           accessKeyId,
           secretAccessKey,
         },
@@ -317,7 +316,7 @@ export const updateAWSAccountAction = protectedClient
   })
   .inputSchema(updateAWSAccountSchema)
   .action(async ({ clientInput, ctx }) => {
-    const { accessKeyId, secretAccessKey, name, id } = clientInput
+    const { accessKeyId, secretAccessKey, name, id, authMethod } = clientInput
     const { userTenant, payload } = ctx
     let response: CloudProviderAccount
 
@@ -337,6 +336,7 @@ export const updateAWSAccountAction = protectedClient
       data: {
         type: 'aws',
         awsDetails: {
+          authMethod,
           accessKeyId,
           secretAccessKey,
         },
@@ -425,12 +425,10 @@ export const updateEC2InstanceAction = protectedClient
     }
 
     // Initialize EC2 client
-    const ec2Client = new EC2Client({
+    const ec2Client = createEC2Client({
       region: awsRegions.at(0)?.value || 'us-east-1',
-      credentials: {
-        accessKeyId: awsAccountDetails.awsDetails.accessKeyId,
-        secretAccessKey: awsAccountDetails.awsDetails.secretAccessKey,
-      },
+      accessKeyId: awsAccountDetails.awsDetails?.accessKeyId,
+      secretAccessKey: awsAccountDetails.awsDetails?.secretAccessKey,
     })
 
     // Process security groups
@@ -545,41 +543,48 @@ export const checkAWSAccountConnection = protectedClient
   })
   .inputSchema(checkAWSConnectionSchema)
   .action(async ({ clientInput }) => {
-    const { accessKeyId, secretAccessKey, region = 'us-east-1' } = clientInput
+    const {
+      accessKeyId,
+      secretAccessKey,
+      region = 'us-east-1',
+      authMethod,
+    } = clientInput
 
     try {
-      // Validate credentials format
-      if (
-        !accessKeyId ||
-        typeof accessKeyId !== 'string' ||
-        accessKeyId.trim() === ''
-      ) {
-        return {
-          isConnected: false,
-          accountInfo: null,
-          error: 'Invalid or missing AWS Access Key ID',
+      if (authMethod !== 'ambient') {
+        // Validate credentials format
+        if (
+          !accessKeyId ||
+          typeof accessKeyId !== 'string' ||
+          accessKeyId.trim() === ''
+        ) {
+          return {
+            isConnected: false,
+            accountInfo: null,
+            error: 'Invalid or missing AWS Access Key ID',
+          }
+        }
+
+        if (
+          !secretAccessKey ||
+          typeof secretAccessKey !== 'string' ||
+          secretAccessKey.trim() === ''
+        ) {
+          return {
+            isConnected: false,
+            accountInfo: null,
+            error: 'Invalid or missing AWS Secret Access Key',
+          }
         }
       }
 
-      if (
-        !secretAccessKey ||
-        typeof secretAccessKey !== 'string' ||
-        secretAccessKey.trim() === ''
-      ) {
-        return {
-          isConnected: false,
-          accountInfo: null,
-          error: 'Invalid or missing AWS Secret Access Key',
-        }
-      }
-
-      // Initialize EC2 client with provided credentials
-      const ec2Client = new EC2Client({
+      // With authMethod 'ambient' (or no keys) the SDK default credential
+      // chain is used: env vars, shared config, instance/container role,
+      // or web-identity token (AWS_ROLE_ARN + AWS_WEB_IDENTITY_TOKEN_FILE).
+      const ec2Client = createEC2Client({
         region,
-        credentials: {
-          accessKeyId: accessKeyId.trim(),
-          secretAccessKey: secretAccessKey.trim(),
-        },
+        accessKeyId,
+        secretAccessKey,
       })
 
       // Perform a simple API call to test connectivity
@@ -603,6 +608,18 @@ export const checkAWSAccountConnection = protectedClient
       }
     } catch (error: any) {
       console.error('AWS account connection check failed:', error)
+
+      if (
+        error.name === 'CredentialsProviderError' ||
+        error.name === 'ProviderError'
+      ) {
+        return {
+          isConnected: false,
+          accountInfo: null,
+          error:
+            'No AWS credentials found in the environment. Set AWS_* env vars, configure ~/.aws, attach an instance/container role, or provide AWS_ROLE_ARN + AWS_WEB_IDENTITY_TOKEN_FILE.',
+        }
+      }
 
       // Handle specific AWS error types
       if (
@@ -725,13 +742,17 @@ export const listUbuntuAmisAction = protectedClient
     const accessKeyId = awsAccountDetails.awsDetails?.accessKeyId
     const secretAccessKey = awsAccountDetails.awsDetails?.secretAccessKey
 
-    if (!accessKeyId || !secretAccessKey) {
+    if (
+      awsAccountDetails.awsDetails?.authMethod !== 'ambient' &&
+      (!accessKeyId || !secretAccessKey)
+    ) {
       throw new Error('AWS account credentials not found')
     }
 
-    const ec2Client = new EC2Client({
+    const ec2Client = createEC2Client({
       region,
-      credentials: { accessKeyId, secretAccessKey },
+      accessKeyId,
+      secretAccessKey,
     })
 
     const response = await ec2Client.send(
@@ -838,13 +859,17 @@ export const upgradeEC2InstanceTypeAction = protectedClient
 
     const accessKeyId = awsAccountDetails?.awsDetails?.accessKeyId
     const secretAccessKey = awsAccountDetails?.awsDetails?.secretAccessKey
-    if (!accessKeyId || !secretAccessKey) {
+    if (
+      awsAccountDetails?.awsDetails?.authMethod !== 'ambient' &&
+      (!accessKeyId || !secretAccessKey)
+    ) {
       throw new Error('AWS account credentials not found')
     }
 
-    const ec2Client = new EC2Client({
+    const ec2Client = createEC2Client({
       region: region || 'us-east-1',
-      credentials: { accessKeyId, secretAccessKey },
+      accessKeyId,
+      secretAccessKey,
     })
 
     const { Reservations } = await ec2Client.send(

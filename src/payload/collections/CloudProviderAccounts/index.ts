@@ -50,11 +50,39 @@ export const CloudProviderAccounts: CollectionConfig = {
         condition: data => data.type === 'aws',
       },
       fields: [
-        encryptedField({ name: 'accessKeyId', type: 'text', required: true }),
+        {
+          name: 'authMethod',
+          type: 'select',
+          defaultValue: 'keys',
+          options: [
+            { label: 'Access keys', value: 'keys' },
+            {
+              label: 'Ambient credentials (instance role, OIDC, env)',
+              value: 'ambient',
+            },
+          ],
+        },
+        encryptedField({
+          name: 'accessKeyId',
+          type: 'text',
+          validate: (
+            value: string | null | undefined,
+            { siblingData }: any,
+          ) => {
+            if (siblingData?.authMethod === 'ambient') return true
+            return value?.trim() ? true : 'Access Key ID is required'
+          },
+        }),
         encryptedField({
           name: 'secretAccessKey',
           type: 'text',
-          required: true,
+          validate: (
+            value: string | null | undefined,
+            { siblingData }: any,
+          ) => {
+            if (siblingData?.authMethod === 'ambient') return true
+            return value?.trim() ? true : 'Secret Access Key is required'
+          },
         }),
       ],
     },

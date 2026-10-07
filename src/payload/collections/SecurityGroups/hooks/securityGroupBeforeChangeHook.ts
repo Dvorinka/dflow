@@ -6,13 +6,13 @@ import {
   DeleteTagsCommand,
   DescribeSecurityGroupRulesCommand,
   DescribeTagsCommand,
-  EC2Client,
   ModifySecurityGroupRulesCommand,
   RevokeSecurityGroupEgressCommand,
   RevokeSecurityGroupIngressCommand,
 } from '@aws-sdk/client-ec2'
 import { APIError, CollectionBeforeChangeHook } from 'payload'
 
+import { createEC2Client } from '@/lib/aws/ec2Client'
 import { awsRegions } from '@/lib/constants'
 import { SecurityGroup } from '@/payload-types'
 
@@ -167,14 +167,18 @@ export const securityGroupBeforeChangeHook: CollectionBeforeChangeHook<
     const accessKeyId = cloudProviderAccounts?.awsDetails?.accessKeyId
     const secretAccessKey = cloudProviderAccounts?.awsDetails?.secretAccessKey
 
-    if (!accessKeyId || !secretAccessKey) {
+    if (
+      cloudProviderAccounts?.awsDetails?.authMethod !== 'ambient' &&
+      (!accessKeyId || !secretAccessKey)
+    ) {
       throw new Error('AWS credentials missing')
     }
 
     const region = awsRegions?.[0]?.value || 'ap-south-1'
-    const ec2Client = new EC2Client({
+    const ec2Client = createEC2Client({
       region,
-      credentials: { accessKeyId, secretAccessKey },
+      accessKeyId,
+      secretAccessKey,
     })
 
     // Create new security group if needed

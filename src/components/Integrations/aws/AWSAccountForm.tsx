@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CloudProviderAccount } from '@/payload-types'
 
 type RefetchType = (input: {
@@ -150,17 +151,29 @@ const AWSAccountForm = ({
     defaultValues: account
       ? {
           name: account.name,
+          authMethod:
+            (account?.awsDetails?.authMethod as 'keys' | 'ambient') ?? 'keys',
           accessKeyId: account?.awsDetails?.accessKeyId ?? '',
           secretAccessKey: account?.awsDetails?.secretAccessKey ?? '',
         }
       : {
           name: '',
+          authMethod: 'keys' as const,
           accessKeyId: '',
           secretAccessKey: '',
         },
   })
 
   const handleTestConnection = () => {
+    const authMethod = form.getValues('authMethod')
+
+    if (authMethod === 'ambient') {
+      setConnectionStatus(null)
+      setHasTestedConnection(false)
+      checkConnection({ authMethod: 'ambient' })
+      return
+    }
+
     const accessKeyId = form.getValues('accessKeyId')
     const secretAccessKey = form.getValues('secretAccessKey')
 
@@ -206,9 +219,12 @@ const AWSAccountForm = ({
     const secretAccessKeyChanged =
       values.secretAccessKey !== initialSecretAccessKey
     const credentialsChanged = accessKeyIdChanged || secretAccessKeyChanged
+    const requiresTest =
+      values.authMethod === 'ambient' || credentialsChanged
 
-    // Only require connection test if credentials changed
-    if (credentialsChanged) {
+    // Require a successful connection test when credentials changed or when
+    // using ambient credentials (nothing stored locally to validate against)
+    if (requiresTest) {
       if (!hasTestedConnection) {
         handleTestConnection()
         return
@@ -233,16 +249,20 @@ const AWSAccountForm = ({
   // - or only name changed (credentials not changed)
   const initialAccessKeyId = account?.awsDetails?.accessKeyId ?? ''
   const initialSecretAccessKey = account?.awsDetails?.secretAccessKey ?? ''
+  const initialAuthMethod = account?.awsDetails?.authMethod ?? 'keys'
   const currentValues = form.watch()
+  const authMethod = currentValues.authMethod ?? 'keys'
   const accessKeyIdChanged = currentValues.accessKeyId !== initialAccessKeyId
   const secretAccessKeyChanged =
     currentValues.secretAccessKey !== initialSecretAccessKey
   const credentialsChanged = accessKeyIdChanged || secretAccessKeyChanged
-  const canSave = credentialsChanged
+  const requiresTest =
+    authMethod === 'ambient' || credentialsChanged || authMethod !== initialAuthMethod
+  const canSave = requiresTest
     ? hasTestedConnection && connectionStatus?.isConnected
     : true
   const showConnectionError =
-    credentialsChanged && hasTestedConnection && !connectionStatus?.isConnected
+    requiresTest && hasTestedConnection && !connectionStatus?.isConnected
 
   return (
     <Dialog onOpenChange={handleDialogOpenChange}>
@@ -304,6 +324,56 @@ const AWSAccountForm = ({
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name='authMethod'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className='text-sm font-medium'>
+                      Authentication
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        value={field.value}
+                        onValueChange={value => {
+                          field.onChange(value)
+                          setConnectionStatus(null)
+                          setHasTestedConnection(false)
+                        }}
+                        className='space-y-2'>
+                        <label className='flex cursor-pointer items-start gap-3 rounded-md border p-3'>
+                          <RadioGroupItem value='keys' className='mt-0.5' />
+                          <span>
+                            <span className='block text-sm font-medium'>
+                              Access keys
+                            </span>
+                            <span className='block text-xs text-muted-foreground'>
+                              IAM access key ID and secret access key
+                            </span>
+                          </span>
+                        </label>
+                        <label className='flex cursor-pointer items-start gap-3 rounded-md border p-3'>
+                          <RadioGroupItem value='ambient' className='mt-0.5' />
+                          <span>
+                            <span className='block text-sm font-medium'>
+                              Ambient credentials
+                            </span>
+                            <span className='block text-xs text-muted-foreground'>
+                              Instance role, ~/.aws, env vars, or OIDC
+                              (AWS_ROLE_ARN + AWS_WEB_IDENTITY_TOKEN_FILE) —
+                              nothing is stored in dFlow
+                            </span>
+                          </span>
+                        </label>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {authMethod === 'keys' && (
+                <>
               <FormField
                 control={form.control}
                 name='accessKeyId'
@@ -371,6 +441,18 @@ const AWSAccountForm = ({
                   </FormItem>
                 )}
               />
+                </>
+              )}
+
+              {authMethod === 'ambient' && (
+                <Alert>
+                  <AlertDescription className='text-xs text-muted-foreground'>
+                    Credentials are resolved from the environment at call time:
+                    AWS_* env vars, shared config, EC2/ECS metadata, or an OIDC
+                    web-identity token. The IAM identity needs EC2 permissions.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             {/* Connection Test Section */}
@@ -391,8 +473,9 @@ const AWSAccountForm = ({
                   onClick={handleTestConnection}
                   disabled={
                     isCheckingConnection ||
-                    !form.getValues('accessKeyId')?.trim() ||
-                    !form.getValues('secretAccessKey')?.trim()
+                    (authMethod === 'keys' &&
+                      (!form.getValues('accessKeyId')?.trim() ||
+                        !form.getValues('secretAccessKey')?.trim()))
                   }
                   className='shrink-0'>
                   {isCheckingConnection ? (

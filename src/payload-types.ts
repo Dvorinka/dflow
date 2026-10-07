@@ -656,8 +656,9 @@ export interface CloudProviderAccount {
   name: string;
   type: 'aws' | 'azure' | 'gcp' | 'digitalocean' | 'hetzner';
   awsDetails?: {
-    accessKeyId: string;
-    secretAccessKey: string;
+    authMethod?: ('keys' | 'ambient') | null;
+    accessKeyId?: string | null;
+    secretAccessKey?: string | null;
   };
   gcpDetails?: {
     /**
@@ -2068,6 +2069,7 @@ export interface CloudProviderAccountsSelect<T extends boolean = true> {
   awsDetails?:
     | T
     | {
+        authMethod?: T;
         accessKeyId?: T;
         secretAccessKey?: T;
       };

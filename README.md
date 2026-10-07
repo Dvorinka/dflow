@@ -86,11 +86,30 @@ Then open the app, create your admin account, and add a server:
   auto-authorize, connect over the mesh IP.
 - **Hetzner Cloud** — provision servers directly from your Hetzner
   account (API token in Integrations → Cloud Providers).
-- **AWS** — provision EC2 instances from your cloud-provider account.
+- **AWS** — provision EC2 instances using stored access keys *or*
+  ambient credentials (instance role, shared config, or OIDC
+  web-identity via `AWS_ROLE_ARN` + `AWS_WEB_IDENTITY_TOKEN_FILE`) —
+  nothing is stored for ambient accounts.
 
 Every attached server gets Dokku installed automatically over SSH — the
 only requirements are Ubuntu/Debian and SSH access. See
 [`docs/`](./docs) and the in-app documentation.
+
+### Migrating from Railway
+
+`scripts/migrate-railway.ts` pulls a Railway project's services,
+environment variables, sources, and domains via the Railway public API
+and recreates them on a target dFlow instance:
+
+```bash
+npx tsx scripts/migrate-railway.ts \
+  --railway-token <token> --project <id-or-name> \
+  --dflow-url https://dflow.example.com --api-key <payload-api-key> \
+  --tenant <tenant-slug> --server <server-id> --dry-run
+```
+
+Drop `--dry-run` to write. Database data and volumes are not migrated —
+dump and restore manually.
 
 <br/>
 

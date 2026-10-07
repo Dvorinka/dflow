@@ -1,17 +1,59 @@
 import { z } from 'zod'
 
-export const connectAWSAccountSchema = z.object({
-  accessKeyId: z.string().min(1),
-  secretAccessKey: z.string().min(1),
-  name: z.string().min(1),
-})
+const awsAuthMethodSchema = z.enum(['keys', 'ambient']).default('keys')
 
-export const updateAWSAccountSchema = z.object({
-  accessKeyId: z.string().min(1),
-  secretAccessKey: z.string().min(1),
-  name: z.string().min(1),
-  id: z.string(),
-})
+export const connectAWSAccountSchema = z
+  .object({
+    authMethod: awsAuthMethodSchema,
+    accessKeyId: z.string().optional().default(''),
+    secretAccessKey: z.string().optional().default(''),
+    name: z.string().min(1),
+  })
+  .superRefine((data, ctx) => {
+    if (data.authMethod === 'keys') {
+      if (!data.accessKeyId.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['accessKeyId'],
+          message: 'Access Key ID is required',
+        })
+      }
+      if (!data.secretAccessKey.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['secretAccessKey'],
+          message: 'Secret Access Key is required',
+        })
+      }
+    }
+  })
+
+export const updateAWSAccountSchema = z
+  .object({
+    authMethod: awsAuthMethodSchema,
+    accessKeyId: z.string().optional().default(''),
+    secretAccessKey: z.string().optional().default(''),
+    name: z.string().min(1),
+    id: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.authMethod === 'keys') {
+      if (!data.accessKeyId.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['accessKeyId'],
+          message: 'Access Key ID is required',
+        })
+      }
+      if (!data.secretAccessKey.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['secretAccessKey'],
+          message: 'Secret Access Key is required',
+        })
+      }
+    }
+  })
 
 export const deleteAWSAccountSchema = z.object({
   id: z.string(),
@@ -77,8 +119,9 @@ export const upgradeEC2InstanceTypeSchema = z.object({
 })
 
 export const checkAWSConnectionSchema = z.object({
-  accessKeyId: z.string().min(1, 'Access Key ID is required'),
-  secretAccessKey: z.string().min(1, 'Secret Access Key is required'),
+  authMethod: z.enum(['keys', 'ambient']).optional().default('keys'),
+  accessKeyId: z.string().optional().default(''),
+  secretAccessKey: z.string().optional().default(''),
   region: z.string().optional().default('us-east-1'),
 })
 
