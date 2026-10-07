@@ -6,12 +6,23 @@ import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Switch } from '../ui/switch'
 import {
+  ArrowRightLeft,
+  BarChart3,
+  Clock,
+  Container,
+  Copy,
+  Database,
   Download,
   LucideIcon,
+  Network,
+  Pin,
   Plug2,
   RefreshCcw,
   Settings,
+  ShieldCheck,
   Trash2,
+  Wrench,
+  Zap,
 } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { useParams } from 'next/navigation'
@@ -75,6 +86,25 @@ const iconMapping: {
   redis: Redis,
   mysql: MySQL,
   clickhouse: ClickHouse,
+  couchdb: Database,
+  elasticsearch: Database,
+  meilisearch: Database,
+  memcached: Database,
+  rethinkdb: Database,
+  omnisci: Database,
+  solr: Database,
+  typesense: Database,
+  nats: Zap,
+  pushpin: Pin,
+  'http-auth': ShieldCheck,
+  maintenance: Wrench,
+  redirect: ArrowRightLeft,
+  registry: Container,
+  graphite: BarChart3,
+  'scheduler-kubernetes': Network,
+  'scheduler-nomad': Network,
+  'cron-restart': Clock,
+  'copy-files-to-image': Copy,
 }
 
 const PluginCard = ({
