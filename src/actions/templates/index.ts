@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { DFLOW_CONFIG, TEMPLATE_EXPR } from '@/lib/constants'
+import { assertTenantOwnership } from '@/lib/extractID'
 import { dFlowRestSdk } from '@/lib/restSDK/utils'
 import { protectedClient, publicClient } from '@/lib/safe-action'
 import { generateRandomString } from '@/lib/utils'
@@ -171,14 +172,26 @@ export const updateTemplateAction = protectedClient
   .inputSchema(updateTemplateSchema)
   .action(async ({ clientInput, ctx }) => {
     const { id, name, services, description, imageUrl } = clientInput
-    const { payload } = ctx
+    const {
+      payload,
+      userTenant: { tenant },
+    } = ctx
 
     const response = await payload.update({
       collection: 'templates',
       where: {
-        id: {
-          equals: id,
-        },
+        and: [
+          {
+            id: {
+              equals: id,
+            },
+          },
+          {
+            'tenant.slug': {
+              equals: tenant.slug,
+            },
+          },
+        ],
       },
       data: {
         name,
@@ -542,13 +555,14 @@ export const templateDeployAction = protectedClient
         }
       }
 
-      const { version } = (await payload.findByID({
+      const { version, tenant: serverTenant } = (await payload.findByID({
         collection: 'servers',
         id: projectData?.serverId!,
         context: {
           populateServerDetails: true,
         },
       })) as ServerType
+      assertTenantOwnership(serverTenant, tenant.id, 'Server')
 
       if (!version || version === 'not-installed') {
         throw new Error('Dokku is not installed!')
@@ -606,6 +620,7 @@ export const templateDeployAction = protectedClient
           },
         },
       })
+      assertTenantOwnership(project.tenant, ctx.userTenant.tenant.id, 'Project')
       projectDetails = project
     }
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { extractSSHDetails } from '@/lib/ssh'
 import { addInstallNetdataQueue } from '@/queues/netdata/install'
@@ -24,6 +25,7 @@ export const installNetdataAction = protectedClient
       id: serverId,
       depth: 5,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     // Set up SSH connection details
     const sshDetails = extractSSHDetails({ server })
@@ -65,6 +67,11 @@ export const uninstallNetdataAction = protectedClient
       id: serverId,
       depth: 1,
     })
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
 
     const sshDetails = extractSSHDetails({ server: serverDetails })
     const uninstallResponse = await addUninstallNetdataQueue({

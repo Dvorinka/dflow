@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 
 import {
@@ -73,6 +74,9 @@ export const updateRolePermissionsAction = protectedClient
     if (isAdminRole) {
       throw new Error('Admin role updates are not allowed.')
     }
+
+    const existing = await payload.findByID({ collection: 'roles', id })
+    assertTenantOwnership(existing.tenant, tenant.id, 'Role')
 
     const response = await payload.update({
       collection: 'roles',
@@ -179,6 +183,9 @@ export const deleteRoleAction = protectedClient
     if (isAdminRole) {
       throw new Error('Admin role deletions are not allowed.')
     }
+
+    const existing = await payload.findByID({ collection: 'roles', id })
+    assertTenantOwnership(existing.tenant, tenant.id, 'Role')
 
     const response = await payload.update({
       collection: 'roles',

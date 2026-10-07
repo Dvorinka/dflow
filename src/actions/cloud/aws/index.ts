@@ -15,7 +15,7 @@ import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 
 import { awsRegions } from '@/lib/constants'
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { CloudProviderAccount } from '@/payload-types'
 
@@ -83,11 +83,21 @@ export const createEC2InstanceAction = protectedClient
       collection: 'cloudProviderAccounts',
       id: accountId,
     })
+    assertTenantOwnership(
+      awsAccountDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     const sshKeyDetails = await payload.findByID({
       collection: 'sshKeys',
       id: sshKeyId,
     })
+    assertTenantOwnership(
+      sshKeyDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'SSH key',
+    )
     const ec2Client = new EC2Client({
       region,
       credentials: {
@@ -116,9 +126,10 @@ export const createEC2InstanceAction = protectedClient
       collection: 'securityGroups',
       pagination: false,
       where: {
-        id: {
-          in: securityGroupIds,
-        },
+        and: [
+          { id: { in: securityGroupIds } },
+          { 'tenant.slug': { equals: tenant.slug } },
+        ],
       },
     })
 
@@ -305,6 +316,16 @@ export const updateAWSAccountAction = protectedClient
     const { userTenant, payload } = ctx
     let response: CloudProviderAccount
 
+    const existingAccount = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id,
+    })
+    assertTenantOwnership(
+      existingAccount.tenant,
+      userTenant.tenant.id,
+      'Cloud provider account',
+    )
+
     response = await payload.update({
       collection: 'cloudProviderAccounts',
       id,
@@ -326,9 +347,20 @@ export const deleteAWSAccountAction = protectedClient
     actionName: 'deleteAWSAccountAction',
   })
   .inputSchema(deleteAWSAccountSchema)
-  .action(async ({ clientInput }) => {
+  .action(async ({ clientInput, ctx }) => {
     const { id } = clientInput
+    const { userTenant } = ctx
     const payload = await getPayload({ config: configPromise })
+
+    const existingAccount = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id,
+    })
+    assertTenantOwnership(
+      existingAccount.tenant,
+      userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     const response = await payload.update({
       collection: 'cloudProviderAccounts',
@@ -346,7 +378,7 @@ export const updateEC2InstanceAction = protectedClient
     actionName: 'updateEC2InstanceAction',
   })
   .inputSchema(updateEC2InstanceSchema)
-  .action(async ({ clientInput }) => {
+  .action(async ({ clientInput, ctx }) => {
     const {
       serverId,
       instanceId,
@@ -363,6 +395,7 @@ export const updateEC2InstanceAction = protectedClient
       collection: 'servers',
       id: clientInput.serverId,
     })
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
 
     if (!server) {
       throw new Error(`Server with ID ${clientInput.serverId} not found`)
@@ -373,6 +406,11 @@ export const updateEC2InstanceAction = protectedClient
       collection: 'cloudProviderAccounts',
       id: accountId,
     })
+    assertTenantOwnership(
+      awsAccountDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     if (
       !awsAccountDetails?.awsDetails?.accessKeyId ||
@@ -395,9 +433,10 @@ export const updateEC2InstanceAction = protectedClient
       collection: 'securityGroups',
       pagination: false,
       where: {
-        id: {
-          in: securityGroupsIds,
-        },
+        and: [
+          { id: { in: securityGroupsIds } },
+          { 'tenant.slug': { equals: ctx.userTenant.tenant.slug } },
+        ],
       },
     })
 
@@ -672,6 +711,11 @@ export const listUbuntuAmisAction = protectedClient
       collection: 'cloudProviderAccounts',
       id: accountId,
     })
+    assertTenantOwnership(
+      awsAccountDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     const accessKeyId = awsAccountDetails.awsDetails?.accessKeyId
     const secretAccessKey = awsAccountDetails.awsDetails?.secretAccessKey
@@ -714,7 +758,10 @@ export const listUbuntuAmisAction = protectedClient
       if (!match || !image.ImageId) continue
       const version = match[1]
       const created = image.CreationDate ?? ''
-      if (!latestByVersion.has(version) || created > (latestByVersion.get(version)?.created ?? '')) {
+      if (
+        !latestByVersion.has(version) ||
+        created > (latestByVersion.get(version)?.created ?? '')
+      ) {
         latestByVersion.set(version, {
           label: `Ubuntu Server ${version} LTS`,
           value: image.ImageId,

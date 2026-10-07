@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { getQueue } from '@/lib/bullmq'
+import { assertTenantOwnership } from '@/lib/extractID'
 import { queueConnection } from '@/lib/redis'
 import { protectedClient } from '@/lib/safe-action'
 
@@ -27,6 +28,7 @@ export const createDeploymentAction = protectedClient
       serviceId,
       cache,
       tenantSlug: tenant.slug,
+      tenantId: tenant.id,
     })
 
     if (deploymentQueueId) {
@@ -47,7 +49,7 @@ export const cancelDeploymentAction = protectedClient
   .inputSchema(cancelDeploymentSchema)
   .action(async ({ clientInput, ctx }) => {
     const { deploymentId } = clientInput
-    const { payload } = ctx
+    const { payload, userTenant } = ctx
 
     const deployment = await payload.findByID({
       collection: 'deployments',
@@ -70,6 +72,11 @@ export const cancelDeploymentAction = protectedClient
             id: deployment.service,
             depth: 2,
           })
+    assertTenantOwnership(
+      (service as { tenant?: unknown }).tenant,
+      userTenant.tenant.id,
+      'Service',
+    )
     const project = (service as { project?: unknown }).project
     const serverId =
       typeof project === 'object' && project !== null

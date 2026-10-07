@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { adminClient, protectedClient } from '@/lib/safe-action'
 import { getUniqueName } from '@/lib/uniqueName'
 import { ServerType } from '@/payload-types-overrides'
@@ -111,13 +112,14 @@ export const createProjectAction = protectedClient
       }
     }
 
-    const { version } = (await payload.findByID({
+    const { version, tenant: serverTenant } = (await payload.findByID({
       collection: 'servers',
       id: serverId,
       context: {
         populateServerDetails: true,
       },
     })) as ServerType
+    assertTenantOwnership(serverTenant, tenant.id, 'Server')
 
     if (!version) {
       throw new Error('Dokku is not installed!')

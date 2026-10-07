@@ -9,7 +9,7 @@ import { extractID } from 'payload/shared'
 
 import updateRailpack from '@/lib/axios/updateRailpack'
 import { dokku } from '@/lib/dokku'
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient, userClient } from '@/lib/safe-action'
 import { server } from '@/lib/server'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
@@ -21,8 +21,8 @@ import { addInstallRailpackQueue } from '@/queues/builder/installRailpack'
 import { addInstallDokkuQueue } from '@/queues/dokku/install'
 import { addManageServerDomainQueue } from '@/queues/domain/manageGlobal'
 import { addDeleteProjectsQueue } from '@/queues/project/deleteProjects'
-import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { checkServersSSHConnectionQueue } from '@/queues/server/checkSSHConnection'
+import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { addResetServerQueue } from '@/queues/server/reset'
 
 import {
@@ -134,8 +134,8 @@ export const createServerAction = protectedClient
       depth: 0,
       where: {
         and: [
-          { ip: { equals: ip } },
           { tenant: { equals: tenant.id } },
+          { ip: { equals: ip } },
           { deletedAt: { exists: true } },
         ],
       },
@@ -311,7 +311,11 @@ export const updateTailscaleServerAction = protectedClient
   .inputSchema(updateTailscaleServerSchema)
   .action(async ({ clientInput, ctx }) => {
     const { id, ...data } = clientInput
-    const { payload, user } = ctx
+    const { payload, user, userTenant } = ctx
+
+    // payload.update by id bypasses access control — verify tenant first
+    const existing = await payload.findByID({ collection: 'servers', id })
+    assertTenantOwnership(existing.tenant, userTenant.tenant.id, 'Server')
 
     const response = await payload.update({
       id,
@@ -336,7 +340,11 @@ export const updateServerAction = protectedClient
   .inputSchema(updateServerSchema)
   .action(async ({ clientInput, ctx }) => {
     const { id, ...data } = clientInput
-    const { payload, user } = ctx
+    const { payload, user, userTenant } = ctx
+
+    // payload.update by id bypasses access control — verify tenant first
+    const existing = await payload.findByID({ collection: 'servers', id })
+    assertTenantOwnership(existing.tenant, userTenant.tenant.id, 'Server')
 
     const response = await payload.update({
       id,
@@ -353,9 +361,7 @@ export const updateServerAction = protectedClient
 
     const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
     await invalidateServerCache(
-      typeof response.tenant === 'object'
-        ? response.tenant?.slug
-        : undefined,
+      typeof response.tenant === 'object' ? response.tenant?.slug : undefined,
       id,
     )
 
@@ -370,7 +376,10 @@ export const updateServerResourceLimitsAction = protectedClient
   .action(async ({ clientInput, ctx }) => {
     try {
       const { id, defaultResourceLimits } = clientInput
-      const { payload, user } = ctx
+      const { payload, user, userTenant } = ctx
+
+      const existing = await payload.findByID({ collection: 'servers', id })
+      assertTenantOwnership(existing.tenant, userTenant.tenant.id, 'Server')
 
       const response = await payload.update({
         collection: 'servers',
@@ -408,6 +417,11 @@ export const deleteServerAction = protectedClient
     const { id, deleteProjects, deleteBackups } = clientInput
     const { payload, userTenant } = ctx
     const { tenant } = userTenant
+
+    // The cascades below key off this id — verify the server belongs to
+    // the caller's tenant before deleting anything.
+    const serverDoc = await payload.findByID({ collection: 'servers', id })
+    assertTenantOwnership(serverDoc.tenant, tenant.id, 'Server')
 
     // soft delete services
     const { docs: services } = await payload.update({
@@ -492,9 +506,7 @@ export const deleteServerAction = protectedClient
       revalidatePath(`/${userTenant.tenant.slug}/servers`)
       revalidatePath(`/${userTenant.tenant.slug}/servers/${id}`)
 
-      const { invalidateServerCache } = await import(
-        '@/lib/serverDetailsCache'
-      )
+      const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
       await invalidateServerCache(userTenant.tenant.slug, id)
 
       return { deleted: true }
@@ -516,6 +528,11 @@ export const installDokkuAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
     const installationResponse = await addInstallDokkuQueue({
@@ -551,6 +568,11 @@ export const updateDokkuAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
     const installationResponse = await addInstallDokkuQueue({
@@ -588,6 +610,11 @@ export const syncServerAppsAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
     const ssh = await dynamicSSH(sshDetails)
 
@@ -658,6 +685,11 @@ export const getDanglingVolumesAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
     const ssh = await dynamicSSH(sshDetails)
 
@@ -665,10 +697,14 @@ export const getDanglingVolumesAction = protectedClient
       const apps = ((await dokku.apps.list(ssh)) as string[])
         .map(app => app.trim())
         .filter(Boolean)
-      const dirs = await ssh.execCommand(
-        `ls -1 ${DANGLING_STORAGE_PATH}`,
-      )
-      const names = dirs.code === 0 ? dirs.stdout.split('\n').map(d => d.trim()).filter(Boolean) : []
+      const dirs = await ssh.execCommand(`ls -1 ${DANGLING_STORAGE_PATH}`)
+      const names =
+        dirs.code === 0
+          ? dirs.stdout
+              .split('\n')
+              .map(d => d.trim())
+              .filter(Boolean)
+          : []
       const mounted = await listMountedPaths(ssh, apps)
 
       const volumes = []
@@ -728,6 +764,11 @@ export const deleteDanglingVolumeAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
     const ssh = await dynamicSSH(sshDetails)
 
@@ -771,6 +812,7 @@ export const attachDanglingVolumeAction = protectedClient
       depth: 3,
     })
 
+    assertTenantOwnership(service.tenant, ctx.userTenant.tenant.id, 'Service')
     const hostPath = `${DANGLING_STORAGE_PATH}${name}`
     const existing = (service.volumes ?? []) as {
       hostPath: string
@@ -828,6 +870,11 @@ export const executeCommandAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
     const ssh = await dynamicSSH(sshDetails)
 
@@ -835,7 +882,10 @@ export const executeCommandAction = protectedClient
       const result = await Promise.race([
         ssh.execCommand(command),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Command timed out after 30s')), 30000),
+          setTimeout(
+            () => reject(new Error('Command timed out after 30s')),
+            30000,
+          ),
         ),
       ])
 
@@ -881,12 +931,13 @@ export const updateServerDomainAction = protectedClient
     const { payload, userTenant } = ctx
 
     // Fetching server-details for showing previous details
-    const { domains: serverPreviousDomains } = await payload.findByID({
+    const serverDoc = await payload.findByID({
       id,
       collection: 'servers',
     })
+    assertTenantOwnership(serverDoc.tenant, userTenant.tenant.id, 'Server')
 
-    const previousDomains = serverPreviousDomains ?? []
+    const previousDomains = serverDoc.domains ?? []
 
     // for add operation check for duplicate domain check
     if (operation === 'add') {
@@ -969,6 +1020,11 @@ export const installRailpackAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
     const installationResponse = await addInstallRailpackQueue({
@@ -1004,6 +1060,11 @@ export const updateRailpackAction = protectedClient
         depth: 1,
       })
 
+      assertTenantOwnership(
+        serverDetails.tenant,
+        ctx.userTenant.tenant.id,
+        'Server',
+      )
       const sshDetails = extractSSHDetails({ server: serverDetails })
 
       await addInstallRailpackQueue({
@@ -1031,6 +1092,12 @@ export const completeServerOnboardingAction = protectedClient
     const { serverId } = clientInput
     const { payload, userTenant } = ctx
 
+    const serverDoc = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+    })
+    assertTenantOwnership(serverDoc.tenant, userTenant.tenant.id, 'Server')
+
     const response = await payload.update({
       id: serverId,
       data: {
@@ -1052,12 +1119,18 @@ export const getServersAction = protectedClient
     actionName: 'getServersAction',
   })
   .action(async ({ ctx }) => {
-    const { payload } = ctx
+    const {
+      payload,
+      userTenant: { tenant },
+    } = ctx
 
     const { docs } = await payload.find({
       collection: 'servers',
       select: {
         name: true,
+      },
+      where: {
+        'tenant.slug': { equals: tenant.slug },
       },
       pagination: false,
     })
@@ -1131,6 +1204,7 @@ export const syncServerDomainAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
     const sshDetails = extractSSHDetails({ server })
 
     const queueResponse = await addManageServerDomainQueue({
@@ -1560,6 +1634,7 @@ export const configureGlobalBuildDirAction = protectedClient
       depth: 1,
     })
 
+    assertTenantOwnership(server.tenant, ctx.userTenant.tenant.id, 'Server')
     const sshDetails = extractSSHDetails({ server })
     const ssh = await dynamicSSH(sshDetails)
 
@@ -1598,6 +1673,11 @@ export const resetServerAction = protectedClient
       },
     })) as ServerType
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
     const resetServerResult = await addResetServerQueue({
@@ -1624,6 +1704,12 @@ export const resetServerOnboardingAction = protectedClient
   .action(async ({ clientInput, ctx }) => {
     const { serverId } = clientInput
     const { payload, user, userTenant } = ctx
+
+    const serverDoc = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+    })
+    assertTenantOwnership(serverDoc.tenant, userTenant.tenant.id, 'Server')
 
     await payload.update({
       id: serverId,
@@ -1672,6 +1758,11 @@ export const cleanupServerAction = protectedClient
       id: serverId,
     })
 
+    assertTenantOwnership(
+      serverDetails.tenant,
+      ctx.userTenant.tenant.id,
+      'Server',
+    )
     const sshDetails = extractSSHDetails({ server: serverDetails })
 
     const cleanupResult = await addCleanupServerQueue({
@@ -1706,6 +1797,12 @@ export const setServerAutoCleanupAction = protectedClient
       pruneVolumes = false,
     } = clientInput
     const { payload, userTenant } = ctx
+
+    const serverDoc = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+    })
+    assertTenantOwnership(serverDoc.tenant, userTenant.tenant.id, 'Server')
 
     await payload.update({
       collection: 'servers',

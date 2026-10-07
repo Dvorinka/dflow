@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import { DFLOW_CONFIG } from '@/lib/constants'
+import { assertTenantOwnership } from '@/lib/extractID'
 import { dFlowRestSdk } from '@/lib/restSDK/utils'
 import { protectedClient } from '@/lib/safe-action'
 import { Server } from '@/payload-types'
@@ -60,6 +61,11 @@ export const syncDflowServersAction = protectedClient
       collection: 'cloudProviderAccounts',
       id,
     })
+    assertTenantOwnership(
+      account.tenant,
+      ctx.userTenant.tenant.id,
+      'Cloud provider account',
+    )
 
     if (account.type === 'dFlow') {
       const key = account?.dFlowDetails?.accessToken!

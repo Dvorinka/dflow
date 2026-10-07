@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import * as ssh2 from 'ssh2'
 
-import { extractTenantSlug } from '@/lib/extractID'
+import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient, userClient } from '@/lib/safe-action'
 
 import {
@@ -33,10 +33,7 @@ export const createSSHKeyAction = protectedClient
     const { totalDocs } = await payload.count({
       collection: 'sshKeys',
       where: {
-        and: [
-          { name: { equals: name } },
-          { tenant: { equals: tenant.id } },
-        ],
+        and: [{ name: { equals: name } }, { tenant: { equals: tenant.id } }],
       },
     })
 
@@ -71,7 +68,10 @@ export const updateSSHKeyAction = protectedClient
   .inputSchema(updateSSHKeySchema)
   .action(async ({ clientInput, ctx }) => {
     const { id, ...data } = clientInput
-    const { payload, user } = ctx
+    const { payload, user, userTenant } = ctx
+
+    const existing = await payload.findByID({ collection: 'sshKeys', id })
+    assertTenantOwnership(existing.tenant, userTenant.tenant.id, 'SSH key')
 
     const response = await payload.update({
       id,
@@ -100,6 +100,9 @@ export const deleteSSHKeyAction = protectedClient
       userTenant: { tenant },
       payload,
     } = ctx
+
+    const existing = await payload.findByID({ collection: 'sshKeys', id })
+    assertTenantOwnership(existing.tenant, tenant.id, 'SSH key')
 
     const response = await payload.update({
       collection: 'sshKeys',

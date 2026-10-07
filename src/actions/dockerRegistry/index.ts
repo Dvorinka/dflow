@@ -3,6 +3,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { DockerRegistry } from '@/payload-types'
 
@@ -69,7 +70,18 @@ export const updateDockerRegistryAction = protectedClient
   .inputSchema(updateDockerRegistrySchema)
   .action(async ({ clientInput, ctx }) => {
     const { password, username, type, name, id } = clientInput
+    const { userTenant } = ctx
     const payload = await getPayload({ config: configPromise })
+
+    const existing = await payload.findByID({
+      collection: 'dockerRegistries',
+      id,
+    })
+    assertTenantOwnership(
+      existing.tenant,
+      userTenant.tenant.id,
+      'Docker registry',
+    )
 
     let response: DockerRegistry
 
@@ -92,9 +104,20 @@ export const deleteDockerRegistryAction = protectedClient
     actionName: 'deleteDockerRegistryAction',
   })
   .inputSchema(deleteDockerRegistrySchema)
-  .action(async ({ clientInput }) => {
+  .action(async ({ clientInput, ctx }) => {
     const { id } = clientInput
+    const { userTenant } = ctx
     const payload = await getPayload({ config: configPromise })
+
+    const existing = await payload.findByID({
+      collection: 'dockerRegistries',
+      id,
+    })
+    assertTenantOwnership(
+      existing.tenant,
+      userTenant.tenant.id,
+      'Docker registry',
+    )
 
     const response = await payload.update({
       collection: 'dockerRegistries',

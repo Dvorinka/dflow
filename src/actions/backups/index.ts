@@ -5,6 +5,7 @@ import { createProjectAction, createProjectAdminAction } from '../project'
 import { env } from 'env'
 import { BasePayload } from 'payload'
 
+import { assertTenantOwnership } from '@/lib/extractID'
 import { pub } from '@/lib/redis'
 import { adminClient, protectedClient } from '@/lib/safe-action'
 import { sendEvent } from '@/lib/sendEvent'
@@ -18,10 +19,12 @@ const serverBackupMethod = async ({
   payload,
   serverId,
   useAdminProcedure = false,
+  tenantId,
 }: {
   payload: BasePayload
   serverId: string
   useAdminProcedure?: boolean
+  tenantId?: string
 }) => {
   const s3Enabled =
     env.S3_ENDPOINT &&
@@ -40,6 +43,9 @@ const serverBackupMethod = async ({
     id: serverId,
     depth: 1,
   })
+  if (tenantId) {
+    assertTenantOwnership(server.tenant, tenantId, 'Server')
+  }
 
   const tenant =
     server.tenant && typeof server.tenant === 'object'
@@ -233,10 +239,14 @@ export const serverBackupAction = protectedClient
   })
   .inputSchema(dokkuBackupSchema)
   .action(async ({ ctx, clientInput }) => {
-    const { payload } = ctx
+    const { payload, userTenant } = ctx
     const { serverId } = clientInput
 
-    const response = await serverBackupMethod({ payload, serverId })
+    const response = await serverBackupMethod({
+      payload,
+      serverId,
+      tenantId: userTenant.tenant.id,
+    })
     return response
   })
 
