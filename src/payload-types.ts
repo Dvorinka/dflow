@@ -912,7 +912,7 @@ export interface Service {
         default: boolean;
         synced: boolean;
         autoRegenerateSSL?: boolean | null;
-        certificateType?: ('letsencrypt' | 'none') | null;
+        certificateType?: ('letsencrypt' | 'cloudflare-origin' | 'none') | null;
         id?: string | null;
       }[]
     | null;

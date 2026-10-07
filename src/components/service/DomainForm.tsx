@@ -158,6 +158,9 @@ const DomainForm = ({ ip }: { ip: string }) => {
                       <SelectContent>
                         <SelectItem value='none'>None</SelectItem>
                         <SelectItem value='letsencrypt'>Letsencrypt</SelectItem>
+                        <SelectItem value='cloudflare-origin'>
+                          Cloudflare Origin
+                        </SelectItem>
                       </SelectContent>
                     </Select>
 

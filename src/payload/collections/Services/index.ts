@@ -634,6 +634,10 @@ export const Services: CollectionConfig = {
               value: 'letsencrypt',
             },
             {
+              label: 'Cloudflare Origin',
+              value: 'cloudflare-origin',
+            },
+            {
               label: 'None',
               value: 'none',
             },

@@ -7,6 +7,7 @@ import { getPayload } from 'payload'
 
 import traefik from '@/lib/axios/traefik'
 import { getQueue, getWorker } from '@/lib/bullmq'
+import { createOriginCertificate } from '@/lib/cloudflare/origin'
 import { dokku } from '@/lib/dokku'
 import { jobOptions, pub, queueConnection } from '@/lib/redis'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
@@ -19,7 +20,7 @@ interface QueueArgs {
     action: 'add' | 'remove' | 'set'
     domain: string
     name: string
-    certificateType: 'letsencrypt' | 'none'
+    certificateType: 'letsencrypt' | 'cloudflare-origin' | 'none'
     autoRegenerateSSL: boolean
     id: string
     variables: Service['variables']
@@ -306,6 +307,78 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
             const addResponse = await dokku.domains.add(ssh, name, domain)
 
             console.dir({ addResponse }, { depth: null })
+          }
+        }
+
+        if (certificateType === 'cloudflare-origin' && action !== 'remove') {
+          // Cloudflare Origin CA: key + CSR generated on the server, the
+          // certificate is requested from the dFlow host (the service key is
+          // instance-level), then installed via `dokku certs:add`.
+          const certDir = `/tmp/dflow-cert-${name}`
+
+          // domain is interpolated into shell commands below — enforce a
+          // hostname charset so nothing but a valid FQDN reaches the shell
+          if (!/^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?$/.test(domain)) {
+            sendEvent({
+              pub,
+              message: `❌ Invalid domain name for certificate request: ${domain}`,
+              serverId: serverDetails.id,
+            })
+          } else {
+          try {
+            sendEvent({
+              pub,
+              message: `Requesting Cloudflare Origin certificate for ${domain}`,
+              serverId: serverDetails.id,
+            })
+
+            await ssh.execCommand(
+              `mkdir -p ${certDir} && openssl req -new -newkey rsa:2048 -nodes -subj "/CN=${domain}" -keyout ${certDir}/server.key -out ${certDir}/server.csr`,
+            )
+
+            const csrResponse = await ssh.execCommand(
+              `cat ${certDir}/server.csr`,
+            )
+            const csr = csrResponse.stdout
+            if (!csr.includes('CERTIFICATE REQUEST')) {
+              throw new Error('Failed to generate CSR on the server')
+            }
+
+            const { certificate, expiresOn } = await createOriginCertificate({
+              hostnames: [domain],
+              csr,
+            })
+
+            await ssh.execCommand(`cat > ${certDir}/server.crt`, {
+              stdin: certificate,
+            })
+
+            const tarResponse = await ssh.execCommand(
+              `tar -cf ${certDir}/bundle.tar -C ${certDir} server.crt server.key && dokku certs:add ${name} < ${certDir}/bundle.tar`,
+            )
+
+            if (tarResponse.code !== 0) {
+              throw new Error(
+                `dokku certs:add failed — ${tarResponse.stderr || tarResponse.stdout}`,
+              )
+            }
+
+            sendEvent({
+              pub,
+              message: `✅ Cloudflare Origin certificate installed for ${domain} (expires ${expiresOn})`,
+              serverId: serverDetails.id,
+            })
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error)
+            sendEvent({
+              pub,
+              message: `❌ Cloudflare Origin certificate failed for ${domain}: ${message}`,
+              serverId: serverDetails.id,
+            })
+          } finally {
+            await ssh.execCommand(`rm -rf ${certDir}`).catch(() => {})
+          }
           }
         }
 
