@@ -11,9 +11,10 @@ import { deleteAWSAccountAction } from '@/actions/cloud/aws'
 import { CloudProviderAccount } from '@/payload-types'
 
 import AWSAccountForm from './aws/AWSAccountForm'
+import HetznerAccountForm from './hetzner/HetznerAccountForm'
 
 type RefetchType = (input: {
-  type: 'aws' | 'azure' | 'gcp' | 'digitalocean'
+  type: 'aws' | 'azure' | 'gcp' | 'digitalocean' | 'hetzner'
 }) => void
 
 const EditForm = ({
@@ -32,6 +33,16 @@ const EditForm = ({
       </AWSAccountForm>
     )
   }
+
+  if (account.type === 'hetzner') {
+    return (
+      <HetznerAccountForm account={account} refetch={refetch}>
+        <Button size='icon' variant='outline'>
+          <Pencil size={20} />
+        </Button>
+      </HetznerAccountForm>
+    )
+  }
 }
 
 const CloudProviderCard = ({
@@ -46,7 +57,7 @@ const CloudProviderCard = ({
     {
       onSuccess: ({ data }) => {
         if (data?.id) {
-          refetch?.({ type: 'aws' })
+          refetch?.({ type: account.type })
         }
       },
       onError: ({ error }) => {

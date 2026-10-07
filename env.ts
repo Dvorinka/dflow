@@ -20,6 +20,9 @@ export const env = createEnv({
     RESEND_SENDER_NAME: z.string().min(1).optional(),
     TAILSCALE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
     TAILSCALE_TAILNET: z.string().min(1).optional(),
+    // Custom control server (e.g. Headscale). Passed to
+    // `tailscale up --login-server`. Leave unset for tailscale.com.
+    TAILSCALE_LOGIN_SERVER: z.string().url().optional(),
     // NetBird management API (https://netbird.io or self-hosted).
     // Token is a Personal Access Token with setup-keys + peers scope.
     NETBIRD_API_URL: z.string().url().optional(),
@@ -27,6 +30,11 @@ export const env = createEnv({
     // Self-hosted management address passed to `netbird up
     // --management-url`. Leave unset when using api.netbird.io.
     NETBIRD_MANAGEMENT_URL: z.string().url().optional(),
+    // ZeroTier Central API (or self-hosted controller).
+    // Token is a Central API token; network is the 16-char network ID.
+    ZEROTIER_API_URL: z.string().url().optional(),
+    ZEROTIER_API_TOKEN: z.string().min(1).optional(),
+    ZEROTIER_NETWORK_ID: z.string().min(1).optional(),
     BESZEL_MONITORING_URL: z.string().min(1).optional(),
     BESZEL_SUPERUSER_EMAIL: z.string().min(1).optional(),
     BESZEL_SUPERUSER_PASSWORD: z.string().min(1).optional(),
@@ -74,9 +82,13 @@ export const env = createEnv({
     TAILSCALE_OAUTH_CLIENT_SECRET: process.env.TAILSCALE_OAUTH_CLIENT_SECRET,
     TAILSCALE_TAILNET: process.env.TAILSCALE_TAILNET,
     TAILSCALE_AUTH_KEY: process.env.TAILSCALE_AUTH_KEY,
+    TAILSCALE_LOGIN_SERVER: process.env.TAILSCALE_LOGIN_SERVER,
     NETBIRD_API_URL: process.env.NETBIRD_API_URL,
     NETBIRD_API_TOKEN: process.env.NETBIRD_API_TOKEN,
     NETBIRD_MANAGEMENT_URL: process.env.NETBIRD_MANAGEMENT_URL,
+    ZEROTIER_API_URL: process.env.ZEROTIER_API_URL,
+    ZEROTIER_API_TOKEN: process.env.ZEROTIER_API_TOKEN,
+    ZEROTIER_NETWORK_ID: process.env.ZEROTIER_NETWORK_ID,
     NEXT_PUBLIC_PROXY_DOMAIN_URL: process.env.NEXT_PUBLIC_PROXY_DOMAIN_URL,
     NEXT_PUBLIC_PROXY_CNAME: process.env.NEXT_PUBLIC_PROXY_CNAME,
     BESZEL_MONITORING_URL: process.env.BESZEL_MONITORING_URL,

@@ -503,7 +503,7 @@ export interface Server {
       }[]
     | null;
   onboarded?: boolean | null;
-  provider: 'digitalocean' | 'aws' | 'gcp' | 'azure' | 'other';
+  provider: 'digitalocean' | 'aws' | 'hetzner' | 'gcp' | 'azure' | 'other';
   cloudProviderAccount?: (string | null) | CloudProviderAccount;
   /**
    * AWS EC2 instance details
@@ -575,6 +575,29 @@ export interface Server {
     architecture?: string | null;
   };
   /**
+   * Hetzner Cloud server details
+   */
+  hetznerDetails?: {
+    /**
+     * The Hetzner Cloud server ID
+     */
+    serverId?: number | null;
+    /**
+     * The datacenter location (e.g., fsn1, nbg1, hel1)
+     */
+    location?: string | null;
+    /**
+     * The server type (e.g., cx22, cax11)
+     */
+    serverType?: string | null;
+    /**
+     * The OS image used (e.g., ubuntu-24.04)
+     */
+    image?: string | null;
+    publicIp?: string | null;
+    status?: string | null;
+  };
+  /**
    * Status of the cloud-init process for this server.
    */
   cloudInitStatus?: ('running' | 'other') | null;
@@ -631,7 +654,7 @@ export interface CloudProviderAccount {
   id: string;
   tenant?: (string | null) | Tenant;
   name: string;
-  type: 'aws' | 'azure' | 'gcp' | 'digitalocean';
+  type: 'aws' | 'azure' | 'gcp' | 'digitalocean' | 'hetzner';
   awsDetails?: {
     accessKeyId: string;
     secretAccessKey: string;
@@ -648,6 +671,12 @@ export interface CloudProviderAccount {
      * Personal Access Token from DigitalOcean API settings
      */
     accessToken: string;
+  };
+  hetznerDetails?: {
+    /**
+     * Hetzner Cloud API token (Console → Project → Security → API tokens, read+write)
+     */
+    apiToken: string;
   };
   azureDetails?: {
     clientId: string;
@@ -1939,6 +1968,16 @@ export interface ServersSelect<T extends boolean = true> {
         keyName?: T;
         architecture?: T;
       };
+  hetznerDetails?:
+    | T
+    | {
+        serverId?: T;
+        location?: T;
+        serverType?: T;
+        image?: T;
+        publicIp?: T;
+        status?: T;
+      };
   cloudInitStatus?: T;
   connection?:
     | T
@@ -2034,6 +2073,11 @@ export interface CloudProviderAccountsSelect<T extends boolean = true> {
     | T
     | {
         accessToken?: T;
+      };
+  hetznerDetails?:
+    | T
+    | {
+        apiToken?: T;
       };
   azureDetails?:
     | T

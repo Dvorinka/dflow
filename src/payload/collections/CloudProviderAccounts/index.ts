@@ -37,6 +37,7 @@ export const CloudProviderAccounts: CollectionConfig = {
         { label: 'Azure', value: 'azure' },
         { label: 'Google Cloud Platform', value: 'gcp' },
         { label: 'Digital Ocean', value: 'digitalocean' },
+        { label: 'Hetzner Cloud', value: 'hetzner' },
       ],
       required: true,
     },
@@ -96,6 +97,26 @@ export const CloudProviderAccounts: CollectionConfig = {
           type: 'text',
           admin: {
             description: 'Personal Access Token from DigitalOcean API settings',
+          },
+        }),
+      ],
+    },
+
+    // Hetzner Cloud
+    {
+      name: 'hetznerDetails',
+      type: 'group',
+      admin: {
+        condition: data => data.type === 'hetzner',
+      },
+      fields: [
+        encryptedField({
+          name: 'apiToken',
+          required: true,
+          type: 'text',
+          admin: {
+            description:
+              'Hetzner Cloud API token (Console → Project → Security → API tokens, read+write)',
           },
         }),
       ],

@@ -89,9 +89,15 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-printf "${PURPLE}⛓️  Tailscale setup${NC}\n"
-printf "${GRAY}Sign-up for a free account at https://tailscale.com${NC}\n\n"
+printf "${PURPLE}⛓️  Private network setup (optional)${NC}\n"
+printf "${GRAY}dFlow can run inside a Tailscale/Headscale tailnet so managed servers${NC}\n"
+printf "${GRAY}stay reachable over private mesh IPs. Skip if you attach servers over${NC}\n"
+printf "${GRAY}public IPs, NetBird, or ZeroTier instead — those are configured in-app.${NC}\n\n"
+printf "Configure Tailscale for the dFlow app container? [y/n]: "
+read ts_answer < /dev/tty
+printf "\n"
 
+if [ "$ts_answer" = "y" ] || [ "$ts_answer" = "Y" ]; then
 printf "Access Control:\n"
 printf "${GRAY}▬ Go to Access Control tab, select JSON Editor option paste the configuration: https://github.com/Dvorinka/dflow/blob/main/TAILSCALE.md ${NC}\n"
 confirm_or_abort "Have you updated the Access Control settings? [y/n]:"
@@ -99,20 +105,23 @@ printf "\n"
 
 printf "Enter your Tailnet name:\n"
 printf "${GRAY}▬ You can find your Tailnet name in the top header after logging in, example: ${BOLD}johndoe.github${NC}\n"
+printf "${GRAY}▬ Using a self-hosted Headscale server? Enter your tailnet/org name and set TAILSCALE_LOGIN_SERVER in .env afterwards.${NC}\n"
 prompt_with_default "TAILSCALE_TAILNET" ">"
 printf "\n"
 
 printf "Enter your Auth key:\n"
 printf "${GRAY}▬ Go to settings tab, under personal settings tab you'll find Keys option click on that!${NC}\n"
 printf "${GRAY}▬ Click Generate auth key, check Reusable & Ephemeral option's and create key. example: tskey-auth-xxxxxxxx-xxxxxxxxx${NC}\n"
+printf "${GRAY}▬ Headscale: generate one with 'headscale preauthkeys create --reusable --ephemeral'${NC}\n"
 prompt_with_default "TAILSCALE_AUTH_KEY" ">"
 printf "\n"
 
-printf "Enter your OAuth key:\n"
+printf "Enter your OAuth key (optional — needed for API-driven server onboarding):\n"
 printf "${GRAY}▬ Go to settings tab, under tailnet settings tab you'll find OAuth clients option click on that!${NC}\n"
 printf "${GRAY}▬ Click Generate OAuth client, check read option for ALL scopes & check write option for Auth Keys scope, select tag:customer-machine create client. example: tskey-client-xxxxxxx-xxxxxxx${NC}\n"
 prompt_with_default "TAILSCALE_OAUTH_CLIENT_SECRET" ">"
 printf "\n"
+fi
 
 # 2. Ask for Traefik user email
 printf "${PURPLE}✉️  Email configuration${NC}\n"
@@ -145,11 +154,13 @@ if [ -z "$PAYLOAD_SECRET" ]; then
 fi
 
 
+MONGO_INITDB_ROOT_PASSWORD="${MONGO_INITDB_ROOT_PASSWORD:-$(openssl rand -base64 24 | tr -d '=+/' | cut -c1-24)}"
+
 # 5. Create .env file
 cat <<EOF > .env
 # mongodb
 MONGO_INITDB_ROOT_USERNAME=admin
-MONGO_INITDB_ROOT_PASSWORD=password
+MONGO_INITDB_ROOT_PASSWORD=$MONGO_INITDB_ROOT_PASSWORD
 MONGO_DB_NAME=dFlow
 
 # redis
@@ -168,10 +179,19 @@ PAYLOAD_SECRET="$PAYLOAD_SECRET"
 NEXT_PUBLIC_PROXY_DOMAIN_URL="$WILD_CARD_DOMAIN"
 NEXT_PUBLIC_PROXY_CNAME=cname.$WILD_CARD_DOMAIN
 
-# tailscale
+# tailscale (optional — works with tailscale.com or Headscale)
 TAILSCALE_AUTH_KEY="$TAILSCALE_AUTH_KEY"
 TAILSCALE_OAUTH_CLIENT_SECRET="$TAILSCALE_OAUTH_CLIENT_SECRET"
 TAILSCALE_TAILNET="$TAILSCALE_TAILNET"
+TAILSCALE_LOGIN_SERVER=""
+
+# other private-network providers (configured in-app too)
+NETBIRD_API_URL=""
+NETBIRD_API_TOKEN=""
+NETBIRD_MANAGEMENT_URL=""
+ZEROTIER_API_URL=""
+ZEROTIER_API_TOKEN=""
+ZEROTIER_NETWORK_ID=""
 
 BESZEL_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOxrWddjHETJ7MMTIUqFXGoLv3WuKlHRd6whux7nVSz"
 BESZEL_TOKEN=""
@@ -183,8 +203,6 @@ CF_DNS_API_TOKEN=""
 
 NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN=""
 NEXT_PUBLIC_BETTER_STACK_INGESTING_URL=""
-
-NEXT_PUBLIC_DISCORD_INVITE_URL=""
 
 RESEND_SENDER_EMAIL=""
 RESEND_SENDER_NAME=""
@@ -322,9 +340,10 @@ printf "${PURPLE}🚀 Next Steps${NC}\n"
 
 if command -v docker >/dev/null 2>&1; then
   DOCKER_VERSION=$(docker --version)
-  printf "%b\n" "▬ Run: ${BOLD}docker compose --env-file .env -p dflow up -d${NC}\n"
+  printf "%b\n" "▬ Core stack: ${BOLD}docker compose --env-file .env -p dflow up -d mongodb redis payload-app${NC}\n"
+  printf "%b\n" "▬ With proxy + monitoring: ${BOLD}docker compose --env-file .env -p dflow --profile proxy --profile monitoring up -d${NC}\n"
 else
   printf "%b\n" "▬ Docker is not installed!\n"
   printf "%b\n" "${GRAY}Install Docker, with single command, curl -fsSL https://get.docker.com/ | sh${NC}\n"
-  printf "%b\n" "▬ After installation run: ${BOLD}docker compose --env-file .env -p dflow up -d${NC}\n"
+  printf "%b\n" "▬ After installation run: ${BOLD}docker compose --env-file .env -p dflow --profile proxy --profile monitoring up -d${NC}\n"
 fi

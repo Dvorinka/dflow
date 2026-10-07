@@ -6,6 +6,7 @@ import {
   DigitalOcean,
   Docker,
   GoogleCloudPlatform,
+  Hetzner,
 } from '@/components/icons'
 
 export const integrationsList = [
@@ -31,6 +32,14 @@ export const integrationsList = [
     live: true,
     slug: 'docker-registry',
   },
+  {
+    label: 'Hetzner Cloud',
+    icon: Hetzner,
+    description:
+      'Provision and manage servers on Hetzner Cloud with an API token',
+    live: true,
+    slug: 'hetzner',
+  },
 ] as const
 
 export const cloudProvidersList = [
@@ -39,6 +48,12 @@ export const cloudProvidersList = [
     Icon: AmazonWebServices,
     live: true,
     slug: 'aws',
+  },
+  {
+    label: 'Hetzner Cloud',
+    Icon: Hetzner,
+    live: true,
+    slug: 'hetzner',
   },
   {
     label: 'Google Cloud Platform',

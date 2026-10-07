@@ -23,6 +23,7 @@ import { SecurityGroup, SshKey } from '@/payload-types'
 import { ServerType } from '@/payload-types-overrides'
 
 import CreateEC2InstanceForm from './CreateEC2InstanceForm'
+import CreateHetznerServerForm from './hetzner/CreateHetznerServerForm'
 
 const parser = parseAsStringLiteral(['cloud', 'manual']).withDefault('cloud')
 
@@ -80,6 +81,8 @@ const getProviderName = (
       return 'Manual Server Configuration'
     case 'aws':
       return 'Configure AWS Server'
+    case 'hetzner':
+      return 'Configure Hetzner Cloud Server'
     case 'gcp':
       return 'Configure Google Cloud Server'
     case 'azure':
@@ -172,6 +175,15 @@ const ServerFormContent: React.FC<ServerFormContentProps> = ({
             <CreateEC2InstanceForm
               sshKeys={sshKeys}
               securityGroups={securityGroups}
+              formType={formType}
+              onSuccess={handleSuccess}
+            />
+          )
+
+        case 'hetzner':
+          return (
+            <CreateHetznerServerForm
+              sshKeys={sshKeys}
               formType={formType}
               onSuccess={handleSuccess}
             />

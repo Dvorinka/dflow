@@ -28,13 +28,14 @@
   image, or database (Postgres, MongoDB, MySQL, MariaDB, Redis,
   ClickHouse, RabbitMQ, and more via dokku plugins).
 - **Works on your infrastructure**: Attach any server over SSH, provision
-  AWS EC2 instances, or manage machines over a private mesh — Tailscale
-  or NetBird (hosted or self-hosted).
+  from AWS EC2 or Hetzner Cloud, or manage machines over a private mesh —
+  Tailscale (or Headscale), NetBird, or ZeroTier, hosted or self-hosted.
 - **Fully self-contained**: The bundled template catalog, monitoring
   agent template, and all integrations work without any external service.
   Nothing in this codebase phones home.
 - **Private Networking**: Zero-trust, end-to-end-encrypted access via
-  Tailscale or NetBird — no exposed SSH ports required.
+  Tailscale/Headscale, NetBird, or ZeroTier — no exposed SSH ports
+  required.
 - **Role Based Access Control**: Unlimited custom roles and permissions
   for admin and end users, scoped per organisation.
 - **Templates**: Kick-start deployments with the bundled template
@@ -50,6 +51,20 @@
 
 ## Quick start
 
+### One-command install (Docker)
+
+Runs the app + MongoDB + Redis on any machine with Docker:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Dvorinka/dflow/main/install.sh | bash
+```
+
+Then open http://localhost:3000 and create your admin account. Optional
+compose profiles add a Traefik reverse proxy with TLS (`--profile proxy`)
+and Beszel monitoring (`--profile monitoring`).
+
+### From source
+
 Requirements: Docker (MongoDB + Redis), Node.js 22+, pnpm.
 
 ```bash
@@ -61,13 +76,20 @@ pnpm dev
 
 Then open the app, create your admin account, and add a server:
 
-- **Public** — any reachable IP + SSH key.
-- **Tailscale** — enrol via auth key, connect over MagicDNS.
+- **Public** — any reachable IP + SSH key (works with any VPS provider:
+  Hostinger, Hetzner, OVH, bare metal, …).
+- **Tailscale** — enrol via auth key; set `TAILSCALE_LOGIN_SERVER` for a
+  Headscale-compatible control server.
 - **NetBird** — enrol via setup key (hosted or self-hosted management),
   connect over the mesh IP.
+- **ZeroTier** — join a Central or self-hosted controller network,
+  auto-authorize, connect over the mesh IP.
+- **Hetzner Cloud** — provision servers directly from your Hetzner
+  account (API token in Integrations → Cloud Providers).
 - **AWS** — provision EC2 instances from your cloud-provider account.
 
-A production deployment runs on Dokku; see
+Every attached server gets Dokku installed automatically over SSH — the
+only requirements are Ubuntu/Debian and SSH access. See
 [`docs/`](./docs) and the in-app documentation.
 
 <br/>
@@ -88,6 +110,11 @@ Copy `.env.example` to `.env` and fill in secrets (never commit `.env`).
 - `NETBIRD_API_TOKEN` / `NETBIRD_API_URL` / `NETBIRD_MANAGEMENT_URL` —
   NetBird management API (hosted `api.netbird.io` or self-hosted). Unset
   = the NetBird tab accepts a manually pasted setup key.
+- `ZEROTIER_API_TOKEN` / `ZEROTIER_API_URL` / `ZEROTIER_NETWORK_ID` —
+  ZeroTier Central or self-hosted controller. Unset = the ZeroTier tab
+  accepts a manually pasted `zerotier-cli join` command.
+- `TAILSCALE_LOGIN_SERVER` — Headscale-compatible control server URL.
+  Unset = tailscale.com.
 - `SERVER_DETAILS_CACHE_TTL` — seconds to cache populated server details
   in Redis (default 300).
 - Package pins live in `config/package-versions.json` (dokku, plugins,

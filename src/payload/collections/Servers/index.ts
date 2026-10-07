@@ -446,6 +446,10 @@ export const Servers: CollectionConfig = {
           value: 'aws',
         },
         {
+          label: 'Hetzner Cloud',
+          value: 'hetzner',
+        },
+        {
           label: 'Google Cloud Platform',
           value: 'gcp',
         },
@@ -623,6 +627,59 @@ export const Servers: CollectionConfig = {
             description:
               'The architecture of the instance (e.g., x86_64, arm64)',
           },
+        },
+      ],
+    },
+    {
+      name: 'hetznerDetails',
+      type: 'group',
+      admin: {
+        condition: data => data.provider === 'hetzner',
+        description: 'Hetzner Cloud server details',
+        position: 'sidebar',
+      },
+      fields: [
+        {
+          name: 'serverId',
+          type: 'number',
+          label: 'Server ID',
+          admin: {
+            description: 'The Hetzner Cloud server ID',
+          },
+        },
+        {
+          name: 'location',
+          type: 'text',
+          label: 'Location',
+          admin: {
+            description: 'The datacenter location (e.g., fsn1, nbg1, hel1)',
+          },
+        },
+        {
+          name: 'serverType',
+          type: 'text',
+          label: 'Server Type',
+          admin: {
+            description: 'The server type (e.g., cx22, cax11)',
+          },
+        },
+        {
+          name: 'image',
+          type: 'text',
+          label: 'Image',
+          admin: {
+            description: 'The OS image used (e.g., ubuntu-24.04)',
+          },
+        },
+        {
+          name: 'publicIp',
+          type: 'text',
+          label: 'Public IPv4',
+        },
+        {
+          name: 'status',
+          type: 'text',
+          label: 'Status',
         },
       ],
     },

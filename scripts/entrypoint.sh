@@ -1,22 +1,24 @@
 #!/bin/sh
 set -e
 
-# # Make sure directories exist
-# mkdir -p /var/run/tailscale
-# mkdir -p /var/lib/tailscale
+# Tailscale is optional — only start it when credentials are provided.
+# Works with tailscale.com or any Headscale-compatible server via
+# TAILSCALE_LOGIN_SERVER.
+if [ -n "${TAILSCALE_AUTH_KEY}" ] || [ -n "${TAILSCALE_OAUTH_CLIENT_SECRET}" ]; then
+  tailscaled --tun=linux --socket=/var/run/tailscale/tailscaled.sock &
+  sleep 2
 
-# Start tailscaled in background
-tailscaled --tun=linux --socket=/var/run/tailscale/tailscaled.sock &
+  TS_ARGS="--hostname dflow --accept-dns"
+  [ -n "${TAILSCALE_LOGIN_SERVER}" ] && TS_ARGS="${TS_ARGS} --login-server ${TAILSCALE_LOGIN_SERVER}"
 
-# Give tailscaled time to come up
-sleep 2
+  if [ -n "${TAILSCALE_OAUTH_CLIENT_SECRET}" ]; then
+    tailscale up --authkey="${TAILSCALE_OAUTH_CLIENT_SECRET}?preauthorized=true" ${TS_ARGS} || true
+  else
+    tailscale up --authkey="${TAILSCALE_AUTH_KEY}" ${TS_ARGS} || true
+  fi
 
-# Join Tailscale as an ephemeral node
-tailscale up --authkey="${TAILSCALE_AUTH_KEY}" --hostname "dflow" --accept-dns
-
-# /usr/sbin/sshd
-# On container stop, log out of Tailscale
-trap 'echo "Logging out of Tailscale..."; tailscale logout; exit 0' TERM INT
+  trap 'echo "Logging out of Tailscale..."; tailscale logout; exit 0' TERM INT
+fi
 
 readonly PRIMARY='\033[38;2;120;66;242m'
 readonly NC='\033[0m'
@@ -64,29 +66,29 @@ readonly NC='\033[0m'
     '====================================================='
 }
 
-tailscale status | awk '
-{
-  status = ($NF == "-" ? "online" : "offline")
-  if ($2 ~ /^vmi/) {
-    dflow[status]++
-  } else if ($2 ~ /^dfi/) {
-    custom[status]++
+if [ -n "${TAILSCALE_AUTH_KEY}" ] || [ -n "${TAILSCALE_OAUTH_CLIENT_SECRET}" ]; then
+  tailscale status | awk '
+  {
+    status = ($NF == "-" ? "online" : "offline")
+    if ($2 ~ /^vmi/) {
+      dflow[status]++
+    } else if ($2 ~ /^dfi/) {
+      custom[status]++
+    }
   }
-}
-END {
-  printf "\ndFlow servers:\n"
-  printf "🟢 Online devices:  %d\n", dflow["online"] + 0
-  printf "🔴 Offline devices: %d\n", dflow["offline"] + 0
+  END {
+    printf "\ndFlow servers:\n"
+    printf "🟢 Online devices:  %d\n", dflow["online"] + 0
+    printf "🔴 Offline devices: %d\n", dflow["offline"] + 0
 
-  printf "\ncustom servers:\n"
-  printf "🟢 Online devices:  %d\n", custom["online"] + 0
-  printf "🔴 Offline devices: %d\n", custom["offline"] + 0
-}'
+    printf "\ncustom servers:\n"
+    printf "🟢 Online devices:  %d\n", custom["online"] + 0
+    printf "🔴 Offline devices: %d\n", custom["offline"] + 0
+  }'
+fi
 
 
 # 🔁 Replace placeholders in built output
-# These fail if unset (because of `set -euo pipefail` if added at the top)
-NEXT_PUBLIC_DISCORD_INVITE_URL="${NEXT_PUBLIC_DISCORD_INVITE_URL}"
 NEXT_PUBLIC_WEBSITE_URL="${NEXT_PUBLIC_WEBSITE_URL}"
 NEXT_PUBLIC_PROXY_DOMAIN_URL="${NEXT_PUBLIC_PROXY_DOMAIN_URL}"
 NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN="${NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN}"
@@ -94,7 +96,6 @@ NEXT_PUBLIC_BETTER_STACK_INGESTING_URL="${NEXT_PUBLIC_BETTER_STACK_INGESTING_URL
 NEXT_PUBLIC_PROXY_CNAME="${NEXT_PUBLIC_PROXY_CNAME}"
 
 # 🪄 Replace values in built static files
-find .next -type f -exec sed -i "s~__NEXT_PUBLIC_DISCORD_INVITE_URL__~${NEXT_PUBLIC_DISCORD_INVITE_URL}~g" {} +
 find .next -type f -exec sed -i "s~__NEXT_PUBLIC_WEBSITE_URL__~${NEXT_PUBLIC_WEBSITE_URL}~g" {} +
 find .next -type f -exec sed -i "s~__NEXT_PUBLIC_PROXY_DOMAIN_URL__~${NEXT_PUBLIC_PROXY_DOMAIN_URL}~g" {} +
 find .next -type f -exec sed -i "s~__NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN__~${NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN}~g" {} +

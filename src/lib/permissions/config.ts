@@ -112,6 +112,18 @@ export const getActionAccess = {
   updateAWSAccountAction: ['cloudProviderAccounts.update'],
   deleteAWSAccountAction: ['cloudProviderAccounts.delete'],
 
+  // Hetzner cloud actions
+  connectHetznerAccountAction: ['cloudProviderAccounts.create'],
+  updateHetznerAccountAction: ['cloudProviderAccounts.update'],
+  listHetznerLocationsAction: ['cloudProviderAccounts.read'],
+  listHetznerServerTypesAction: ['cloudProviderAccounts.read'],
+  listHetznerImagesAction: ['cloudProviderAccounts.read'],
+  createHetznerServerAction: [
+    'cloudProviderAccounts.read',
+    'sshKeys.read',
+    'servers.create',
+  ],
+
   // Git provider actions
   createGithubAppAction: ['gitProviders.create'],
   installGithubAppAction: ['gitProviders.update'],
@@ -203,6 +215,7 @@ export const getActionAccess = {
   getSshKeysAction: ['sshKeys.read', 'servers.read'],
 
   // tailscale Actions
+  tailscaleConfiguredAction: ['servers.read'],
   generateOAuthTokenAction: ['servers.read'],
   generateAuthKeyAction: ['servers.read'],
 
@@ -211,6 +224,11 @@ export const getActionAccess = {
   generateNetbirdSetupKeyAction: ['servers.read'],
   getNetbirdPeerAction: ['servers.read'],
   deleteNetbirdPeerAction: ['servers.delete'],
+
+  // zerotier Actions
+  zerotierConfiguredAction: ['servers.read'],
+  getZerotierMembersAction: ['servers.read'],
+  authorizeZerotierMemberAction: ['servers.create'],
 
   //  Backup actions
   getAllBackupsAction: ['backups.read', 'backups.update'],

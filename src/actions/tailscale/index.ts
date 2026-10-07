@@ -8,6 +8,17 @@ import { generateOAuthToken } from '@/lib/tailscale/generateOAuthToken'
 
 import { generateAuthKeySchema } from './validator'
 
+// Lets the UI pick between API key generation (OAuth client configured)
+// and manual auth-key paste (Headscale or hand-created tskey-auth-*).
+export const tailscaleConfiguredAction = protectedClient
+  .metadata({ actionName: 'tailscaleConfiguredAction' })
+  .action(async () => ({
+    configured: Boolean(
+      env.TAILSCALE_OAUTH_CLIENT_SECRET && env.TAILSCALE_TAILNET,
+    ),
+    loginServer: env.TAILSCALE_LOGIN_SERVER ?? null,
+  }))
+
 export const generateOAuthTokenAction = protectedClient
   .metadata({
     actionName: 'generateOAuthTokenAction',

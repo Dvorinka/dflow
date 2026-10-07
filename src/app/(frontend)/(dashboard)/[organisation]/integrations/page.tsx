@@ -18,6 +18,11 @@ const AWSDrawer = dynamic(() => import('@/components/Integrations/AWSDrawer'), {
   ssr: false,
 })
 
+const HetznerDrawer = dynamic(
+  () => import('@/components/Integrations/HetznerDrawer'),
+  { ssr: false },
+)
+
 const DockerRegistryDrawer = dynamic(
   () => import('@/components/Integrations/DockerRegistryDrawer'),
   { ssr: false },
@@ -30,6 +35,7 @@ const SuspendedIntegrationsPage = () => {
 
       <GitHubDrawer />
       <AWSDrawer />
+      <HetznerDrawer />
       <DockerRegistryDrawer />
     </>
   )

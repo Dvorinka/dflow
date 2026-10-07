@@ -3,11 +3,12 @@ networks:
     driver: bridge
 
 services:
-  # Traefik Reverse Proxy
+  # Traefik Reverse Proxy (optional — enable with --profile proxy)
   traefik:
     image: traefik:v3.4
-    container_name: traefik
     restart: always
+    profiles:
+      - proxy
     ports:
       - '80:80'
       - '443:443'
@@ -22,13 +23,16 @@ services:
       - ./acme.json:/etc/traefik/acme.json
       - ./dynamic:/etc/traefik/dynamic
 
-  # Dynamic Config Generator
+  # Dynamic traefik config generator (optional — enable with --profile proxy).
+  # Image is the original dflow-sh build; the upstream repo is archived but
+  # the image remains published on ghcr.
   config-generator:
     image: ghcr.io/dflow-sh/config-generator:latest
     networks:
       - custom-tailnet
-    container_name: config-generator
     restart: on-failure
+    profiles:
+      - proxy
     environment:
       - JWT_TOKEN=${JWT_TOKEN}
       - WILD_CARD_DOMAIN=${WILD_CARD_DOMAIN}
@@ -36,11 +40,12 @@ services:
     volumes:
       - ./dynamic:/app/output
 
-  # Monitoring dashboard
+  # Monitoring dashboard (optional — enable with --profile monitoring)
   beszel:
     image: henrygd/beszel:latest
-    container_name: beszel
     restart: unless-stopped
+    profiles:
+      - monitoring
     networks:
       - custom-tailnet
     volumes:
@@ -50,8 +55,9 @@ services:
   # Monitoring beszel-agent
   beszel-agent:
     image: henrygd/beszel-agent
-    container_name: beszel-agent
     restart: unless-stopped
+    profiles:
+      - monitoring
     networks:
       - custom-tailnet
     volumes:
@@ -67,7 +73,6 @@ services:
   # Redis
   redis:
     image: redis:7
-    container_name: redis
     restart: unless-stopped
     networks:
       - custom-tailnet
@@ -77,7 +82,6 @@ services:
   # MongoDB
   mongodb:
     image: mongo:7
-    container_name: mongodb
     restart: unless-stopped
     networks:
       - custom-tailnet
@@ -94,9 +98,10 @@ services:
       - NET_ADMIN
     devices:
       - /dev/net/tun
-    container_name: payload-app
     networks:
       - custom-tailnet
+    ports:
+      - '${APP_PORT:-3000}:3000'
     restart: always
     depends_on:
       - redis
@@ -109,6 +114,10 @@ services:
       TAILSCALE_AUTH_KEY: ${TAILSCALE_AUTH_KEY}
       TAILSCALE_OAUTH_CLIENT_SECRET: ${TAILSCALE_OAUTH_CLIENT_SECRET}
       TAILSCALE_TAILNET: ${TAILSCALE_TAILNET}
+      TAILSCALE_LOGIN_SERVER: ${TAILSCALE_LOGIN_SERVER:-}
+      ZEROTIER_API_URL: ${ZEROTIER_API_URL:-}
+      ZEROTIER_API_TOKEN: ${ZEROTIER_API_TOKEN:-}
+      ZEROTIER_NETWORK_ID: ${ZEROTIER_NETWORK_ID:-}
       NEXT_PUBLIC_PROXY_DOMAIN_URL: ${NEXT_PUBLIC_PROXY_DOMAIN_URL}
       NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: ${NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN}
       NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: ${NEXT_PUBLIC_BETTER_STACK_INGESTING_URL}

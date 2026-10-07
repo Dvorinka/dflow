@@ -4,7 +4,8 @@ import { Tailscale } from '../icons'
 import NetBirdForm from '../servers/NetBirdForm'
 import TailscaleForm from '../servers/TailscaleForm'
 import UpdateTailscaleServerForm from '../servers/UpdateTailscaleServerForm'
-import { Globe, Network } from 'lucide-react'
+import ZeroTierForm from '../servers/ZeroTierForm'
+import { Globe, Hexagon, Network } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect } from 'react'
 
@@ -51,7 +52,7 @@ const ManualSetupTabs = ({ sshKeys, server, formType, onSuccess }: Props) => {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className='w-full'>
-      <TabsList className='grid w-full max-w-md grid-cols-3'>
+      <TabsList className='grid w-full max-w-xl grid-cols-4'>
         <TabsTrigger value='tailscale' className='flex items-center gap-2'>
           <Tailscale />
           <span>Tailscale</span>
@@ -59,6 +60,10 @@ const ManualSetupTabs = ({ sshKeys, server, formType, onSuccess }: Props) => {
         <TabsTrigger value='netbird' className='flex items-center gap-2'>
           <Network className='h-4 w-4' />
           <span>NetBird</span>
+        </TabsTrigger>
+        <TabsTrigger value='zerotier' className='flex items-center gap-2'>
+          <Hexagon className='h-4 w-4' />
+          <span>ZeroTier</span>
         </TabsTrigger>
         <TabsTrigger value='public' className='flex items-center gap-2'>
           <Globe className='h-4 w-4' />
@@ -99,6 +104,21 @@ const ManualSetupTabs = ({ sshKeys, server, formType, onSuccess }: Props) => {
           </CardHeader>
           <CardContent>
             {formType === 'create' ? <NetBirdForm sshKeys={sshKeys} /> : null}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value='zerotier' className='mt-4'>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-2xl'>ZeroTier Setup</CardTitle>
+            <CardDescription>
+              Join the server to a ZeroTier network (Central or self-hosted
+              controller), authorize it, and manage it over its mesh IP
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {formType === 'create' ? <ZeroTierForm sshKeys={sshKeys} /> : null}
           </CardContent>
         </Card>
       </TabsContent>

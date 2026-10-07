@@ -19,6 +19,7 @@ import { createTailscaleServerSchema } from '@/actions/server/validator'
 import {
   generateAuthKeyAction,
   generateOAuthTokenAction,
+  tailscaleConfiguredAction,
 } from '@/actions/tailscale'
 import {
   Form,
@@ -28,7 +29,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-
 import { handleGenerateName } from '@/lib/generateName'
 
 type TailscaleFormData = z.infer<typeof createTailscaleServerSchema>
@@ -36,6 +36,9 @@ type TailscaleFormData = z.infer<typeof createTailscaleServerSchema>
 const TailscaleForm = () => {
   const [generatedCommands, setGeneratedCommands] = useState<string[]>([])
   const [showCreateServer, setShowCreateServer] = useState<boolean>(false)
+  const [apiConfigured, setApiConfigured] = useState(false)
+  const [loginServer, setLoginServer] = useState<string | null>(null)
+  const [manualKey, setManualKey] = useState('')
 
   const form = useForm<TailscaleFormData>({
     resolver: zodResolver(createTailscaleServerSchema),
@@ -45,6 +48,39 @@ const TailscaleForm = () => {
       username: 'root',
     },
   })
+
+  const { execute: checkConfigured } = useAction(tailscaleConfiguredAction, {
+    onSuccess: ({ data }) => {
+      setApiConfigured(Boolean(data?.configured))
+      setLoginServer(data?.loginServer ?? null)
+    },
+  })
+
+  useEffect(() => {
+    checkConfigured()
+  }, [])
+
+  const buildCommands = (key: string, tagged = false) => {
+    const hostname = form.getValues('hostname')
+    const flags = [
+      `--authkey=${key}`,
+      `--hostname=${hostname || 'server'}`,
+      '--ssh',
+    ]
+    // API-generated keys are created with tag:customer-machine — only
+    // advertise the tag when the key carries it (Headscale/manual keys
+    // would fail the `tailscale up` otherwise).
+    if (tagged) {
+      flags.push('--advertise-tags tag:customer-machine')
+    }
+    if (loginServer) {
+      flags.push(`--login-server=${loginServer}`)
+    }
+    return [
+      'sudo curl -fsSL https://tailscale.com/install.sh | sh',
+      `sudo tailscale up ${flags.join(' ')}`,
+    ]
+  }
 
   const { executeAsync: generateHostName } = useAction(
     generateTailscaleHostname,
@@ -94,13 +130,7 @@ const TailscaleForm = () => {
             return
           }
 
-          const hostname = form.getValues('hostname')
-          const commands = [
-            'sudo curl -fsSL https://tailscale.com/install.sh | sh',
-            `sudo tailscale up --authkey=${data.data.key} --hostname=${hostname || 'server'} --ssh --advertise-tags tag:customer-machine`,
-          ]
-
-          setGeneratedCommands(commands)
+          setGeneratedCommands(buildCommands(data.data.key, true))
           toast.success('Tailscale auth key generated successfully!')
         } else {
           toast.error('Failed to generate auth key')
@@ -202,7 +232,8 @@ const TailscaleForm = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleGenerate)}
-        className='w-full space-y-6'>
+        className='w-full space-y-6'
+      >
         <FormField
           control={form.control}
           name='name'
@@ -222,7 +253,8 @@ const TailscaleForm = () => {
                     const generatedName = handleGenerateName()
                     form.setValue('name', generatedName)
                   }}
-                  title='Generate unique name'>
+                  title='Generate unique name'
+                >
                   <Dices className='h-4 w-4' />
                 </Button>
               </div>
@@ -290,7 +322,7 @@ const TailscaleForm = () => {
         </div>
 
         <div className='space-y-4'>
-          {/* Generate Auth Key Section */}
+          {/* Auth Key Section */}
           <div className='bg-muted/30 rounded-lg border p-4'>
             <div className='flex items-center justify-between gap-3'>
               <div className='flex-1'>
@@ -301,21 +333,54 @@ const TailscaleForm = () => {
                   </p>
                 </div>
                 <p className='text-muted-foreground mt-1 text-xs'>
-                  Generate authentication key for secure mesh networking
+                  {apiConfigured
+                    ? 'Generate an authentication key for secure mesh networking'
+                    : 'Paste a tailscale auth key (tskey-auth-…). For Headscale, generate a pre-auth key with `headscale preauthkeys create` and set TAILSCALE_LOGIN_SERVER'}
                 </p>
               </div>
 
-              <Button
-                type='submit'
-                disabled={
-                  isFetchingOAuthClientSecret || isGenerating || isGenerated
-                }
-                isLoading={isFetchingOAuthClientSecret || isGenerating}
-                className='shrink-0'>
-                <Key className='mr-2 h-3 w-3' />
-                Generate Key
-              </Button>
+              {apiConfigured && (
+                <Button
+                  type='submit'
+                  disabled={
+                    isFetchingOAuthClientSecret || isGenerating || isGenerated
+                  }
+                  isLoading={isFetchingOAuthClientSecret || isGenerating}
+                  className='shrink-0'
+                >
+                  <Key className='mr-2 h-3 w-3' />
+                  Generate Key
+                </Button>
+              )}
             </div>
+
+            {!apiConfigured && (
+              <div className='mt-3 flex items-center gap-2'>
+                <Input
+                  value={manualKey}
+                  onChange={e => setManualKey(e.target.value)}
+                  placeholder='tskey-auth-…'
+                  className='rounded-sm font-mono text-xs'
+                />
+                <Button
+                  type='button'
+                  variant='outline'
+                  disabled={isGenerated}
+                  onClick={() => {
+                    const key = manualKey.trim()
+                    if (!key) {
+                      toast.error('Paste an auth key first')
+                      return
+                    }
+                    setGeneratedCommands(buildCommands(key))
+                    toast.success('Commands generated from your auth key')
+                  }}
+                  className='shrink-0'
+                >
+                  Use Key
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Generated Commands Section */}
@@ -347,7 +412,8 @@ const TailscaleForm = () => {
                         variant='ghost'
                         size='sm'
                         onClick={() => copyToClipboard(command, index)}
-                        className='h-6 px-2'>
+                        className='h-6 px-2'
+                      >
                         <Copy className='mr-1 h-3 w-3' />
                         Copy
                       </Button>
@@ -391,7 +457,8 @@ const TailscaleForm = () => {
                 onClick={handleTestConnection}
                 // disabled={!isGenerated || isTestingConnection || isGenerating}
                 disabled={isTestingConnection || isGenerating || !isGenerated}
-                className='shrink-0'>
+                className='shrink-0'
+              >
                 {isTestingConnection ? (
                   <>
                     <RefreshCw className='mr-2 h-3 w-3 animate-spin' />
@@ -412,7 +479,8 @@ const TailscaleForm = () => {
           <Button
             type='button'
             disabled={isCreatingServer || !showCreateServer}
-            onClick={handleCreateServer}>
+            onClick={handleCreateServer}
+          >
             Add Server
           </Button>
         </div>

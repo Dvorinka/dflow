@@ -711,6 +711,21 @@ export const AmazonWebServices = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+export const Hetzner = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    viewBox='0 0 24 24'
+    width='1em'
+    height='1em'
+    {...props}>
+    <rect width='24' height='24' rx='4' fill='#d50c2d' />
+    <path
+      fill='#ffffff'
+      d='M7 5v14h2.6v-5.6h4.8V19H17V5h-2.6v5.4H9.6V5H7z'
+    />
+  </svg>
+)
+
 export const GoogleCloudPlatform = (props: SVGProps<SVGSVGElement>) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
