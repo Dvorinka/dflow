@@ -1,13 +1,33 @@
 'use client'
 
 import { Button } from '../ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
 import { useAction } from 'next-safe-action/hooks'
-import { FormEvent, useEffect } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { exposeDatabasePortAction } from '@/actions/service'
+import { getProjectsAndServers } from '@/actions/pages/dashboard'
+import {
+  exposeDatabasePortAction,
+  migrateDatabaseAction,
+} from '@/actions/service'
 import { Server, Service } from '@/payload-types'
 
 const DatabaseForm = ({
@@ -44,6 +64,49 @@ const DatabaseForm = ({
           duration: 5000,
         })
       },
+    },
+  )
+
+  // --- Cross-server migration (#408) ---
+  const [migrateOpen, setMigrateOpen] = useState(false)
+  const [targetProjectId, setTargetProjectId] = useState('')
+  const [targetName, setTargetName] = useState(service.name)
+
+  const sourceServerId = typeof server === 'object' ? server.id : server
+
+  const { execute: fetchTargets, result: targetsResult } = useAction(
+    getProjectsAndServers,
+    { onError: () => toast.error('Failed to load migration targets') },
+  )
+
+  const { execute: migrate, isPending: migrating } = useAction(
+    migrateDatabaseAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Database migration queued', {
+            description:
+              'Export → transfer → import runs in the background. Watch the new service deployments for progress.',
+          })
+          setMigrateOpen(false)
+        }
+      },
+      onError: ({ error }) => {
+        toast.error(`Migration failed: ${error.serverError}`, {
+          duration: 5000,
+        })
+      },
+    },
+  )
+
+  // Migration targets = tenant projects hosted on a different server
+  const targetProjects = (targetsResult?.data?.projectsRes?.docs ?? []).filter(
+    project => {
+      const projectServerId =
+        typeof project.server === 'object'
+          ? (project.server as Server).id
+          : project.server
+      return projectServerId !== sourceServerId
     },
   )
 
@@ -141,6 +204,91 @@ const DatabaseForm = ({
             </div>
           </div>
         </form>
+      </div>
+
+      {/* Cross-server migration (#408) */}
+      <div className='bg-muted/30 space-y-2 rounded p-4'>
+        <h3 className='text-lg font-semibold'>Migrate to another server</h3>
+        <p className='text-muted-foreground text-sm'>
+          Copies this database to a new database service on another server.
+          The source keeps running — re-point dependent apps afterwards.
+        </p>
+
+        <Dialog
+          open={migrateOpen}
+          onOpenChange={open => {
+            setMigrateOpen(open)
+            if (open) fetchTargets()
+          }}>
+          <DialogTrigger asChild>
+            <Button variant='outline' disabled={!hasDeployed}>
+              Migrate
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Migrate {service.name}</DialogTitle>
+              <DialogDescription>
+                Creates a new {databaseDetails?.type} database in the chosen
+                project and imports a dump of this database. Apps are not
+                re-linked automatically.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-4 py-2'>
+              <div className='space-y-2'>
+                <Label>Target project (on another server)</Label>
+                <Select
+                  value={targetProjectId}
+                  onValueChange={setTargetProjectId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select a project' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {targetProjects.length === 0 && (
+                      <SelectItem value='__none' disabled>
+                        No projects on other servers
+                      </SelectItem>
+                    )}
+                    {targetProjects.map(project => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                        {typeof project.server === 'object' &&
+                          ` — ${(project.server as Server).name}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className='space-y-2'>
+                <Label>New database name</Label>
+                <Input
+                  value={targetName}
+                  onChange={e => setTargetName(e.target.value)}
+                  placeholder='database name'
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                disabled={
+                  migrating || !targetProjectId || targetProjectId === '__none' || !targetName
+                }
+                isLoading={migrating}
+                onClick={() =>
+                  migrate({
+                    serviceId: service.id,
+                    targetProjectId,
+                    targetDatabaseName: targetName,
+                  })
+                }>
+                {migrating ? 'Queueing...' : 'Start migration'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   )

@@ -251,3 +251,16 @@ export const setServiceNginxConfigSchema = z
       }
     }
   })
+
+export const migrateDatabaseSchema = z.object({
+  serviceId: z.string(),
+  targetProjectId: z.string(),
+  targetDatabaseName: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(
+      /^[a-z0-9][a-z0-9-]*$/,
+      'Lowercase letters, numbers and dashes only',
+    ),
+})

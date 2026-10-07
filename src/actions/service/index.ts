@@ -6,6 +6,7 @@ import { NodeSSH } from 'node-ssh'
 import { extractID } from 'payload/shared'
 
 import { dokku } from '@/lib/dokku'
+import { extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { checkServerResources } from '@/lib/server/resourceCheck'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
@@ -22,6 +23,7 @@ import { addStopDatabaseQueue } from '@/queues/database/stop'
 import { addManageServiceDomainQueue } from '@/queues/domain/manage'
 import { addUpdateEnvironmentVariablesQueue } from '@/queues/environment/update'
 import { addLetsencryptRegenerateQueueQueue } from '@/queues/letsencrypt/regenerate'
+import { ServerType } from '@/payload-types-overrides'
 import { addCreateServiceWithPluginsQueue } from '@/queues/service/createWithPlugins'
 import { updateVolumesQueue } from '@/queues/volume/updateVolumesQueue'
 
@@ -36,6 +38,7 @@ import {
   fetchServiceScaleStatusSchema,
   getServiceNginxConfigSchema,
   markDefaultServiceDomainSchema,
+  migrateDatabaseSchema,
   regenerateSSLSchema,
   restartServiceSchema,
   scaleServiceSchema,
@@ -1342,4 +1345,142 @@ export const setServiceNginxConfigAction = protectedClient
     } finally {
       if (ssh) ssh.dispose()
     }
+  })
+
+// Migrates a database service's data to another server (#408). Creates a
+// new database service in the target project and queues
+// export → transfer → import. The source database is left running; apps
+// keep pointing at it until their env vars are re-linked.
+export const migrateDatabaseAction = protectedClient
+  .metadata({ actionName: 'migrateDatabaseAction' })
+  .inputSchema(migrateDatabaseSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serviceId, targetProjectId, targetDatabaseName } = clientInput
+    const {
+      payload,
+      user,
+      userTenant: { tenant },
+    } = ctx
+
+    const service = await payload.findByID({
+      collection: 'services',
+      id: serviceId,
+      depth: 2,
+    })
+
+    const serviceTenantId =
+      typeof service.tenant === 'object' ? service.tenant?.id : service.tenant
+    if (!serviceTenantId || serviceTenantId !== tenant.id) {
+      throw new Error('Service not found')
+    }
+
+    if (service.type !== 'database' || !service.databaseDetails?.type) {
+      throw new Error('Only database services can be migrated')
+    }
+
+    const sourceProject =
+      typeof service.project === 'object' ? service.project : null
+    if (!sourceProject) {
+      throw new Error('Service has no project')
+    }
+
+    const targetProject = await payload.findByID({
+      collection: 'projects',
+      id: targetProjectId,
+      depth: 2,
+    })
+
+    const projectTenantId =
+      typeof targetProject.tenant === 'object'
+        ? targetProject.tenant?.id
+        : targetProject.tenant
+    if (!projectTenantId || projectTenantId !== tenant.id) {
+      throw new Error('Target project not found')
+    }
+
+    const sourceServerId = extractID(sourceProject.server)
+    const targetServerId = extractID(targetProject.server)
+
+    if (sourceServerId === targetServerId) {
+      throw new Error(
+        'Target project is on the same server — nothing to migrate',
+      )
+    }
+
+    const sourceServer = await payload.findByID({
+      collection: 'servers',
+      id: sourceServerId,
+      depth: 1,
+    })
+    const targetServer = (await payload.findByID({
+      collection: 'servers',
+      id: targetServerId,
+      depth: 1,
+    })) as ServerType
+
+    if (!targetServer.version || targetServer.version === 'not-installed') {
+      throw new Error('Dokku is not installed on the target server')
+    }
+
+    const databaseType = service.databaseDetails.type
+    const finalName = await getUniqueName(async name => {
+      const { totalDocs } = await payload.count({
+        collection: 'services',
+        where: {
+          and: [
+            { name: { equals: name } },
+            { 'tenant.slug': { equals: tenant.slug } },
+          ],
+        },
+      })
+      return totalDocs > 0
+    }, `${targetProject.name}-${targetDatabaseName}`)
+
+    const targetService = await payload.create({
+      collection: 'services',
+      data: {
+        name: finalName,
+        type: 'database',
+        project: targetProjectId,
+        tenant: tenant.id,
+        databaseDetails: {
+          type: databaseType,
+        },
+        description: `Migrated from ${service.name} (server ${sourceServer.name ?? sourceServerId})`,
+      },
+    })
+
+    const deployment = await payload.create({
+      collection: 'deployments',
+      data: {
+        service: targetService.id,
+        status: 'queued',
+      },
+    })
+
+    const { addDatabaseMigrateQueue } = await import(
+      '@/queues/database/migrate'
+    )
+    await addDatabaseMigrateQueue({
+      sourceServiceId: service.id,
+      sourceDatabaseName: service.name,
+      databaseType,
+      sourceServerId,
+      targetServerId,
+      targetProjectId,
+      targetDatabaseName: finalName,
+      targetServiceId: targetService.id,
+      targetDeploymentId: deployment.id,
+      sourceSshDetails: extractSSHDetails({ server: sourceServer }),
+      targetSshDetails: extractSSHDetails({ server: targetServer }),
+      tenant: { slug: tenant.slug },
+      userId: user.id,
+    })
+
+    const tenantSlug = extractTenantSlug(targetProject.tenant)
+    if (tenantSlug) {
+      revalidatePath(`/${tenantSlug}/dashboard/project/${targetProjectId}`)
+    }
+
+    return { success: true, service: targetService, deployment }
   })
