@@ -1,0 +1,23 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img "logo" [ref=e6]
+        - generic [ref=e7]: Welcome back
+        - generic [ref=e8]: Enter your email and password to sign in
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: Email
+          - textbox "john.doe@example.com" [ref=e17]
+        - generic [ref=e18]:
+          - generic [ref=e19]: Password
+          - generic [ref=e25]:
+            - textbox "Enter your password" [ref=e26]
+            - button "Show password" [ref=e27]
+        - button "Sign in" [ref=e33]
+    - generic [ref=e35]:
+      - text: Don't have an account?
+      - link "Sign up" [ref=e36] [cursor=pointer]:
+        - /url: /sign-up
+  - region "Notifications alt+T"
+  - alert [ref=e37]

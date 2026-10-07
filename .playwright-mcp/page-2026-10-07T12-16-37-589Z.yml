@@ -1,0 +1,35 @@
+- generic [active] [ref=f10e1]:
+  - generic [ref=f10e4]:
+    - generic [ref=f10e6]:
+      - link [ref=f10e8] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=f10e9]
+      - button "d d" [ref=f10e11]:
+        - generic [ref=f10e12] [cursor=pointer]: d
+        - generic "demo" [ref=f10e14]: d
+    - generic [ref=f10e22]:
+      - link "Dashboard" [ref=f10e23] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=f10e24] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=f10e25] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=f10e26] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=f10e27] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=f10e28] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=f10e29] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=f10e30] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=f10e32]:
+      - generic [ref=f10e33]:
+        - heading "Backups" [level=3] [ref=f10e39]
+        - generic [ref=f10e43]:
+          - heading "No Backups Found" [level=2] [ref=f10e49]
+          - paragraph [ref=f10e50]: You don’t have any backups yet. Backups for your projects or services will appear here once they’re created.
+  - button [ref=f10e52]
+  - region "Notifications alt+T"
+  - alert [ref=f10e57]

@@ -1,0 +1,51 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e4]:
+    - generic [ref=f6e6]:
+      - link [ref=f6e8] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=f6e9]
+      - button "d d" [ref=f6e11]:
+        - generic [ref=f6e12] [cursor=pointer]: d
+        - generic "demo" [ref=f6e14]: d
+    - generic [ref=f6e22]:
+      - link "Dashboard" [ref=f6e23] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=f6e24] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=f6e25] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=f6e26] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=f6e27] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=f6e28] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=f6e29] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=f6e30] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=f6e32]:
+      - generic [ref=f6e33]:
+        - generic [ref=f6e34]: Security Settings
+        - paragraph [ref=f6e35]: Manage your SSH keys and security groups for secure access to your infrastructure.
+      - generic [ref=f6e36]:
+        - tablist [ref=f6e37]:
+          - tab "SSH Keys 0" [selected] [ref=f6e38]:
+            - generic [ref=f6e42]: SSH Keys
+            - generic [ref=f6e43]: "0"
+          - tab "Security Groups 0" [ref=f6e44]:
+            - generic [ref=f6e47]: Security Groups
+            - generic [ref=f6e48]: "0"
+        - tabpanel "SSH Keys 0" [ref=f6e49]:
+          - generic [ref=f6e50]:
+            - generic [ref=f6e51]:
+              - generic [ref=f6e52]:
+                - generic [ref=f6e53]: SSH Keys
+                - button "Add SSH key" [ref=f6e54]
+              - generic [ref=f6e56]: Manage SSH keys for secure access to your resources
+            - generic [ref=f6e58]:
+              - paragraph [ref=f6e62]: No SSH Keys Found
+              - paragraph [ref=f6e63]: Add your first SSH key to securely access your resources
+  - button [ref=f6e65]
+  - region "Notifications alt+T"
+  - alert [ref=f6e70]

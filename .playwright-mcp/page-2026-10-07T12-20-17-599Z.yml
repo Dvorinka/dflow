@@ -1,0 +1,31 @@
+- generic [active] [ref=f27e1]:
+  - generic [ref=f27e3]:
+    - generic [ref=f27e4]:
+      - generic [ref=f27e5]:
+        - img "logo" [ref=f27e6]
+        - generic [ref=f27e7]: Create an account
+        - generic [ref=f27e8]: Enter your information to create an account
+      - generic [ref=f27e10]:
+        - generic [ref=f27e11]:
+          - generic [ref=f27e12]: Username
+          - textbox "john-doe" [ref=f27e17]
+        - generic [ref=f27e18]:
+          - generic [ref=f27e19]: Email
+          - textbox "johndoe@example.com" [ref=f27e24]
+        - generic [ref=f27e25]:
+          - generic [ref=f27e26]: Password
+          - generic [ref=f27e31]:
+            - textbox [ref=f27e32]
+            - button "Show password" [ref=f27e33]
+        - generic [ref=f27e39]:
+          - generic [ref=f27e40]: Confirm Password
+          - generic [ref=f27e45]:
+            - textbox [ref=f27e46]
+            - button "Show password" [ref=f27e47]
+        - button "Sign Up" [ref=f27e54]
+    - generic [ref=f27e56]:
+      - text: Already have an account?
+      - link "Sign in" [ref=f27e57] [cursor=pointer]:
+        - /url: /sign-in
+  - region "Notifications alt+T"
+  - alert [ref=f27e58]

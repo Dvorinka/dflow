@@ -1,0 +1,8 @@
+- generic [active] [ref=f18e1]:
+  - main [ref=f18e2]:
+    - heading "404" [level=2] [ref=f18e3]
+    - paragraph [ref=f18e4]: Sorry, the page you requested cannot be found.
+    - button [ref=f18e5]:
+      - link "Back To Dashboard" [ref=f18e7] [cursor=pointer]:
+        - /url: /
+  - alert [ref=f18e8]

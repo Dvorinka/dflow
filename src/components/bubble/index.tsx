@@ -166,15 +166,6 @@ function useViewportSafeArea() {
   return safeArea
 }
 
-declare global {
-  interface Window {
-    $chatway?: {
-      openChatwayWidget: () => void
-      closeChatwayWidget: () => void
-    }
-  }
-}
-
 const Bubble = () => {
   // Use context for all state
   const {
@@ -220,15 +211,6 @@ const Bubble = () => {
         setIsOpen(false)
       }
     } else {
-      // If not expanded, close Chatway first and then open bubble immediately
-      if (window.$chatway?.closeChatwayWidget) {
-        try {
-          window.$chatway.closeChatwayWidget()
-        } catch (error) {
-          console.warn('Failed to close Chatway:', error)
-        }
-      }
-
       // Open the bubble immediately without delay
       setIsExpanded(true)
       setCurrentPanel('menu')
@@ -371,20 +353,13 @@ const Bubble = () => {
       left: safeArea.left,
     }
 
-    // Adjust for Chatway widget when bubble is at bottom-right
-    const chatwayOffset =
-      bubblePreferences.position === 'bottom-right' &&
-      screenDimensions.isDesktop
-        ? 96
-        : 0
-
     let left: string | undefined = undefined
     let right: string | undefined = undefined
     let top: string | undefined = undefined
     let bottom: string | undefined = undefined
 
     if (isRight) {
-      right = `${screenPadding.right + chatwayOffset}px`
+      right = `${screenPadding.right}px`
     } else {
       left = `${screenPadding.left}px`
     }

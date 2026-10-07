@@ -1,0 +1,12 @@
+[     385ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at rD (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:35061)
+    at oq (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:84565)
+    at ik (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:114681)
+    at http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:114526
+    at ib (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:114534)
+    at iu (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:110836)
+    at iG (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:133054)
+    at iW (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:131265)
+    at i_ (http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:129342)
+    at http://localhost:3100/_next/static/chunks/9addb5bf-5319447737c57a09.js:1:124935
+[     457ms] [WARNING] [Headway Error] Element provided by selector does not exist. @ https://cdn.headwayapp.co/widget.js:0

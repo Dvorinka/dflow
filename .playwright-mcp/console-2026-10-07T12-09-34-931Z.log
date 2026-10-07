@@ -1,0 +1,8 @@
+[     604ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/css/22cf0afedb7258e6.css:0
+[     648ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:3100/sign-in:0
+[     665ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/webpack-6097be6a522246b7.js:0
+[     709ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/app/(frontend)/layout-95893985ce8724a0.js:0
+[     710ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/6522-a7151ae077bed05f.js:0
+[     818ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/6592-155722ad8dfd2e11.js:0
+[     882ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/2839-308afa5dc887b055.js:0
+[     882ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://localhost:3100/_next/static/chunks/app/(frontend)/(auth)/sign-in/page-145032d2689d542a.js:0

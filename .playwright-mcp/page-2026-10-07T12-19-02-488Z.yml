@@ -1,0 +1,66 @@
+- generic [active] [ref=f19e1]:
+  - generic [ref=f19e4]:
+    - generic [ref=f19e6]:
+      - link [ref=f19e8] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=f19e9]
+      - button "d d" [ref=f19e11]:
+        - generic [ref=f19e12] [cursor=pointer]: d
+        - generic "demo" [ref=f19e14]: d
+    - generic [ref=f19e22]:
+      - link "Dashboard" [ref=f19e23] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=f19e24] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=f19e25] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=f19e26] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=f19e27] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=f19e28] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=f19e29] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=f19e30] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=f19e32]:
+      - generic [ref=f19e33]:
+        - button "Menu" [ref=f19e35]
+        - article [ref=f19e38]:
+          - generic [ref=f19e39]:
+            - heading [level=1] [ref=f19e40]:
+              - link "Introduction" [ref=f19e41] [cursor=pointer]:
+                - /url: "#introduction"
+            - paragraph [ref=f19e42]: dFlow is a platform for deploying, managing, and scaling git apps, Docker images, and databases on your own infrastructure.
+            - paragraph [ref=f19e43]: This repository is a public snapshot of older dFlow code. It is not dFlow Cloud, and it is not a supported self-host product. You may fork and modify it for your own use under the repository license. That license does not apply to Cloud or private platform source.
+            - heading [level=2] [ref=f19e44]:
+              - link "Key Features" [ref=f19e45] [cursor=pointer]:
+                - /url: "#key-features"
+            - list [ref=f19e46]:
+              - listitem [ref=f19e47]:
+                - strong [ref=f19e48]: Easy to use
+                - text: ": dFlow provides a simple and intuitive interface for managing your applications and infrastructure."
+              - listitem [ref=f19e49]:
+                - strong [ref=f19e50]: Fast
+                - text: ": dFlow is designed to be fast and efficient, allowing you to deploy and manage your applications quickly."
+              - listitem [ref=f19e51]:
+                - strong [ref=f19e52]: Flexible
+                - text: ": dFlow supports a wide range of applications and infrastructure components, making it easy to integrate with your existing tools and workflows."
+            - heading [level=2] [ref=f19e53]:
+              - link "Community and Support" [ref=f19e54] [cursor=pointer]:
+                - /url: "#community-and-support"
+            - paragraph [ref=f19e55]: "dFlow has an active community of users. You can find help and support in the following places:"
+            - list [ref=f19e56]:
+              - listitem [ref=f19e57]:
+                - link "Discord Community" [ref=f19e58] [cursor=pointer]:
+                  - /url: https://discord.gg/XTZcmmUG
+              - listitem [ref=f19e59]:
+                - link "Documentation" [ref=f19e60] [cursor=pointer]:
+                  - /url: https://dflow.sh/docs
+              - listitem [ref=f19e61]:
+                - link "GitHub Issues" [ref=f19e62] [cursor=pointer]:
+                  - /url: https://github.com/dflow-sh/dflow/issues
+  - button [ref=f19e64]
+  - region "Notifications alt+T"
+  - alert [ref=f19e69]

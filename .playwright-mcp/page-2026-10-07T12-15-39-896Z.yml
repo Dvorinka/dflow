@@ -1,0 +1,92 @@
+- generic [ref=f4e1]:
+  - generic [ref=f4e4]:
+    - generic [ref=f4e6]:
+      - link [ref=f4e8] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=f4e9]
+      - button "d d" [ref=f4e11]:
+        - generic [ref=f4e12] [cursor=pointer]: d
+        - generic "demo" [ref=f4e14]: d
+    - generic [ref=f4e22]:
+      - link "Dashboard" [ref=f4e23] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=f4e24] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=f4e25] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=f4e26] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=f4e27] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=f4e28] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=f4e29] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=f4e30] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=f4e32]:
+      - generic [ref=f4e33]:
+        - generic [ref=f4e35]:
+          - heading "Choose a Deployment Option" [level=2] [ref=f4e36]
+          - paragraph [ref=f4e37]: Connect a cloud provider or add server details manually
+        - radiogroup [ref=f4e38]:
+          - generic [ref=f4e39] [cursor=pointer]:
+            - radio "Connect Cloud Provider" [ref=f4e40]
+            - generic [ref=f4e43]: Connect Cloud Provider
+          - generic [ref=f4e49] [cursor=pointer]:
+            - radio "Add Server Manually" [checked] [active] [ref=f4e50]
+            - generic [ref=f4e51]: Add Server Manually
+        - generic [ref=f4e122]:
+          - heading "Manual Server Configuration" [level=2] [ref=f4e124]
+          - generic [ref=f4e128]:
+            - tablist [ref=f4e129]:
+              - tab "Tailscale" [selected] [ref=f4e130]
+              - tab "Public" [ref=f4e143]
+            - tabpanel "Tailscale" [ref=f4e148]:
+              - generic [ref=f4e149]:
+                - generic [ref=f4e150]:
+                  - generic [ref=f4e151]: Tailscale Setup
+                  - generic [ref=f4e152]: Configure Tailscale for secure private network access
+                - generic [ref=f4e154]:
+                  - generic [ref=f4e155]:
+                    - generic [ref=f4e156]: Name
+                    - generic [ref=f4e157]:
+                      - textbox "Name" [ref=f4e158]: dflow-quaint-newt-795
+                      - button "Generate unique name" [ref=f4e159]
+                  - generic [ref=f4e161]:
+                    - generic [ref=f4e162]: Description
+                    - textbox "Description" [ref=f4e163]
+                  - generic [ref=f4e164]:
+                    - generic [ref=f4e165]:
+                      - generic [ref=f4e166]: Hostname (Auto-generated)
+                      - textbox "Hostname (Auto-generated)" [disabled]:
+                        - /placeholder: Generating unique hostname...
+                        - text: dfi-5105530
+                      - paragraph [ref=f4e167]: A unique hostname has been automatically generated for your server
+                    - generic [ref=f4e168]:
+                      - generic [ref=f4e169]: Username
+                      - textbox "Username" [ref=f4e170]:
+                        - /placeholder: Enter username
+                        - text: root
+                  - generic [ref=f4e171]:
+                    - generic [ref=f4e173]:
+                      - generic [ref=f4e174]:
+                        - paragraph [ref=f4e180]: Tailscale Auth Key
+                        - paragraph [ref=f4e181]: Generate authentication key for secure mesh networking
+                      - button "Generate Key" [ref=f4e182]
+                    - generic [ref=f4e185]:
+                      - generic [ref=f4e186]:
+                        - paragraph [ref=f4e190]: Server Connection Test
+                        - paragraph [ref=f4e191]: Verify Tailscale network connectivity
+                      - button "Test Connection" [disabled]
+                  - generic [ref=f4e192]:
+                    - button "Add Server" [disabled]
+  - button [ref=f4e114]
+  - region "Notifications alt+T"
+  - alert [ref=f4e119]
+  - generic:
+    - generic:
+      - iframe
+    - generic [ref=f4e195] [cursor=pointer]:
+      - button "Show Chatway Messenger" [ref=f4e196]
+      - button "Hide Chatway Messenger" [ref=f4e200]

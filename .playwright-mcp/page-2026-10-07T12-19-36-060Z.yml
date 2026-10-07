@@ -1,0 +1,240 @@
+- generic [active] [ref=f23e1]:
+  - generic [ref=f23e5]:
+    - generic:
+      - generic:
+        - button "Open Menu"
+    - generic [ref=f23e6]:
+      - complementary [ref=f23e7]:
+        - generic [ref=f23e8]:
+          - navigation [ref=f23e9]:
+            - generic [ref=f23e10]:
+              - button "Collections" [ref=f23e11] [cursor=pointer]
+              - generic [ref=f23e18]:
+                - link "Projects" [ref=f23e19] [cursor=pointer]:
+                  - /url: /payload-admin/collections/projects
+                - link "Services" [ref=f23e21] [cursor=pointer]:
+                  - /url: /payload-admin/collections/services
+                - link "Servers" [ref=f23e23] [cursor=pointer]:
+                  - /url: /payload-admin/collections/servers
+                - link "SSH Keys" [ref=f23e25] [cursor=pointer]:
+                  - /url: /payload-admin/collections/sshKeys
+                - link "Git Providers" [ref=f23e27] [cursor=pointer]:
+                  - /url: /payload-admin/collections/gitProviders
+                - link "Deployments" [ref=f23e29] [cursor=pointer]:
+                  - /url: /payload-admin/collections/deployments
+                - link "Cloud Provider Accounts" [ref=f23e31] [cursor=pointer]:
+                  - /url: /payload-admin/collections/cloudProviderAccounts
+                - link "Templates" [ref=f23e33] [cursor=pointer]:
+                  - /url: /payload-admin/collections/templates
+                - link "Security Groups" [ref=f23e35] [cursor=pointer]:
+                  - /url: /payload-admin/collections/securityGroups
+                - link "Docker Registries" [ref=f23e37] [cursor=pointer]:
+                  - /url: /payload-admin/collections/dockerRegistries
+                - link "Backups" [ref=f23e39] [cursor=pointer]:
+                  - /url: /payload-admin/collections/backups
+                - link "Traefiks" [ref=f23e41] [cursor=pointer]:
+                  - /url: /payload-admin/collections/traefik
+                - link "Roles" [ref=f23e43] [cursor=pointer]:
+                  - /url: /payload-admin/collections/roles
+                - link "Banners" [ref=f23e45] [cursor=pointer]:
+                  - /url: /payload-admin/collections/banners
+                - link "Media" [ref=f23e47] [cursor=pointer]:
+                  - /url: /payload-admin/collections/media
+                - link "Webhooks" [ref=f23e49] [cursor=pointer]:
+                  - /url: /payload-admin/collections/webhooks
+            - generic [ref=f23e51]:
+              - button "Globals" [ref=f23e52] [cursor=pointer]
+              - generic [ref=f23e59]:
+                - link "Theme" [ref=f23e60] [cursor=pointer]:
+                  - /url: /payload-admin/globals/theme
+                - link "Branding" [ref=f23e62] [cursor=pointer]:
+                  - /url: /payload-admin/globals/branding
+                - link "Auth Config" [ref=f23e64] [cursor=pointer]:
+                  - /url: /payload-admin/globals/auth-config
+            - generic [ref=f23e66]:
+              - button "Users & Tenants" [ref=f23e67] [cursor=pointer]
+              - generic [ref=f23e74]:
+                - link "Users" [ref=f23e75] [cursor=pointer]:
+                  - /url: /payload-admin/collections/users
+                - link "Tenants" [ref=f23e77] [cursor=pointer]:
+                  - /url: /payload-admin/collections/tenants
+            - generic [ref=f23e79]:
+              - button "System" [ref=f23e80] [cursor=pointer]
+              - link "Activities" [ref=f23e88] [cursor=pointer]:
+                - /url: /payload-admin/collections/activity
+            - link "Log out" [ref=f23e91] [cursor=pointer]:
+              - /url: /payload-admin/logout
+          - button [ref=f23e96]:
+            - generic "Close" [ref=f23e98] [cursor=pointer]
+      - generic [ref=f23e101]:
+        - banner [ref=f23e102]:
+          - generic [ref=f23e104]:
+            - button "Open Menu" [ref=f23e105] [cursor=pointer]:
+              - generic "Open" [ref=f23e107]
+            - generic [ref=f23e110]:
+              - generic "Dashboard" [ref=f23e114]
+              - link "Account" [ref=f23e118] [cursor=pointer]:
+                - /url: /payload-admin/account
+                - img "yas" [ref=f23e119]
+        - generic [ref=f23e121]:
+          - generic [ref=f23e122]:
+            - heading "Collections" [level=2] [ref=f23e123]
+            - list [ref=f23e124]:
+              - listitem [ref=f23e125]:
+                - generic [ref=f23e126] [cursor=pointer]:
+                  - heading "Projects" [level=3] [ref=f23e127]
+                  - link "Create new Projects" [ref=f23e129]:
+                    - /url: /payload-admin/collections/projects/create
+                  - link "Show all Projects" [ref=f23e130]:
+                    - /url: /payload-admin/collections/projects
+              - listitem [ref=f23e131]:
+                - generic [ref=f23e132] [cursor=pointer]:
+                  - heading "Services" [level=3] [ref=f23e133]
+                  - link "Create new Services" [ref=f23e135]:
+                    - /url: /payload-admin/collections/services/create
+                  - link "Show all Services" [ref=f23e136]:
+                    - /url: /payload-admin/collections/services
+              - listitem [ref=f23e137]:
+                - generic [ref=f23e138] [cursor=pointer]:
+                  - heading "Servers" [level=3] [ref=f23e139]
+                  - link "Create new Servers" [ref=f23e141]:
+                    - /url: /payload-admin/collections/servers/create
+                  - link "Show all Servers" [ref=f23e142]:
+                    - /url: /payload-admin/collections/servers
+              - listitem [ref=f23e143]:
+                - generic [ref=f23e144] [cursor=pointer]:
+                  - heading "SSH Keys" [level=3] [ref=f23e145]
+                  - link "Create new SSH Keys" [ref=f23e147]:
+                    - /url: /payload-admin/collections/sshKeys/create
+                  - link "Show all SSH Keys" [ref=f23e148]:
+                    - /url: /payload-admin/collections/sshKeys
+              - listitem [ref=f23e149]:
+                - generic [ref=f23e150] [cursor=pointer]:
+                  - heading "Git Providers" [level=3] [ref=f23e151]
+                  - link "Create new Git Providers" [ref=f23e153]:
+                    - /url: /payload-admin/collections/gitProviders/create
+                  - link "Show all Git Providers" [ref=f23e154]:
+                    - /url: /payload-admin/collections/gitProviders
+              - listitem [ref=f23e155]:
+                - generic [ref=f23e156] [cursor=pointer]:
+                  - heading "Deployments" [level=3] [ref=f23e157]
+                  - link "Create new Deployments" [ref=f23e159]:
+                    - /url: /payload-admin/collections/deployments/create
+                  - link "Show all Deployments" [ref=f23e160]:
+                    - /url: /payload-admin/collections/deployments
+              - listitem [ref=f23e161]:
+                - generic [ref=f23e162] [cursor=pointer]:
+                  - heading "Cloud Provider Accounts" [level=3] [ref=f23e163]
+                  - link "Create new Cloud Provider Accounts" [ref=f23e165]:
+                    - /url: /payload-admin/collections/cloudProviderAccounts/create
+                  - link "Show all Cloud Provider Accounts" [ref=f23e166]:
+                    - /url: /payload-admin/collections/cloudProviderAccounts
+              - listitem [ref=f23e167]:
+                - generic [ref=f23e168] [cursor=pointer]:
+                  - heading "Templates" [level=3] [ref=f23e169]
+                  - link "Create new Templates" [ref=f23e171]:
+                    - /url: /payload-admin/collections/templates/create
+                  - link "Show all Templates" [ref=f23e172]:
+                    - /url: /payload-admin/collections/templates
+              - listitem [ref=f23e173]:
+                - generic [ref=f23e174] [cursor=pointer]:
+                  - heading "Security Groups" [level=3] [ref=f23e175]
+                  - link "Create new Security Groups" [ref=f23e177]:
+                    - /url: /payload-admin/collections/securityGroups/create
+                  - link "Show all Security Groups" [ref=f23e178]:
+                    - /url: /payload-admin/collections/securityGroups
+              - listitem [ref=f23e179]:
+                - generic [ref=f23e180] [cursor=pointer]:
+                  - heading "Docker Registries" [level=3] [ref=f23e181]
+                  - link "Create new Docker Registries" [ref=f23e183]:
+                    - /url: /payload-admin/collections/dockerRegistries/create
+                  - link "Show all Docker Registries" [ref=f23e184]:
+                    - /url: /payload-admin/collections/dockerRegistries
+              - listitem [ref=f23e185]:
+                - generic [ref=f23e186] [cursor=pointer]:
+                  - heading "Backups" [level=3] [ref=f23e187]
+                  - link "Create new Backups" [ref=f23e189]:
+                    - /url: /payload-admin/collections/backups/create
+                  - link "Show all Backups" [ref=f23e190]:
+                    - /url: /payload-admin/collections/backups
+              - listitem [ref=f23e191]:
+                - generic [ref=f23e192] [cursor=pointer]:
+                  - heading "Traefiks" [level=3] [ref=f23e193]
+                  - link "Create new Traefiks" [ref=f23e195]:
+                    - /url: /payload-admin/collections/traefik/create
+                  - link "Show all Traefiks" [ref=f23e196]:
+                    - /url: /payload-admin/collections/traefik
+              - listitem [ref=f23e197]:
+                - generic [ref=f23e198] [cursor=pointer]:
+                  - heading "Roles" [level=3] [ref=f23e199]
+                  - link "Create new Roles" [ref=f23e201]:
+                    - /url: /payload-admin/collections/roles/create
+                  - link "Show all Roles" [ref=f23e202]:
+                    - /url: /payload-admin/collections/roles
+              - listitem [ref=f23e203]:
+                - generic [ref=f23e204] [cursor=pointer]:
+                  - heading "Banners" [level=3] [ref=f23e205]
+                  - link "Create new Banners" [ref=f23e207]:
+                    - /url: /payload-admin/collections/banners/create
+                  - link "Show all Banners" [ref=f23e208]:
+                    - /url: /payload-admin/collections/banners
+              - listitem [ref=f23e209]:
+                - generic [ref=f23e210] [cursor=pointer]:
+                  - heading "Media" [level=3] [ref=f23e211]
+                  - link "Create new Media" [ref=f23e213]:
+                    - /url: /payload-admin/collections/media/create
+                  - link "Show all Media" [ref=f23e214]:
+                    - /url: /payload-admin/collections/media
+              - listitem [ref=f23e215]:
+                - generic [ref=f23e216] [cursor=pointer]:
+                  - heading "Webhooks" [level=3] [ref=f23e217]
+                  - link "Create new Webhooks" [ref=f23e219]:
+                    - /url: /payload-admin/collections/webhooks/create
+                  - link "Show all Webhooks" [ref=f23e220]:
+                    - /url: /payload-admin/collections/webhooks
+          - generic [ref=f23e221]:
+            - heading "Globals" [level=2] [ref=f23e222]
+            - list [ref=f23e223]:
+              - listitem [ref=f23e224]:
+                - generic [ref=f23e225] [cursor=pointer]:
+                  - heading "Theme" [level=3] [ref=f23e226]
+                  - link "Edit Theme" [ref=f23e227]:
+                    - /url: /payload-admin/globals/theme
+              - listitem [ref=f23e228]:
+                - generic [ref=f23e229] [cursor=pointer]:
+                  - heading "Branding" [level=3] [ref=f23e230]
+                  - link "Edit Branding" [ref=f23e231]:
+                    - /url: /payload-admin/globals/branding
+              - listitem [ref=f23e232]:
+                - generic [ref=f23e233] [cursor=pointer]:
+                  - heading "Auth Config" [level=3] [ref=f23e234]
+                  - link "Edit Auth Config" [ref=f23e235]:
+                    - /url: /payload-admin/globals/auth-config
+          - generic [ref=f23e236]:
+            - heading "Users & Tenants" [level=2] [ref=f23e237]
+            - list [ref=f23e238]:
+              - listitem [ref=f23e239]:
+                - generic [ref=f23e240] [cursor=pointer]:
+                  - heading "Users" [level=3] [ref=f23e241]
+                  - link "Create new Users" [ref=f23e243]:
+                    - /url: /payload-admin/collections/users/create
+                  - link "Show all Users" [ref=f23e244]:
+                    - /url: /payload-admin/collections/users
+              - listitem [ref=f23e245]:
+                - generic [ref=f23e246] [cursor=pointer]:
+                  - heading "Tenants" [level=3] [ref=f23e247]
+                  - link "Create new Tenants" [ref=f23e249]:
+                    - /url: /payload-admin/collections/tenants/create
+                  - link "Show all Tenants" [ref=f23e250]:
+                    - /url: /payload-admin/collections/tenants
+          - generic [ref=f23e251]:
+            - heading "System" [level=2] [ref=f23e252]
+            - list [ref=f23e253]:
+              - listitem [ref=f23e254]:
+                - generic [ref=f23e255] [cursor=pointer]:
+                  - heading "Activities" [level=3] [ref=f23e256]
+                  - link "Show all Activities" [ref=f23e257]:
+                    - /url: /payload-admin/collections/activity
+  - status [ref=f23e258]
+  - region "Notifications alt+T"
+  - alert [ref=f23e259]

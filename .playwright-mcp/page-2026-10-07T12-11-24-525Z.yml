@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e40]:
+    - generic [ref=e42]:
+      - link [ref=e44] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=e45]
+      - button "d d" [ref=e47]:
+        - generic [ref=e48] [cursor=pointer]: d
+        - generic "demo" [ref=e50]: d
+    - generic [ref=e58]:
+      - link "Dashboard" [ref=e59] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=e60] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=e61] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=e62] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=e63] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=e64] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=e65] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=e66] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]: Projects
+        - link "View platform metrics" [ref=e74] [cursor=pointer]:
+          - /url: /demo/admin
+        - generic [ref=e77]:
+          - heading "No Servers Available" [level=2] [ref=e82]
+          - paragraph [ref=e83]: You need at least one server to get started. Add a server to deploy your projects.
+          - button "Connect Server" [ref=e84]
+  - button [ref=e87]
+  - region "Notifications alt+T"
+  - alert [ref=e37]
+  - generic:
+    - generic:
+      - iframe
+    - generic [ref=e94] [cursor=pointer]:
+      - button "Show Chatway Messenger" [ref=e95]
+      - button "Hide Chatway Messenger" [ref=e99]
