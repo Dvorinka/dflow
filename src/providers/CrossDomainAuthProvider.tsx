@@ -8,6 +8,11 @@ import { useCrossDomainAuth } from '@/hooks/useCrossDomainAuth'
 interface CrossDomainAuthContextType {
   crossDomainLogout: (redirectUrl?: string) => Promise<void>
   crossDomainLoginSync: (token?: string, redirectUrl?: string) => Promise<void>
+  // Redirect-chain URLs (null when no sync domains configured). Prefer
+  // these over the iframe variants — first-party navigation actually
+  // persists the cookie on the sibling domain (#364).
+  loginSyncRedirectUrl: (token: string, returnUrl: string) => string | null
+  logoutSyncRedirectUrl: (returnUrl: string) => string | null
 }
 
 const CrossDomainAuthContext = createContext<CrossDomainAuthContextType | null>(
@@ -29,7 +34,12 @@ export function CrossDomainAuthProvider({
   domains,
   config = {},
 }: CrossDomainAuthProviderProps) {
-  const { crossDomainLogout, crossDomainLoginSync } = useCrossDomainAuth({
+  const {
+    crossDomainLogout,
+    crossDomainLoginSync,
+    loginSyncRedirectUrl,
+    logoutSyncRedirectUrl,
+  } = useCrossDomainAuth({
     domains,
     ...config,
     onSuccess: () => {
@@ -48,8 +58,15 @@ export function CrossDomainAuthProvider({
     () => ({
       crossDomainLogout,
       crossDomainLoginSync,
+      loginSyncRedirectUrl,
+      logoutSyncRedirectUrl,
     }),
-    [crossDomainLogout, crossDomainLoginSync],
+    [
+      crossDomainLogout,
+      crossDomainLoginSync,
+      loginSyncRedirectUrl,
+      logoutSyncRedirectUrl,
+    ],
   )
 
   return (

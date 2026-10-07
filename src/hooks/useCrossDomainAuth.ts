@@ -55,6 +55,34 @@ export function useCrossDomainAuth({
     })
   }
 
+  // Redirect-chain builders (#364). Iframe cookie writes are blocked or
+  // partitioned by modern browsers, so reliable sync navigates top-level
+  // through each sibling: every hop sets/clears its own first-party cookie
+  // and forwards `next`/`back`. Returns null when no sync domains exist.
+  const chainUrl = (
+    endpoint: string,
+    token: string | null,
+    returnUrl: string,
+  ): string | null => {
+    if (!domains.length) return null
+
+    let next: string | null = null
+    for (let i = domains.length - 1; i >= 0; i--) {
+      const params = new URLSearchParams()
+      if (token) params.set('token', token)
+      params.set('back', returnUrl)
+      if (next) params.set('next', next)
+      next = `https://${domains[i]}${endpoint}?${params.toString()}`
+    }
+    return next
+  }
+
+  const loginSyncRedirectUrl = (token: string, returnUrl: string) =>
+    chainUrl(loginEndpoint, token, returnUrl)
+
+  const logoutSyncRedirectUrl = (returnUrl: string) =>
+    chainUrl(logoutEndpoint, null, returnUrl)
+
   const crossDomainLogout = async (redirectUrl?: string) => {
     try {
       const logoutPromises = domains.map(domain =>
@@ -97,5 +125,7 @@ export function useCrossDomainAuth({
   return {
     crossDomainLogout,
     crossDomainLoginSync,
+    loginSyncRedirectUrl,
+    logoutSyncRedirectUrl,
   }
 }
