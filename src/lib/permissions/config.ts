@@ -250,6 +250,13 @@ export const getActionAccess = {
   getServiceNginxConfigAction: ['services.read'],
   setServiceNginxConfigSchema: ['services.update'],
   getDeploymentsAction: ['services.read'],
+
+  // Activity actions (self-scoped reads; team.read is the least privilege
+  // that every dashboard role already carries)
+  getActivitiesAction: ['team.read'],
+  getActivitiesByCategoryAction: ['team.read'],
+  getActivityCategoriesAction: ['team.read'],
+  getActivityStatsAction: ['team.read'],
 } as const
 
 export type GetActionAccessMap = typeof getActionAccess
