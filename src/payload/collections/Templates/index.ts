@@ -509,6 +509,21 @@ export const Template: CollectionConfig = {
       ],
     },
     {
+      name: 'type',
+      type: 'select',
+      options: [
+        { label: 'Personal', value: 'personal' },
+        { label: 'Official', value: 'official' },
+        { label: 'Community', value: 'community' },
+      ],
+      defaultValue: 'personal',
+      admin: {
+        position: 'sidebar',
+        description:
+          'Official/community templates are tenant-less and listed for every organisation (#218)',
+      },
+    },
+    {
       name: 'isPublished',
       type: 'checkbox',
       label: 'Is Template Published',

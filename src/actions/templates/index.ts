@@ -1,8 +1,15 @@
 'use server'
 
+import configPromise from '@payload-config'
 import { revalidatePath } from 'next/cache'
+import { getPayload } from 'payload'
 
 import { DFLOW_CONFIG, TEMPLATE_EXPR } from '@/lib/constants'
+import {
+  OFFICIAL_TEMPLATES,
+  findBundledTemplate,
+} from '@/lib/officialTemplates'
+import { Template as DFlowTemplate } from '@/lib/restSDK/types'
 import { dFlowRestSdk } from '@/lib/restSDK/utils'
 import { protectedClient, publicClient } from '@/lib/safe-action'
 import { generateRandomString } from '@/lib/utils'
@@ -190,22 +197,45 @@ export const updateTemplateAction = protectedClient
     return response
   })
 
+// Official/community templates are served from the local catalog (#218) —
+// the upstream dflow.sh catalog is no longer reachable, so seeded local
+// documents are now the source of truth. The remote community catalog is
+// still merged best-effort in case it ever comes back.
 export const getAllOfficialTemplatesAction = publicClient
   .metadata({ actionName: 'getAllOfficialTemplatesAction' })
   .inputSchema(getAllTemplatesSchema)
   .action(async ({ clientInput }) => {
     const { type } = clientInput
+    const payload = await getPayload({ config: configPromise })
 
-    const res = await dFlowRestSdk.find({
+    const { docs: localTemplates } = await payload.find({
       collection: 'templates',
       limit: 1000,
       where: {
-        type: {
-          equals: type,
-        },
+        type: { equals: type },
       },
     })
-    return res.docs
+
+    // Components type the catalog by the remote SDK shape; local docs are
+    // structurally compatible.
+    const local = localTemplates as unknown as DFlowTemplate[]
+
+    if (type === 'official') {
+      return [...OFFICIAL_TEMPLATES, ...local]
+    }
+
+    try {
+      const res = await dFlowRestSdk.find({
+        collection: 'templates',
+        limit: 1000,
+        where: {
+          type: { equals: 'community' },
+        },
+      })
+      return [...local, ...res.docs]
+    } catch {
+      return local
+    }
   })
 
 export const getPersonalTemplatesAction = protectedClient
@@ -236,6 +266,22 @@ export const getOfficialTemplateByIdAction = publicClient
   .inputSchema(getTemplateByIdSchema)
   .action(async ({ clientInput }) => {
     const { templateId } = clientInput
+    const payload = await getPayload({ config: configPromise })
+
+    // Bundled official catalog first, then local docs, then the legacy
+    // remote catalog (#218).
+    const bundled = findBundledTemplate(templateId)
+    if (bundled) return bundled
+
+    try {
+      return (await payload.findByID({
+        collection: 'templates',
+        id: templateId,
+        depth: 3,
+      })) as unknown as DFlowTemplate
+    } catch {
+      // not a local document id — try the remote catalog
+    }
 
     const templateDetails = await dFlowRestSdk.findByID({
       collection: 'templates',

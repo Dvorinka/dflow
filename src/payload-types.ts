@@ -1130,6 +1130,10 @@ export interface Template {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Official/community templates are tenant-less and listed for every organisation (#218)
+   */
+  type?: ('personal' | 'official' | 'community') | null;
   isPublished?: boolean | null;
   publishedTemplateId?: string | null;
   updatedAt: string;
@@ -2194,6 +2198,7 @@ export interface TemplatesSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  type?: T;
   isPublished?: T;
   publishedTemplateId?: T;
   updatedAt?: T;
