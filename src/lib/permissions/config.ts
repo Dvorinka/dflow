@@ -206,6 +206,12 @@ export const getActionAccess = {
   generateOAuthTokenAction: ['servers.read'],
   generateAuthKeyAction: ['servers.read'],
 
+  // netbird Actions
+  netbirdConfiguredAction: ['servers.read'],
+  generateNetbirdSetupKeyAction: ['servers.read'],
+  getNetbirdPeerAction: ['servers.read'],
+  deleteNetbirdPeerAction: ['servers.delete'],
+
   //  Backup actions
   getAllBackupsAction: ['backups.read', 'backups.update'],
   internalBackupAction: ['backups.create', 'services.read'],

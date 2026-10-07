@@ -20,6 +20,13 @@ export const env = createEnv({
     RESEND_SENDER_NAME: z.string().min(1).optional(),
     TAILSCALE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
     TAILSCALE_TAILNET: z.string().min(1).optional(),
+    // NetBird management API (https://netbird.io or self-hosted).
+    // Token is a Personal Access Token with setup-keys + peers scope.
+    NETBIRD_API_URL: z.string().url().optional(),
+    NETBIRD_API_TOKEN: z.string().min(1).optional(),
+    // Self-hosted management address passed to `netbird up
+    // --management-url`. Leave unset when using api.netbird.io.
+    NETBIRD_MANAGEMENT_URL: z.string().url().optional(),
     BESZEL_MONITORING_URL: z.string().min(1).optional(),
     BESZEL_SUPERUSER_EMAIL: z.string().min(1).optional(),
     BESZEL_SUPERUSER_PASSWORD: z.string().min(1).optional(),
@@ -57,8 +64,7 @@ export const env = createEnv({
     DATABASE_URI: process.env.DATABASE_URI,
     PAYLOAD_SECRET: process.env.PAYLOAD_SECRET,
     REDIS_URI: process.env.REDIS_URI,
-    NEXT_PUBLIC_TELEMETRY_DISABLED:
-      process.env.NEXT_PUBLIC_TELEMETRY_DISABLED,
+    NEXT_PUBLIC_TELEMETRY_DISABLED: process.env.NEXT_PUBLIC_TELEMETRY_DISABLED,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_SENDER_EMAIL: process.env.RESEND_SENDER_EMAIL,
     RESEND_SENDER_NAME: process.env.RESEND_SENDER_NAME,
@@ -69,6 +75,9 @@ export const env = createEnv({
     TAILSCALE_OAUTH_CLIENT_SECRET: process.env.TAILSCALE_OAUTH_CLIENT_SECRET,
     TAILSCALE_TAILNET: process.env.TAILSCALE_TAILNET,
     TAILSCALE_AUTH_KEY: process.env.TAILSCALE_AUTH_KEY,
+    NETBIRD_API_URL: process.env.NETBIRD_API_URL,
+    NETBIRD_API_TOKEN: process.env.NETBIRD_API_TOKEN,
+    NETBIRD_MANAGEMENT_URL: process.env.NETBIRD_MANAGEMENT_URL,
     NEXT_PUBLIC_PROXY_DOMAIN_URL: process.env.NEXT_PUBLIC_PROXY_DOMAIN_URL,
     NEXT_PUBLIC_PROXY_CNAME: process.env.NEXT_PUBLIC_PROXY_CNAME,
     NEXT_PUBLIC_DISCORD_INVITE_URL: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL,

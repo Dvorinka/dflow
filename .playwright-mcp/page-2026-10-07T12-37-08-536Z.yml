@@ -1,0 +1,104 @@
+- generic [active] [ref=f37e1]:
+  - generic [ref=f37e4]:
+    - generic [ref=f37e6]:
+      - link [ref=f37e8] [cursor=pointer]:
+        - /url: /demo/dashboard
+        - img "logo" [ref=f37e9]
+      - button "d d" [ref=f37e11]:
+        - generic [ref=f37e12] [cursor=pointer]: d
+        - generic "demo" [ref=f37e14]: d
+    - generic [ref=f37e21]:
+      - link "Dashboard" [ref=f37e22] [cursor=pointer]:
+        - /url: /demo/dashboard
+      - link "Servers" [ref=f37e23] [cursor=pointer]:
+        - /url: /demo/servers
+      - link "Security" [ref=f37e24] [cursor=pointer]:
+        - /url: /demo/security
+      - link "Integrations" [ref=f37e25] [cursor=pointer]:
+        - /url: /demo/integrations
+      - link "Backups" [ref=f37e26] [cursor=pointer]:
+        - /url: /demo/backups
+      - link "Templates" [ref=f37e27] [cursor=pointer]:
+        - /url: /demo/templates
+      - link "Team" [ref=f37e28] [cursor=pointer]:
+        - /url: /demo/team
+      - link "Docs" [ref=f37e29] [cursor=pointer]:
+        - /url: /demo/docs/getting-started/introduction
+    - main [ref=f37e31]:
+      - generic [ref=f37e32]:
+        - generic [ref=f37e34]:
+          - heading "Choose a Deployment Option" [level=2] [ref=f37e35]
+          - paragraph [ref=f37e36]: Connect a cloud provider or add server details manually
+        - radiogroup [ref=f37e37]:
+          - generic [ref=f37e38] [cursor=pointer]:
+            - radio "Connect Cloud Provider" [ref=f37e39]
+            - radio [aria-hidden]
+            - generic [ref=f37e40]: Connect Cloud Provider
+          - generic [ref=f37e46] [cursor=pointer]:
+            - radio "Add Server Manually" [checked] [ref=f37e47]
+            - radio [checked] [aria-hidden]
+            - generic [ref=f37e50]: Add Server Manually
+        - generic [ref=f37e56]:
+          - heading "Manual Server Configuration" [level=2] [ref=f37e58]
+          - generic [ref=f37e62]:
+            - tablist [ref=f37e63]:
+              - tab "Tailscale" [ref=f37e64]
+              - tab "NetBird" [selected] [ref=f37e77]
+              - tab "Public" [ref=f37e84]
+            - tabpanel "NetBird" [ref=f37e89]:
+              - generic [ref=f37e90]:
+                - generic [ref=f37e91]:
+                  - generic [ref=f37e92]: NetBird Setup
+                  - generic [ref=f37e93]: Enrol the server into a NetBird mesh network (hosted or self-hosted) and manage it over its private IP
+                - generic [ref=f37e95]:
+                  - generic [ref=f37e96]:
+                    - generic [ref=f37e97]: Name
+                    - generic [ref=f37e98]:
+                      - textbox "Name" [ref=f37e99]: dflow-damp-magpie-544
+                      - button "Generate unique name" [ref=f37e100]
+                  - generic [ref=f37e102]:
+                    - generic [ref=f37e103]: Description
+                    - textbox "Description" [ref=f37e104]
+                  - generic [ref=f37e105]:
+                    - generic [ref=f37e106]:
+                      - generic [ref=f37e107]: Hostname (Auto-generated)
+                      - textbox "Hostname (Auto-generated)" [disabled]:
+                        - /placeholder: Generating unique hostname...
+                      - paragraph [ref=f37e108]: The peer registers under this name in your NetBird network
+                    - generic [ref=f37e109]:
+                      - generic [ref=f37e110]: Username
+                      - textbox "Username" [ref=f37e111]:
+                        - /placeholder: Enter username
+                        - text: root
+                  - generic [ref=f37e112]:
+                    - generic [ref=f37e113]:
+                      - generic [ref=f37e114]: SSH Key
+                      - combobox "SSH Key" [ref=f37e115]:
+                        - generic: Select an SSH key
+                      - combobox [aria-hidden] [ref=f37e116]
+                      - paragraph [ref=f37e117]: Used to SSH into the server over the NetBird mesh IP
+                    - generic [ref=f37e118]:
+                      - generic [ref=f37e119]: SSH Port
+                      - spinbutton "SSH Port" [ref=f37e120]: "22"
+                  - generic [ref=f37e121]:
+                    - generic [ref=f37e122]:
+                      - generic [ref=f37e124]:
+                        - paragraph [ref=f37e130]: NetBird Setup Key
+                        - paragraph [ref=f37e131]: Paste a setup key from your NetBird dashboard, or set NETBIRD_API_TOKEN to generate keys here
+                      - generic [ref=f37e132]:
+                        - textbox "Paste setup key" [ref=f37e134]
+                        - button "Use Key" [ref=f37e135]
+                    - generic [ref=f37e138]:
+                      - generic [ref=f37e139]:
+                        - paragraph [ref=f37e144]: Resolve Peer IP
+                        - paragraph [ref=f37e145]: After the server joins, fetch its NetBird mesh IP
+                      - button "Resolve" [disabled]
+                    - generic [ref=f37e147]:
+                      - generic [ref=f37e148]:
+                        - paragraph [ref=f37e152]: Server Connection Test
+                        - paragraph [ref=f37e153]: Verify SSH connectivity over the NetBird network
+                      - button "Test Connection" [disabled]
+                  - generic [ref=f37e154]:
+                    - button "Add Server" [disabled]
+  - button [ref=f37e156]
+  - region "Notifications alt+T"

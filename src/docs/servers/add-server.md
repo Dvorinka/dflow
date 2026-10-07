@@ -32,12 +32,26 @@ steps:
   Spin up droplets with ease. Great for quick deployments, hobby projects, and
   developer-friendly infrastructure.
 
+## Manual & Private-Network Servers
+
+You can also attach a server you already own. Three connection modes are
+available under **Add Server Manually**:
+
+- **Tailscale** — generate an auth key and enrol the server into your
+  tailnet; dFlow connects over MagicDNS.
+- **NetBird** — generate (or paste) a setup key and enrol the server into
+  a NetBird network, hosted on `api.netbird.io` or self-hosted. dFlow
+  connects over the peer's mesh IP. Set `NETBIRD_API_TOKEN` (and
+  `NETBIRD_API_URL`/`NETBIRD_MANAGEMENT_URL` for self-hosted) to enable
+  key generation and peer resolution from the dashboard.
+- **Public** — any server reachable over SSH on a public IP.
+
 ## Getting Started
 
 To add a server:
 
-1. Choose your preferred provider.
-2. Follow the specific setup instructions for that provider.
+1. Choose your preferred provider or connection mode.
+2. Follow the specific setup instructions shown in the form.
 3. Once the server is created, it will be automatically connected to your
    project for deployments and management.
 

@@ -10,10 +10,10 @@ categoryOrder: 1
 dFlow is a platform for deploying, managing, and scaling git apps, Docker
 images, and databases on your own infrastructure.
 
-This repository is a public snapshot of older dFlow code. It is not dFlow Cloud,
-and it is not a supported self-host product. You may fork and modify it for your
-own use under the repository license. That license does not apply to Cloud or
-private platform source.
+This is the community-maintained fork of dFlow. The upstream project is no
+longer maintained; this fork is developed independently and is fully open
+source — no hosted tier, no feature gates, no external service dependency.
+Everything runs on infrastructure you own.
 
 ## Key Features
 
@@ -30,6 +30,5 @@ private platform source.
 dFlow has an active community of users. You can find help and support in the
 following places:
 
-- [Discord Community](https://discord.gg/XTZcmmUG)
-- [Documentation](https://dflow.sh/docs)
-- [GitHub Issues](https://github.com/dflow-sh/dflow/issues)
+- [GitHub Issues](https://github.com/Dvorinka/dflow/issues)
+- [GitHub Discussions](https://github.com/Dvorinka/dflow/discussions)

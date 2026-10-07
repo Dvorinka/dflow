@@ -1,9 +1,10 @@
 'use client'
 
 import { Tailscale } from '../icons'
+import NetBirdForm from '../servers/NetBirdForm'
 import TailscaleForm from '../servers/TailscaleForm'
 import UpdateTailscaleServerForm from '../servers/UpdateTailscaleServerForm'
-import { Globe } from 'lucide-react'
+import { Globe, Network } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect } from 'react'
 
@@ -50,10 +51,14 @@ const ManualSetupTabs = ({ sshKeys, server, formType, onSuccess }: Props) => {
 
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className='w-full'>
-      <TabsList className='grid w-full max-w-md grid-cols-2'>
+      <TabsList className='grid w-full max-w-md grid-cols-3'>
         <TabsTrigger value='tailscale' className='flex items-center gap-2'>
           <Tailscale />
           <span>Tailscale</span>
+        </TabsTrigger>
+        <TabsTrigger value='netbird' className='flex items-center gap-2'>
+          <Network className='h-4 w-4' />
+          <span>NetBird</span>
         </TabsTrigger>
         <TabsTrigger value='public' className='flex items-center gap-2'>
           <Globe className='h-4 w-4' />
@@ -79,6 +84,21 @@ const ManualSetupTabs = ({ sshKeys, server, formType, onSuccess }: Props) => {
                 onSuccess={onSuccess}
               />
             )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value='netbird' className='mt-4'>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-2xl'>NetBird Setup</CardTitle>
+            <CardDescription>
+              Enrol the server into a NetBird mesh network (hosted or
+              self-hosted) and manage it over its private IP
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {formType === 'create' ? <NetBirdForm sshKeys={sshKeys} /> : null}
           </CardContent>
         </Card>
       </TabsContent>
