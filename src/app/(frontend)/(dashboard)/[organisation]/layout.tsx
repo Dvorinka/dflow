@@ -4,6 +4,7 @@ import React, { Suspense } from 'react'
 
 import { getGithubStarsAction } from '@/actions/github'
 import Banner from '@/components/Banner'
+import CommandPalette from '@/components/CommandPalette'
 import DocSidebar from '@/components/DocSidebar'
 import GithubStars from '@/components/GithubStars'
 import Logo from '@/components/Logo'
@@ -58,6 +59,8 @@ const DashboardLayoutInner = async ({
         </div>
 
         <div className='flex items-center gap-x-4'>
+          <CommandPalette />
+
           <GithubStars githubStars={result?.data?.stars} />
 
           <ToggleTheme />
