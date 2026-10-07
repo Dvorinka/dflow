@@ -62,7 +62,7 @@ const DocSidebar = () => {
           exit='initial'
           animate={isOpen ? 'animate' : 'initial'}
           transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
-          className={`bg-background fixed top-0 right-0 z-9999 h-full max-w-md overflow-y-scroll scroll-smooth pt-0 lg:static ${isOpen ? 'border-l' : ''}`}>
+          className={`bg-background fixed top-0 right-0 z-40 h-full max-w-md overflow-y-scroll scroll-smooth pt-0 lg:static ${isOpen ? 'border-l' : ''}`}>
           <header className='bg-background sticky top-0 z-50 flex items-center justify-between border-b px-4 py-4'>
             <div className='font-medium'>Documentation</div>
             <Button
