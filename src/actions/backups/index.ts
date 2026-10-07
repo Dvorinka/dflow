@@ -101,6 +101,7 @@ const serverBackupMethod = async ({
 
   const template = await fetchOfficialTemplateByName({
     name: 'Restic Backups',
+    payload,
   })
 
   const existingServices = project?.services?.docs ?? []
