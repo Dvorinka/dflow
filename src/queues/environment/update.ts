@@ -14,8 +14,8 @@ import { dokku } from '@/lib/dokku'
 import { pub, queueConnection } from '@/lib/redis'
 import { sendActionEvent, sendEvent } from '@/lib/sendEvent'
 import { server } from '@/lib/server'
-import { SSHType, dynamicSSH } from '@/lib/ssh'
-import { parseDatabaseUrl } from '@/lib/utils'
+import { SSHType, dynamicSSH, extractSSHDetails } from '@/lib/ssh'
+import { buildConnectionUrl, parseDatabaseUrl } from '@/lib/utils'
 import { waitForJobCompletion } from '@/lib/utils/waitForJobCompletion'
 import { Service } from '@/payload-types'
 
@@ -322,6 +322,168 @@ async function handleReferenceVariables({
           const envAlias = formattedDatabaseVariableName
             .replace(/-([a-z0-9])/g, (_, char) => '_' + char.toUpperCase())
             .toUpperCase()
+
+          // External databases (#412/#366) are managed elsewhere — resolve
+          // all known variables straight from the stored connection details,
+          // no dokku linking, deployment check, or port exposure needed.
+          const { docs: externalDbDocs } = await payload.find({
+            collection: 'services',
+            where: {
+              and: [
+                { name: { equals: databaseName } },
+                { 'tenant.slug': { equals: tenantSlug } },
+                { 'databaseDetails.provider': { equals: 'external' } },
+              ],
+            },
+          })
+
+          const externalDb = externalDbDocs?.[0]
+          if (externalDb?.databaseDetails) {
+            const details = externalDb.databaseDetails
+            const connectionUrl = details.connectionUrl ?? ''
+            const parsed: Partial<
+              ReturnType<typeof parseDatabaseUrl>
+            > = connectionUrl ? parseDatabaseUrl(connectionUrl) : {}
+            const host = details.host || parsed.host || ''
+            const port = details.port || parsed.port || ''
+
+            let value = ''
+            if (databaseVariableName.includes('_URI')) value = connectionUrl
+            else if (databaseVariableName.endsWith('_NAME'))
+              value = parsed.databaseName ?? externalDb.name
+            else if (databaseVariableName.endsWith('_USERNAME'))
+              value = details.username || parsed.username || ''
+            else if (databaseVariableName.endsWith('_PASSWORD'))
+              value = details.password || parsed.password || ''
+            else if (databaseVariableName.endsWith('_HOST')) value = host
+            else if (databaseVariableName.endsWith('_PORT')) value = port
+
+            return { [variable]: value }
+          }
+
+          // Cross-server link (#413): dokku `link` only works when app and
+          // database share a dokku host. When the DB lives on a different
+          // server, expose its port there and inject a URI pointed at the
+          // tailnet/mesh IP — private traffic, no public exposure needed.
+          const { docs: dbServiceDocs } = await payload.find({
+            collection: 'services',
+            depth: 2,
+            where: {
+              and: [
+                { name: { equals: databaseName } },
+                { 'tenant.slug': { equals: tenantSlug } },
+                { type: { equals: 'database' } },
+              ],
+            },
+          })
+
+          const dbService = dbServiceDocs?.[0]
+          const dbServer =
+            typeof dbService?.project === 'object' &&
+            typeof dbService.project?.server === 'object' &&
+            dbService.project.server
+              ? dbService.project.server
+              : null
+
+          if (dbService && dbServer && dbServer.id !== serverDetails.id) {
+            const meshHost = dbServer.tailscalePrivateIp || dbServer.ip
+
+            if (!meshHost) {
+              sendEvent({
+                message: `❌ ${databaseName} lives on another server with no reachable private IP`,
+                pub,
+                serverId: serverDetails.id,
+              })
+              return { [variable]: '' }
+            }
+
+            let exposedPort =
+              dbService.databaseDetails?.exposedPorts?.[0] ?? ''
+
+            if (!exposedPort) {
+              try {
+                const dbSshDetails = extractSSHDetails({ server: dbServer })
+                const exposeJob = await addExposeDatabasePortQueue({
+                  sshDetails: dbSshDetails,
+                  databaseName: dbService.name,
+                  databaseType: dbService.databaseDetails?.type!,
+                  serviceDetails: {
+                    action: 'expose',
+                    id: dbService.id,
+                  },
+                  serverDetails: { id: dbServer.id },
+                  tenant: { slug: tenantSlug },
+                })
+
+                const exposeResponse = await waitForJobCompletion(exposeJob)
+
+                if (exposeResponse.success) {
+                  const fresh = await payload.findByID({
+                    collection: 'services',
+                    id: dbService.id,
+                  })
+                  exposedPort =
+                    fresh.databaseDetails?.exposedPorts?.[0] ?? ''
+                }
+              } catch (error) {
+                const message =
+                  error instanceof Error ? error.message : ''
+                sendEvent({
+                  message: `❌ Failed to expose ${databaseName} on its server: ${message}`,
+                  pub,
+                  serverId: serverDetails.id,
+                })
+                return { [variable]: '' }
+              }
+            }
+
+            if (!exposedPort) {
+              sendEvent({
+                message: `❌ ${databaseName} has no exposed port — link it first or expose a port`,
+                pub,
+                serverId: serverDetails.id,
+              })
+              return { [variable]: '' }
+            }
+
+            let parsed: Partial<ReturnType<typeof parseDatabaseUrl>> = {}
+            try {
+              parsed = parseDatabaseUrl(
+                dbService.databaseDetails?.connectionUrl ?? '',
+              )
+            } catch {
+              // connectionUrl absent/unparseable — compose from fields below
+            }
+
+            const remoteUri = buildConnectionUrl({
+              type: dbService.databaseDetails?.type ?? databaseType ?? '',
+              host: meshHost,
+              port: exposedPort,
+              username: parsed.username,
+              password: parsed.password,
+              databaseName: parsed.databaseName ?? databaseName,
+            })
+
+            sendEvent({
+              message: `🔗 Linked ${databaseName} over private network (${meshHost}:${exposedPort})`,
+              pub,
+              serverId: serverDetails.id,
+            })
+
+            let value = ''
+            if (databaseVariableName.includes('_URI')) value = remoteUri
+            else if (databaseVariableName.endsWith('_NAME'))
+              value = parsed.databaseName ?? databaseName
+            else if (databaseVariableName.endsWith('_USERNAME'))
+              value = parsed.username ?? ''
+            else if (databaseVariableName.endsWith('_PASSWORD'))
+              value = parsed.password ?? ''
+            else if (databaseVariableName.endsWith('_HOST')) value = meshHost
+            else if (databaseVariableName.endsWith('_PORT'))
+              value = exposedPort
+
+            return { [variable]: value }
+          }
 
           // 1. Public database connection -> MONGO_PUBLIC_URI
           if (databaseVariableName.includes('PUBLIC')) {

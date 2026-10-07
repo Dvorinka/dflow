@@ -1,15 +1,22 @@
 'use server'
 
+import { env } from 'env'
+import { BasePayload } from 'payload'
+
 import { assertTenantOwnership } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
 import { extractSSHDetails } from '@/lib/ssh'
+import { Service } from '@/payload-types'
+import { addExternalBackupQueue } from '@/queues/database/backup/externalBackup'
 import { addInternalBackupQueue } from '@/queues/database/backup/internalBackup'
 import { deleteInternalBackupQueue } from '@/queues/database/backup/internalBackupDelete'
 
 import {
+  externalBackupSchema,
   internalDBBackupSchema,
   internalDbDeleteScheme,
   internalRestoreSchema,
+  scheduleExternalBackupSchema,
 } from './validator'
 
 export const getAllBackupsAction = protectedClient
@@ -171,6 +178,249 @@ export const internalRestoreAction = protectedClient
       success: true,
       queueResponseId: queueResponseId,
     }
+  })
+
+const S3_BUCKET = env.S3_BUCKET || 'dflow'
+
+// Resolves the service + owning server + SSH details for external-backup
+// operations, enforcing tenant ownership (#407).
+const resolveManagedDatabase = async ({
+  payload,
+  serviceId,
+  tenantId,
+}: {
+  payload: BasePayload
+  serviceId: string
+  tenantId: string
+}) => {
+  const { project, ...serviceDetails } = await payload.findByID({
+    collection: 'services',
+    depth: 3,
+    id: serviceId,
+  })
+  assertTenantOwnership(serviceDetails.tenant, tenantId, 'Service')
+
+  if (serviceDetails.databaseDetails?.provider === 'external') {
+    throw new Error(
+      'Externally-managed databases cannot use dokku backups — the provider owns dump access',
+    )
+  }
+
+  if (
+    typeof project !== 'object' ||
+    typeof project?.server !== 'object' ||
+    !project.server
+  ) {
+    throw new Error('Could not resolve the server hosting this database')
+  }
+
+  return {
+    serviceDetails: serviceDetails as Service,
+    project,
+    server: project.server,
+    sshDetails: extractSSHDetails({ project }),
+  }
+}
+
+const s3Configured = () =>
+  !!(
+    env.S3_ENDPOINT &&
+    env.S3_REGION &&
+    env.S3_ACCESS_KEY_ID &&
+    env.S3_SECRET_ACCESS_KEY
+  )
+
+// Stores the instance's S3 credentials on the dokku plugin so
+// <db>:backup / :backup-schedule can upload dumps (#407).
+export const configureExternalBackupAction = protectedClient
+  .metadata({ actionName: 'configureExternalBackupAction' })
+  .inputSchema(externalBackupSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { payload, userTenant } = ctx
+    const { serviceId } = clientInput
+
+    if (!s3Configured()) {
+      throw new Error(
+        'S3 is not configured — set S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY',
+      )
+    }
+
+    const { serviceDetails, server, sshDetails } =
+      await resolveManagedDatabase({
+        payload,
+        serviceId,
+        tenantId: userTenant.tenant.id,
+      })
+
+    const { id } = await addExternalBackupQueue({
+      databaseName: serviceDetails.name,
+      databaseType: serviceDetails.databaseDetails?.type ?? '',
+      op: 'auth',
+      bucket: S3_BUCKET,
+      awsAccessKeyId: env.S3_ACCESS_KEY_ID,
+      awsSecretAccessKey: env.S3_SECRET_ACCESS_KEY,
+      awsDefaultRegion: env.S3_REGION,
+      endPointUrl: env.S3_ENDPOINT,
+      sshDetails,
+      serverDetails: { id: server.id },
+      serviceId,
+      tenant: { slug: userTenant.tenant.slug },
+    })
+
+    return { success: true, queueResponseId: id }
+  })
+
+// Manual one-shot dump to S3 (#407).
+export const externalBackupAction = protectedClient
+  .metadata({ actionName: 'externalBackupAction' })
+  .inputSchema(externalBackupSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { payload, userTenant } = ctx
+    const { serviceId } = clientInput
+
+    if (!s3Configured()) {
+      throw new Error(
+        'S3 is not configured — set S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY',
+      )
+    }
+
+    const { serviceDetails, server, sshDetails } =
+      await resolveManagedDatabase({
+        payload,
+        serviceId,
+        tenantId: userTenant.tenant.id,
+      })
+
+    const now = new Date()
+    const formattedDate = [
+      now.getUTCFullYear(),
+      String(now.getUTCMonth() + 1).padStart(2, '0'),
+      String(now.getUTCDate()).padStart(2, '0'),
+      String(now.getUTCHours()).padStart(2, '0'),
+      String(now.getUTCMinutes()).padStart(2, '0'),
+      String(now.getUTCSeconds()).padStart(2, '0'),
+    ].join('-')
+
+    const { id: backupId } = await payload.create({
+      collection: 'backups',
+      data: {
+        service: serviceId,
+        type: 'external',
+        databaseType: serviceDetails?.databaseDetails?.type,
+        backupName: `${serviceDetails?.name}-${formattedDate}`,
+        destination: `s3://${S3_BUCKET}/${serviceDetails?.name}`,
+        status: 'in-progress',
+        tenant: userTenant.tenant?.id,
+      },
+    })
+
+    const { id } = await addExternalBackupQueue({
+      databaseName: serviceDetails.name,
+      databaseType: serviceDetails.databaseDetails?.type ?? '',
+      op: 'backup',
+      bucket: S3_BUCKET,
+      awsAccessKeyId: env.S3_ACCESS_KEY_ID,
+      awsSecretAccessKey: env.S3_SECRET_ACCESS_KEY,
+      awsDefaultRegion: env.S3_REGION,
+      endPointUrl: env.S3_ENDPOINT,
+      sshDetails,
+      serverDetails: { id: server.id },
+      serviceId,
+      backupId,
+      tenant: { slug: userTenant.tenant.slug },
+    })
+
+    return { success: true, queueResponseId: id }
+  })
+
+// Schedule a recurring external backup (dokku cron) (#407).
+export const scheduleExternalBackupAction = protectedClient
+  .metadata({ actionName: 'scheduleExternalBackupAction' })
+  .inputSchema(scheduleExternalBackupSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { payload, userTenant } = ctx
+    const { serviceId, schedule } = clientInput
+
+    if (!s3Configured()) {
+      throw new Error(
+        'S3 is not configured — set S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY',
+      )
+    }
+
+    const { serviceDetails, server, sshDetails } =
+      await resolveManagedDatabase({
+        payload,
+        serviceId,
+        tenantId: userTenant.tenant.id,
+      })
+
+    const { id } = await addExternalBackupQueue({
+      databaseName: serviceDetails.name,
+      databaseType: serviceDetails.databaseDetails?.type ?? '',
+      op: 'schedule',
+      bucket: S3_BUCKET,
+      cronSchedule: schedule,
+      awsAccessKeyId: env.S3_ACCESS_KEY_ID,
+      awsSecretAccessKey: env.S3_SECRET_ACCESS_KEY,
+      awsDefaultRegion: env.S3_REGION,
+      endPointUrl: env.S3_ENDPOINT,
+      sshDetails,
+      serverDetails: { id: server.id },
+      serviceId,
+      tenant: { slug: userTenant.tenant.slug },
+    })
+
+    await payload.update({
+      collection: 'services',
+      id: serviceId,
+      data: {
+        databaseDetails: {
+          ...serviceDetails.databaseDetails,
+          backupSchedule: schedule,
+        },
+      },
+    })
+
+    return { success: true, queueResponseId: id }
+  })
+
+export const unscheduleExternalBackupAction = protectedClient
+  .metadata({ actionName: 'unscheduleExternalBackupAction' })
+  .inputSchema(externalBackupSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { payload, userTenant } = ctx
+    const { serviceId } = clientInput
+
+    const { serviceDetails, server, sshDetails } =
+      await resolveManagedDatabase({
+        payload,
+        serviceId,
+        tenantId: userTenant.tenant.id,
+      })
+
+    const { id } = await addExternalBackupQueue({
+      databaseName: serviceDetails.name,
+      databaseType: serviceDetails.databaseDetails?.type ?? '',
+      op: 'unschedule',
+      bucket: S3_BUCKET,
+      sshDetails,
+      serverDetails: { id: server.id },
+      serviceId,
+      tenant: { slug: userTenant.tenant.slug },
+    })
+
+    await payload.update({
+      collection: 'services',
+      id: serviceId,
+      data: {
+        databaseDetails: {
+          ...serviceDetails.databaseDetails,
+          backupSchedule: '',
+        },
+      },
+    })
+
+    return { success: true, queueResponseId: id }
   })
 
 export const internalDbDeleteAction = protectedClient

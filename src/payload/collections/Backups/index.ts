@@ -54,6 +54,12 @@ export const Backups: CollectionConfig = {
       type: 'text',
     },
     {
+      // Where an external backup landed, e.g. "s3://dflow" (#407)
+      name: 'destination',
+      label: 'Destination',
+      type: 'text',
+    },
+    {
       name: 'status',
       type: 'select',
       options: [

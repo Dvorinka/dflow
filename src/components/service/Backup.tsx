@@ -1,9 +1,7 @@
 'use client'
 
-import { ComingSoonBadge } from '../ComingSoonBadge'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/check-box'
 import {
   Dialog,
   DialogContent,
@@ -39,10 +37,15 @@ import React, { useState } from 'react'
 import { toast } from 'sonner'
 
 import {
+  externalBackupAction,
   internalBackupAction,
   internalDbDeleteAction,
   internalRestoreAction,
+  scheduleExternalBackupAction,
+  unscheduleExternalBackupAction,
 } from '@/actions/dbBackup'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { databaseOptions } from '@/lib/constants'
 import { Backup as BackupType, Service } from '@/payload-types'
 
@@ -217,6 +220,68 @@ const Backup = ({
       },
     })
 
+  const isExternalProvider = databaseDetails?.provider === 'external'
+  const [cronSchedule, setCronSchedule] = useState(
+    databaseDetails?.backupSchedule ?? '0 3 * * *',
+  )
+
+  const { execute: externalBackupExecution, isPending: isExternalDBPending } =
+    useAction(externalBackupAction, {
+      onExecute: () => {
+        toast.loading('Creating external backup...', { id: 'create-backup' })
+      },
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Added to queue', {
+            id: 'create-backup',
+            description: 'Backup will be dumped and uploaded to S3',
+          })
+        }
+      },
+      onError: ({ error }) => {
+        toast.error('Backup Failed', {
+          id: 'create-backup',
+          description: error?.serverError,
+        })
+      },
+    })
+
+  const { execute: scheduleExecution, isPending: isScheduling } = useAction(
+    scheduleExternalBackupAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Backup schedule saved', {
+            description: `External backups run on: ${cronSchedule}`,
+          })
+          setIsDialogOpen(false)
+        }
+      },
+      onError: ({ error }) => {
+        toast.error('Failed to save schedule', {
+          description: error?.serverError,
+        })
+      },
+    },
+  )
+
+  const { execute: unscheduleExecution, isPending: isUnscheduling } = useAction(
+    unscheduleExternalBackupAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success('Backup schedule removed')
+          setIsDialogOpen(false)
+        }
+      },
+      onError: ({ error }) => {
+        toast.error('Failed to remove schedule', {
+          description: error?.serverError,
+        })
+      },
+    },
+  )
+
   const { execute: restoreExistingExecution, isPending: isRestorePending } =
     useAction(internalRestoreAction, {
       onExecute: () => {
@@ -249,74 +314,83 @@ const Backup = ({
           Backups
         </h2>
         <div className='flex items-center gap-2'>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant={'outline'}>Create backup schedule</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Configure backup schedule</DialogTitle>
-                <DialogDescription>
-                  Enable database backups for your applications.
-                </DialogDescription>
-              </DialogHeader>
+          {!isExternalProvider && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant={'outline'}>
+                  {databaseDetails?.backupSchedule
+                    ? `Scheduled: ${databaseDetails.backupSchedule}`
+                    : 'Create backup schedule'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Configure backup schedule</DialogTitle>
+                  <DialogDescription>
+                    Recurring dumps uploaded to the configured S3 destination
+                    via the dokku backup plugin.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className='space-y-4'>
-                <div className='text-muted-foreground text-sm'>
-                  Available schedules
+                <div className='space-y-2'>
+                  <Label htmlFor='backup-cron'>Cron schedule</Label>
+                  <Input
+                    id='backup-cron'
+                    value={cronSchedule}
+                    onChange={e => setCronSchedule(e.target.value)}
+                    placeholder='0 3 * * *'
+                  />
+                  <p className='text-muted-foreground text-xs'>
+                    Standard cron — e.g.{' '}
+                    <code>0 3 * * *</code> daily at 03:00,{' '}
+                    <code>0 3 * * 0</code> weekly on Sunday.
+                  </p>
                 </div>
-                <div className='flex items-center gap-x-4 space-x-2 rounded-md border p-2'>
-                  <Checkbox />
-                  <div>
-                    <div>Daily</div>
-                    <div className='text-muted-foreground text-sm'>
-                      Backed up every 24 hours, kept for 6 days.
-                    </div>
-                  </div>
-                </div>
-                <div className='flex items-center gap-x-4 space-x-2 rounded-md border p-2'>
-                  <Checkbox />
-                  <div>
-                    <div>Weekly</div>
-                    <div className='text-muted-foreground text-sm'>
-                      Backed up every 7 day, kept for 1 month.
-                    </div>
-                  </div>
-                </div>
-                <div className='flex items-center gap-x-4 space-x-2 rounded-md border p-2'>
-                  <Checkbox />
-                  <div>
-                    <div>Monthly</div>
-                    <div className='text-muted-foreground text-sm'>
-                      Backed up every 30 days, kept for 3 months.
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
+
+                <DialogFooter>
+                  {databaseDetails?.backupSchedule && (
+                    <Button
+                      variant='destructive'
+                      isLoading={isUnscheduling}
+                      onClick={() =>
+                        unscheduleExecution({ serviceId })
+                      }>
+                      Remove schedule
+                    </Button>
+                  )}
+                  <Button
+                    variant={'outline'}
+                    onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    isLoading={isScheduling}
+                    disabled={!cronSchedule}
+                    onClick={() =>
+                      scheduleExecution({ serviceId, schedule: cronSchedule })
+                    }>
+                    Save schedule
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          {/* Both backup paths are dokku-based — not applicable to
+              externally-managed databases (#412) */}
+          {!isExternalProvider && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant={'outline'}
-                  onClick={() => setIsDialogOpen(false)}>
-                  Cancel
+                  disabled={
+                    databaseDetails?.status !== 'running' ||
+                    isInternalDBPending
+                  }
+                  className='flex items-center gap-2'>
+                  Create Backup
+                  <ChevronDown />
                 </Button>
-                <Button disabled className='cursor-not-allowed'>
-                  Save schedule (Coming soon...)
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={'outline'}
-                disabled={
-                  databaseDetails?.status !== 'running' || isInternalDBPending
-                }
-                className='flex items-center gap-2'>
-                Create Backup
-                <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
+              </DropdownMenuTrigger>
 
             <DropdownMenuContent align='end'>
               <DropdownMenuItem
@@ -338,23 +412,29 @@ const Backup = ({
                   </div>
                 </div>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <div
-                  className='flex size-8 items-center justify-center'
-                  aria-hidden='true'>
-                  <Cloud size={16} className='opacity-60' />
-                </div>
-                <ComingSoonBadge position='top-right'>
+              {!isExternalProvider && (
+                <DropdownMenuItem
+                  className='hover:text-background cursor-pointer'
+                  disabled={isExternalDBPending}
+                  onClick={() => externalBackupExecution({ serviceId })}>
+                  <div
+                    className='flex size-8 items-center justify-center'
+                    aria-hidden='true'>
+                    <Cloud size={16} className='opacity-60' />
+                  </div>
                   <div>
-                    <div className='text-sm font-medium'>External Backup</div>
+                    <div className='text-sm font-medium'>
+                      External Backup (S3)
+                    </div>
                     <div className='text-xs opacity-60'>
-                      Creates backup in cloud storage (AWS S3, GCP, etc.)
+                      Dumps and uploads to the configured S3 endpoint
                     </div>
                   </div>
-                </ComingSoonBadge>
-              </DropdownMenuItem>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
-          </DropdownMenu>
+            </DropdownMenu>
+          )}
         </div>
       </div>
       {backups.length === 0 ? (

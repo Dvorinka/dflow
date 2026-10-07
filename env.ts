@@ -44,6 +44,7 @@ export const env = createEnv({
     S3_REGION: z.string().min(1).optional(),
     S3_ACCESS_KEY_ID: z.string().min(1).optional(),
     S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    S3_BUCKET: z.string().min(1).optional(),
     AUTH_METHOD: z.enum(['email-password', 'magic-link', 'both']).optional(),
   },
   client: {
@@ -99,6 +100,7 @@ export const env = createEnv({
     S3_REGION: process.env.S3_REGION,
     S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
     S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+    S3_BUCKET: process.env.S3_BUCKET,
     AUTH_METHOD: process.env.AUTH_METHOD,
   },
   emptyStringAsUndefined: true,

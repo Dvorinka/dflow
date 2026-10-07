@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Database,
   Loader2,
+  PlugZap,
   Plus,
   Server,
 } from 'lucide-react'
@@ -30,6 +31,7 @@ import { z } from 'zod'
 import {
   checkServerResourcesAction,
   createServiceAction,
+  testExternalDbConnectionAction,
 } from '@/actions/service'
 import { createServiceSchema } from '@/actions/service/validator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -59,12 +61,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { databaseOptions } from '@/lib/constants'
 import { ServiceType } from '@/lib/server/resourceCheck'
 import { slugify } from '@/lib/slugify'
@@ -332,7 +328,19 @@ const CreateService = ({
     },
   })
 
-  const { type, databaseType } = useWatch({ control: form.control })
+  const { type, databaseType, databaseProvider } = useWatch({
+    control: form.control,
+  })
+
+  const { execute: testConnection, isPending: isTestingConnection } =
+    useAction(testExternalDbConnectionAction, {
+      onSuccess: ({ data }) => {
+        toast.success(`Reachable — ${data?.host}:${data?.port}`)
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || 'Connection test failed')
+      },
+    })
 
   const needsPluginInstallation =
     databaseType &&
@@ -387,9 +395,7 @@ const CreateService = ({
   }
 
   const createButton = (
-    <Button
-      disabled={disableCreateButton}
-      className='w-full disabled:cursor-not-allowed'>
+    <Button className='w-full'>
       {isPending ? (
         <>
           <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -418,27 +424,9 @@ const CreateService = ({
             form.reset()
           }
         }}>
-        <DialogTrigger asChild>
-          {disableCreateButton ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span tabIndex={0}>
-                    <Button disabled={true}>
-                      <Plus className='mr-2 h-4 w-4' />
-                      Create Service
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{disableReason}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            createButton
-          )}
-        </DialogTrigger>
+        {/* Always openable — external databases need no server connection;
+            the form gates dokku-dependent options itself when offline */}
+        <DialogTrigger asChild>{createButton}</DialogTrigger>
 
         <DialogContent className='sm:max-w-md md:max-w-2xl'>
           <DialogHeader>
@@ -582,22 +570,181 @@ const CreateService = ({
                           )}
                         </SelectContent>
                       </Select>
-                      {needsPluginInstallation && (
-                        <Alert variant={'info'}>
-                          <AlertCircle className='h-4 w-4' />
-                          <AlertDescription>
-                            The {databaseType} plugin will be automatically
-                            installed during service deployment.
-                          </AlertDescription>
-                        </Alert>
-                      )}
+                      {needsPluginInstallation &&
+                        databaseProvider !== 'external' && (
+                          <Alert variant={'info'}>
+                            <AlertCircle className='h-4 w-4' />
+                            <AlertDescription>
+                              The {databaseType} plugin will be automatically
+                              installed during service deployment.
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
 
-              {type === 'database' && (
+              {type === 'database' && databaseType && (
+                <FormField
+                  control={form.control}
+                  name='databaseProvider'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hosted</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value ?? 'dokku'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Managed on this server' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value='dokku' disabled={disableCreateButton}>
+                            On this server (dokku-managed)
+                          </SelectItem>
+                          <SelectItem value='external'>
+                            External provider — Neon, Atlas, Turso, RDS…
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {type === 'database' && databaseProvider === 'external' && (
+                <div className='space-y-4 rounded-md border p-4'>
+                  <FormField
+                    control={form.control}
+                    name='externalDetails.connectionUrl'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Connection URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ''}
+                            placeholder='postgresql://user:pass@host:5432/dbname'
+                          />
+                        </FormControl>
+                        <p className='text-muted-foreground text-xs'>
+                          Paste the provider&apos;s connection string, or fill
+                          the fields below instead.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control}
+                      name='externalDetails.host'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Host</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value ?? ''}
+                              placeholder='db.example.com'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='externalDetails.port'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Port</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value ?? ''}
+                              placeholder='5432'
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <FormField
+                      control={form.control}
+                      name='externalDetails.username'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value ?? ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name='externalDetails.password'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input
+                              type='password'
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className='flex items-end gap-2'>
+                    <FormField
+                      control={form.control}
+                      name='externalDetails.databaseName'
+                      render={({ field }) => (
+                        <FormItem className='grow'>
+                          <FormLabel>Database name</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value ?? ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      isLoading={isTestingConnection}
+                      onClick={() =>
+                        testConnection({
+                          connectionUrl:
+                            form.getValues('externalDetails.connectionUrl'),
+                          host: form.getValues('externalDetails.host'),
+                          port: form.getValues('externalDetails.port'),
+                          databaseType,
+                        })
+                      }>
+                      <PlugZap className='mr-2 h-4 w-4' />
+                      Test connection
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {type === 'database' && databaseProvider !== 'external' && (
                 <FormField
                   control={form.control}
                   name='databaseVersion'
@@ -703,10 +850,25 @@ const CreateService = ({
                 </div>
               )}
 
+              {disableCreateButton &&
+                !(type === 'database' && databaseProvider === 'external') && (
+                  <Alert variant='warning'>
+                    <AlertCircle className='h-4 w-4' />
+                    <AlertDescription>
+                      {disableReason} — external databases can still be added
+                      (they need no server connection).
+                    </AlertDescription>
+                  </Alert>
+                )}
+
               <DialogFooter>
                 <Button
                   type='submit'
-                  disabled={isPending}
+                  disabled={
+                    isPending ||
+                    (disableCreateButton &&
+                      !(type === 'database' && databaseProvider === 'external'))
+                  }
                   isLoading={isPending}>
                   Create Service
                 </Button>

@@ -33,6 +33,18 @@ const databaseField: Field = {
           })),
         },
         {
+          // 'dokku' = provisioned on the project's server (default);
+          // 'external' = managed elsewhere (Neon, Atlas, Turso, RDS…),
+          // connection details supplied by the user (#412/#366).
+          name: 'provider',
+          type: 'select',
+          defaultValue: 'dokku',
+          options: [
+            { label: 'Dokku (managed on this server)', value: 'dokku' },
+            { label: 'External (managed elsewhere)', value: 'external' },
+          ],
+        },
+        {
           name: 'username',
           type: 'text',
         },
@@ -78,6 +90,14 @@ const databaseField: Field = {
           name: 'exposedPorts',
           type: 'text',
           hasMany: true,
+        },
+        {
+          // Cron schedule for dokku-native external (S3) backups (#407)
+          name: 'backupSchedule',
+          type: 'text',
+          admin: {
+            description: 'Cron expression for scheduled S3 backups',
+          },
         },
       ],
     },

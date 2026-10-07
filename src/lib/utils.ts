@@ -131,8 +131,13 @@ export function parseDatabaseUrl(url: string): {
 } {
   let dbType: DatabaseType
 
-  if (url.startsWith('postgres://')) dbType = 'postgres'
-  else if (url.startsWith('mongodb://')) dbType = 'mongo'
+  if (url.startsWith('postgres://') || url.startsWith('postgresql://'))
+    dbType = 'postgres'
+  else if (
+    url.startsWith('mongodb://') ||
+    url.startsWith('mongodb+srv://')
+  )
+    dbType = 'mongo'
   else if (url.startsWith('mysql://')) dbType = 'mysql'
   else if (url.startsWith('mariadb://')) dbType = 'mariadb'
   else if (url.startsWith('redis://')) dbType = 'redis'
@@ -149,48 +154,14 @@ export function parseDatabaseUrl(url: string): {
   } = { type: dbType }
 
   switch (dbType) {
-    case 'postgres': {
-      const regex = /postgres:\/\/(.*?):(.*?)@(.*?):(.*?)\/(.*)/
-      const match = url.match(regex)
-      if (match) {
-        data.username = match[1]
-        data.password = match[2]
-        data.host = match[3]
-        data.port = match[4]
-        data.databaseName = match[5]
-      }
-      break
-    }
-
-    case 'mongo': {
-      const regex = /mongodb:\/\/(.*?):(.*?)@(.*?):(.*?)\/(.*)/
-      const match = url.match(regex)
-      if (match) {
-        data.username = match[1]
-        data.password = match[2]
-        data.host = match[3]
-        data.port = match[4]
-        data.databaseName = match[5]
-      }
-      break
-    }
-
+    case 'postgres':
+    case 'mongo':
     case 'mysql':
-    case 'mariadb': {
-      const regex = /.*:\/\/(.*?):(.*?)@(.*?):(.*?)\/(.*)/
-      const match = url.match(regex)
-      if (match) {
-        data.username = match[1]
-        data.password = match[2]
-        data.host = match[3]
-        data.port = match[4]
-        data.databaseName = match[5]
-      }
-      break
-    }
-
+    case 'mariadb':
     case 'clickhouse': {
-      const regex = /clickhouse:\/\/(.*?):(.*?)@(.*?):(.*?)\/(.*)/
+      // Generic form: scheme://user:pass@host[:port]/name — tolerates
+      // postgresql://, mongodb+srv:// and missing ports (SRV URIs).
+      const regex = /.*:\/\/(.*?):(.*?)@([^:/]+)(?::(\d+))?\/(.*)/
       const match = url.match(regex)
       if (match) {
         data.username = match[1]
@@ -219,6 +190,53 @@ export function parseDatabaseUrl(url: string): {
   }
 
   return data
+}
+
+// Inverse of parseDatabaseUrl — builds a connection URL from discrete
+// fields for externally-managed databases (#412/#366).
+export function buildConnectionUrl({
+  type,
+  host,
+  port,
+  username,
+  password,
+  databaseName,
+}: {
+  type: DatabaseType | string
+  host: string
+  port?: string
+  username?: string
+  password?: string
+  databaseName?: string
+}): string {
+  const defaultPorts: Record<string, string> = {
+    postgres: '5432',
+    mongo: '27017',
+    mysql: '3306',
+    mariadb: '3306',
+    redis: '6379',
+    clickhouse: '9000',
+  }
+
+  const schemes: Record<string, string> = {
+    postgres: 'postgresql',
+    mongo: 'mongodb',
+    mysql: 'mysql',
+    mariadb: 'mysql',
+    redis: 'redis',
+    clickhouse: 'clickhouse',
+  }
+
+  const scheme = schemes[type] ?? type
+  const resolvedPort = port || defaultPorts[type] || ''
+  const auth = username
+    ? `${encodeURIComponent(username)}${password ? `:${encodeURIComponent(password)}` : ''}@`
+    : password
+      ? `:${encodeURIComponent(password)}@`
+      : ''
+  const path = databaseName ? `/${databaseName}` : ''
+
+  return `${scheme}://${auth}${host}${resolvedPort ? `:${resolvedPort}` : ''}${path}`
 }
 
 export function generateRandomString({

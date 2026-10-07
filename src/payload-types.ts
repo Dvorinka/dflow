@@ -876,6 +876,7 @@ export interface Service {
   };
   databaseDetails?: {
     type?: ('postgres' | 'mongo' | 'mysql' | 'mariadb' | 'redis' | 'clickhouse') | null;
+    provider?: ('dokku' | 'external') | null;
     username?: string | null;
     password?: string | null;
     host?: string | null;
@@ -884,6 +885,10 @@ export interface Service {
     version?: string | null;
     status?: ('running' | 'missing' | 'exited') | null;
     exposedPorts?: string[] | null;
+    /**
+     * Cron expression for scheduled S3 backups
+     */
+    backupSchedule?: string | null;
   };
   dockerDetails?: {
     /**
@@ -938,6 +943,7 @@ export interface Backup {
   type?: ('external' | 'internal') | null;
   backupName?: string | null;
   databaseType?: string | null;
+  destination?: string | null;
   status: 'in-progress' | 'failed' | 'success';
   updatedAt: string;
   createdAt: string;
@@ -1849,6 +1855,7 @@ export interface ServicesSelect<T extends boolean = true> {
     | T
     | {
         type?: T;
+        provider?: T;
         username?: T;
         password?: T;
         host?: T;
@@ -1857,6 +1864,7 @@ export interface ServicesSelect<T extends boolean = true> {
         version?: T;
         status?: T;
         exposedPorts?: T;
+        backupSchedule?: T;
       };
   dockerDetails?:
     | T
@@ -2288,6 +2296,7 @@ export interface BackupsSelect<T extends boolean = true> {
   type?: T;
   backupName?: T;
   databaseType?: T;
+  destination?: T;
   status?: T;
   updatedAt?: T;
   createdAt?: T;

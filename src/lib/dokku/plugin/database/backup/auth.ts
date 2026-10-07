@@ -12,7 +12,7 @@ export const auth = async (
   options?: SSHExecCommandOptions,
 ) => {
   const result = await ssh.execCommand(
-    `dokku ${databaseType}:backup-auth ${databaseName} ${awsAccessKeyId} ${awsSecretAccessKey} ${awsDefaultRegion} ${provider} ${endPointUrl}`,
+    `dokku ${databaseType}:backup-auth ${databaseName} "${awsAccessKeyId}" "${awsSecretAccessKey}" "${awsDefaultRegion}" ${provider} "${endPointUrl}"`,
     options,
   )
 

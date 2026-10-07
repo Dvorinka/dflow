@@ -11,6 +11,17 @@ export const createServiceSchema = z
     databaseType: z
       .enum(['postgres', 'mongo', 'mysql', 'redis', 'mariadb', 'clickhouse'])
       .optional(),
+    databaseProvider: z.enum(['dokku', 'external']).optional(),
+    externalDetails: z
+      .object({
+        host: z.string().min(1).optional(),
+        port: z.string().optional(),
+        username: z.string().optional(),
+        password: z.string().optional(),
+        databaseName: z.string().optional(),
+        connectionUrl: z.string().min(1).optional(),
+      })
+      .optional(),
     projectId: z.string(),
     databaseVersion: z
       .string()
@@ -26,6 +37,33 @@ export const createServiceSchema = z
     message: 'Please select a database type',
     path: ['databaseType'],
   })
+  .refine(
+    data =>
+      data.databaseProvider !== 'external' ||
+      !!data.externalDetails?.connectionUrl ||
+      !!(data.externalDetails?.host && data.externalDetails?.databaseName),
+    {
+      message:
+        'External databases need a connection URL, or at least host + database name',
+      path: ['externalDetails'],
+    },
+  )
+
+export const cloneServiceSchema = z.object({
+  serviceId: z.string(),
+  projectId: z.string().min(1),
+  // databases only: copy actual data via dokku export → import
+  cloneData: z.boolean().optional(),
+})
+
+export const testExternalDbConnectionSchema = z.object({
+  connectionUrl: z.string().min(1).optional(),
+  host: z.string().min(1).optional(),
+  port: z.string().optional(),
+  databaseType: z
+    .enum(['postgres', 'mongo', 'mysql', 'redis', 'mariadb', 'clickhouse'])
+    .optional(),
+})
 
 export const deleteServiceSchema = z.object({
   id: z.string(),

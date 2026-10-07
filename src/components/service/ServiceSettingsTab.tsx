@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '../ui/button'
-import { AlertTriangle, Repeat, Settings2, Trash2 } from 'lucide-react'
+import { AlertTriangle, Copy, Repeat, Settings2, Trash2 } from 'lucide-react'
 import React, { useState } from 'react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,12 +10,14 @@ import { Project, Service } from '@/payload-types'
 import DeleteServiceDialog from './DeleteServiceDialog'
 import SwitchServiceProjectDialog from './SwitchServiceProjectDialog'
 import AppAccessControls from './AppAccessControls'
+import CloneServiceDialog from './CloneServiceDialog'
 
 const ServiceSettingsTab: React.FC<{
   service: Service
   project: Project
 }> = ({ service, project }) => {
   const [switchProjectDialogOpen, serSwitchProjectDialogOpen] = useState(false)
+  const [cloneDialogOpen, setCloneDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   return (
@@ -53,6 +55,39 @@ const ServiceSettingsTab: React.FC<{
             project={project}
             service={service}
             setOpen={serSwitchProjectDialogOpen}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Clone service — copy config (and optionally database contents)
+          into any project, same or different server (#358) */}
+      <Card>
+        <CardContent className='pt-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-start gap-3'>
+              <div className='bg-muted flex h-10 w-10 items-center justify-center rounded-md'>
+                <Copy className='text-muted-foreground h-5 w-5' />
+              </div>
+              <div className='flex-1 space-y-1'>
+                <h3 className='font-semibold'>Clone Service</h3>
+                <p className='text-muted-foreground text-sm'>
+                  Create a copy of this service in any project — useful for
+                  staging environments. Domains are not copied.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant='secondary'
+              onClick={() => setCloneDialogOpen(true)}>
+              <Copy className='mr-2 h-4 w-4' />
+              Clone Service
+            </Button>
+          </div>
+          <CloneServiceDialog
+            open={cloneDialogOpen}
+            project={project}
+            service={service}
+            setOpen={setCloneDialogOpen}
           />
         </CardContent>
       </Card>

@@ -38,6 +38,7 @@ const DatabaseForm = ({
   server: Server | string
 }) => {
   const { databaseDetails } = service
+  const isExternal = databaseDetails?.provider === 'external'
   const isPublic = !!databaseDetails?.exposedPorts?.length
   const connectionUrl = databaseDetails?.connectionUrl ?? ''
   const host = databaseDetails?.host ?? ''
@@ -146,7 +147,17 @@ const DatabaseForm = ({
   return (
     <>
       <div className='bg-muted/30 space-y-4 rounded p-4'>
-        <h3 className='text-lg font-semibold'>Internal Credentials</h3>
+        <h3 className='text-lg font-semibold'>
+          {isExternal ? 'External Credentials' : 'Internal Credentials'}
+        </h3>
+        {isExternal && (
+          <p className='text-muted-foreground text-sm'>
+            This database is managed by an external provider. Apps reference it
+            via template variables — e.g.{' '}
+            <code>{`{{ ${service.name}.POSTGRES_URI }}`}</code> — which resolve
+            to the connection URL.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className='w-full space-y-6'>
           <div className='grid gap-4 sm:grid-cols-2'>

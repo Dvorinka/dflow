@@ -77,6 +77,11 @@ const Deploy = ({ service }: { service: Service }) => {
     return null
   }
 
+  // External databases are managed elsewhere — nothing to deploy (#412)
+  if (service.databaseDetails?.provider === 'external') {
+    return null
+  }
+
   // Adding disabled state for deploy button
   // 1. if service is app
   // 2. if git provider is not set

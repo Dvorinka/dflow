@@ -1,6 +1,9 @@
 'use server'
 
 import { env } from 'env'
+import fs from 'fs'
+import net from 'net'
+import os from 'os'
 import { revalidatePath } from 'next/cache'
 import { NodeSSH } from 'node-ssh'
 import { extractID } from 'payload/shared'
@@ -11,6 +14,7 @@ import { protectedClient } from '@/lib/safe-action'
 import { checkServerResources } from '@/lib/server/resourceCheck'
 import { dynamicSSH, extractSSHDetails } from '@/lib/ssh'
 import { getUniqueName } from '@/lib/uniqueName'
+import { buildConnectionUrl, parseDatabaseUrl } from '@/lib/utils'
 import { addDestroyApplicationQueue } from '@/queues/app/destroy'
 import { addResourceAppQueue } from '@/queues/app/resource'
 import { addRestartAppQueue } from '@/queues/app/restart'
@@ -29,6 +33,7 @@ import { updateVolumesQueue } from '@/queues/volume/updateVolumesQueue'
 
 import {
   checkServerResourcesSchema,
+  cloneServiceSchema,
   clearServiceResourceLimitSchema,
   clearServiceResourceReserveSchema,
   createServiceSchema,
@@ -46,6 +51,7 @@ import {
   setServiceResourceLimitSchema,
   setServiceResourceReserveSchema,
   stopServiceSchema,
+  testExternalDbConnectionSchema,
   toggleHttpAuthSchema,
   toggleMaintenanceSchema,
   updateServiceDomainSchema,
@@ -76,6 +82,8 @@ export const createServiceAction = protectedClient
       projectId,
       type,
       databaseType,
+      databaseProvider,
+      externalDetails,
       databaseVersion,
     } = clientInput
     const {
@@ -94,6 +102,68 @@ export const createServiceAction = protectedClient
       depth: 2,
     })
     assertTenantOwnership(docTenant, ctx.userTenant.tenant.id, 'Project')
+
+    // External databases (Neon, Atlas, Turso, RDS, …) are managed outside
+    // dFlow — we only store the connection details; nothing is provisioned
+    // on the project's server (#412/#366).
+    if (type === 'database' && databaseProvider === 'external') {
+      const connectionUrl =
+        externalDetails?.connectionUrl ||
+        buildConnectionUrl({
+          type: databaseType!,
+          host: externalDetails?.host ?? '',
+          port: externalDetails?.port,
+          username: externalDetails?.username,
+          password: externalDetails?.password,
+          databaseName: externalDetails?.databaseName,
+        })
+
+      const parsed = parseDatabaseUrl(connectionUrl)
+
+      const databaseResponse = await payload.create({
+        collection: 'services',
+        data: {
+          project: projectId,
+          name: await getUniqueName(async candidate => {
+            const { totalDocs } = await payload.count({
+              collection: 'services',
+              where: {
+                and: [
+                  { tenant: { equals: tenant.id } },
+                  { name: { equals: candidate } },
+                ],
+              },
+            })
+            return totalDocs > 0
+          }, `${projectName}-${name.slice(0, 10)}`),
+          description,
+          type,
+          databaseDetails: {
+            type: databaseType,
+            provider: 'external',
+            version: databaseVersion,
+            host: externalDetails?.host || parsed.host,
+            port: externalDetails?.port || parsed.port,
+            username: externalDetails?.username || parsed.username,
+            password: externalDetails?.password || parsed.password,
+            connectionUrl,
+            status: 'running',
+          },
+          tenant,
+        },
+        user,
+      })
+
+      if (databaseResponse.id) {
+        revalidatePath(`/${tenant.slug}/dashboard/project/${projectId}`)
+        return {
+          success: true,
+          redirectUrl: `/${tenant.slug}/dashboard/project/${projectId}/service/${databaseResponse.id}`,
+        }
+      }
+
+      throw new Error('Failed to create external database service')
+    }
 
     const slicedName = name.slice(0, 10)
 
@@ -233,6 +303,265 @@ export const createServiceAction = protectedClient
     }
   })
 
+// TCP-level reachability check for externally-managed databases —
+// confirms host:port is dialable before the service is created (#412/#366).
+export const testExternalDbConnectionAction = protectedClient
+  .metadata({ actionName: 'testExternalDbConnectionAction' })
+  .inputSchema(testExternalDbConnectionSchema)
+  .action(async ({ clientInput }) => {
+    const { connectionUrl, host, port, databaseType } = clientInput
+
+    let targetHost = host
+    let targetPort = port
+
+    if (connectionUrl) {
+      const parsed = parseDatabaseUrl(connectionUrl)
+      targetHost = parsed.host
+      targetPort = parsed.port
+    }
+
+    if (!targetHost) {
+      throw new Error('Could not determine the database host')
+    }
+
+    const defaultPorts: Record<string, string> = {
+      postgres: '5432',
+      mongo: '27017',
+      mysql: '3306',
+      mariadb: '3306',
+      redis: '6379',
+      clickhouse: '9000',
+    }
+    const resolvedPort = Number(
+      targetPort || (databaseType ? defaultPorts[databaseType] : ''),
+    )
+    if (!resolvedPort || Number.isNaN(resolvedPort)) {
+      throw new Error('Could not determine the database port')
+    }
+
+    const reachable = await new Promise<boolean>(resolve => {
+      const socket = net.connect(
+        { host: targetHost, port: resolvedPort },
+        () => {
+          socket.destroy()
+          resolve(true)
+        },
+      )
+      socket.setTimeout(5000)
+      socket.on('timeout', () => {
+        socket.destroy()
+        resolve(false)
+      })
+      socket.on('error', () => {
+        socket.destroy()
+        resolve(false)
+      })
+    })
+
+    if (!reachable) {
+      throw new Error(
+        `Cannot reach ${targetHost}:${resolvedPort} — check host, port, and firewall`,
+      )
+    }
+
+    return { success: true, host: targetHost, port: resolvedPort }
+  })
+
+// Clone a service into any project — the pragmatic slice of environments
+// (#358): new name, copied config/env vars (self-references rewritten),
+// and for dokku databases an optional data copy via export → import.
+export const cloneServiceAction = protectedClient
+  .metadata({ actionName: 'cloneServiceAction' })
+  .inputSchema(cloneServiceSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serviceId, projectId, cloneData } = clientInput
+    const {
+      payload,
+      userTenant: { tenant },
+      user,
+    } = ctx
+
+    const source = await payload.findByID({
+      collection: 'services',
+      depth: 3,
+      id: serviceId,
+    })
+    assertTenantOwnership(source.tenant, tenant.id, 'Service')
+
+    const targetProject = await payload.findByID({
+      collection: 'projects',
+      depth: 2,
+      id: projectId,
+    })
+    assertTenantOwnership(targetProject.tenant, tenant.id, 'Project')
+
+    const targetServer =
+      typeof targetProject.server === 'object' ? targetProject.server : null
+    if (!targetServer) {
+      throw new Error('Target project has no server')
+    }
+
+    const newName = await getUniqueName(async candidate => {
+      const { totalDocs } = await payload.count({
+        collection: 'services',
+        where: {
+          and: [
+            { tenant: { equals: tenant.id } },
+            { name: { equals: candidate } },
+          ],
+        },
+      })
+      return totalDocs > 0
+    }, `${targetProject.name}-${source.name.slice(0, 10)}`)
+
+    // Rewrite template self-references {{ oldName.VAR }} → {{ newName.VAR }}
+    const selfRef = new RegExp(
+      `\\{\\{\\s*${source.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.`,
+      'g',
+    )
+    const variables = (source.variables ?? []).map(v => ({
+      key: v.key,
+      value: v.value?.replace(selfRef, `{{ ${newName}.`) ?? v.value,
+    }))
+
+    const data: Record<string, unknown> = {
+      project: projectId,
+      name: newName,
+      description: source.description,
+      type: source.type,
+      tenant,
+      variables,
+      builder: source.builder,
+      volumes: source.volumes?.map(({ hostPath, containerPath }) => ({
+        hostPath,
+        containerPath,
+      })),
+    }
+
+    if (source.type === 'database') {
+      const dd = source.databaseDetails
+      data.databaseDetails =
+        dd?.provider === 'external'
+          ? { ...dd, exposedPorts: undefined, backupSchedule: undefined }
+          : { type: dd?.type, version: dd?.version }
+    } else {
+      // app/docker — copy provider + build settings; domains intentionally
+      // not copied (they'd collide) and deployment stays manual.
+      data.provider = source.provider
+      data.providerType = source.providerType
+      data.githubSettings = source.githubSettings
+      data.azureSettings = source.azureSettings
+      data.giteaSettings = source.giteaSettings
+      data.gitlabSettings = source.gitlabSettings
+      data.bitbucketSettings = source.bitbucketSettings
+      data.dockerDetails = source.dockerDetails
+    }
+
+    const created = await payload.create({
+      collection: 'services',
+      data: data as any,
+      user,
+    })
+
+    // Optional data copy for dokku databases that are actually deployed.
+    if (
+      cloneData &&
+      source.type === 'database' &&
+      source.databaseDetails?.provider !== 'external' &&
+      source.databaseDetails?.status === 'running'
+    ) {
+      const sourceProject =
+        typeof source.project === 'object' ? source.project : null
+      const sourceServer =
+        typeof sourceProject?.server === 'object'
+          ? sourceProject.server
+          : null
+      const dbType = source.databaseDetails?.type
+
+      if (sourceServer && dbType) {
+        let sourceSsh: NodeSSH | null = null
+        let targetSsh: NodeSSH | null = null
+        const stamp = Date.now()
+        const remoteDump = `/tmp/dflow-clone-${stamp}.dump`
+        const localDump = `${os.tmpdir()}/dflow-clone-${stamp}.dump`
+
+        try {
+          sourceSsh = await dynamicSSH(extractSSHDetails({ server: sourceServer }))
+          const sameServer = sourceServer.id === targetServer.id
+          targetSsh = sameServer
+            ? sourceSsh
+            : await dynamicSSH(extractSSHDetails({ server: targetServer }))
+
+          const createRes = await dokku.database.create(
+            targetSsh,
+            newName,
+            dbType,
+            undefined,
+            { imageVersion: source.databaseDetails?.version ?? undefined },
+          )
+          if (createRes.code !== 0) {
+            throw new Error(`dokku ${dbType}:create failed — ${createRes.stderr}`)
+          }
+
+          await dokku.database.internal.export(
+            sourceSsh,
+            dbType,
+            source.name,
+            remoteDump,
+          )
+
+          if (!sameServer) {
+            await sourceSsh.getFile(localDump, remoteDump)
+            await targetSsh.putFile(localDump, remoteDump)
+          }
+
+          await dokku.database.internal.import(
+            targetSsh,
+            dbType,
+            newName,
+            remoteDump,
+          )
+
+          await payload.update({
+            collection: 'services',
+            id: created.id,
+            data: { databaseDetails: { type: dbType, status: 'running' } },
+          })
+        } catch (error) {
+          // Clone exists; only the data copy failed — surface it but don't
+          // roll back the service record.
+          const message = error instanceof Error ? error.message : ''
+          console.error(`clone data copy failed for ${newName}:`, message)
+          return {
+            success: true,
+            redirectUrl: `/${tenant.slug}/dashboard/project/${projectId}/service/${created.id}`,
+            warning: `Service cloned, but data copy failed: ${message}`,
+          }
+        } finally {
+          if (sourceSsh) {
+            await sourceSsh
+              .execCommand(`rm -f ${remoteDump}`)
+              .catch(() => {})
+            sourceSsh.dispose()
+          }
+          if (targetSsh && targetSsh !== sourceSsh) {
+            await targetSsh
+              .execCommand(`rm -f ${remoteDump}`)
+              .catch(() => {})
+            targetSsh.dispose()
+          }
+          await fs.promises.unlink(localDump).catch(() => {})
+        }
+      }
+    }
+
+    revalidatePath(`/${tenant.slug}/dashboard/project/${projectId}`)
+    return {
+      success: true,
+      redirectUrl: `/${tenant.slug}/dashboard/project/${projectId}/service/${created.id}`,
+    }
+  })
+
 export const createServiceWithPluginAction = protectedClient
   .metadata({
     actionName: 'createServiceWithPluginAction',
@@ -334,8 +663,13 @@ export const deleteServiceAction = protectedClient
 
         let queueId: string | undefined = ''
 
-        // handling database delete
-        if (type === 'database' && serviceDetails.databaseDetails?.type) {
+        // handling database delete — external databases are managed
+        // elsewhere, nothing exists on the server to destroy (#412)
+        if (
+          type === 'database' &&
+          serviceDetails.databaseDetails?.type &&
+          serviceDetails.databaseDetails?.provider !== 'external'
+        ) {
           const databaseDeletionQueueResponse = await addDestroyDatabaseQueue({
             databaseName: serviceDetails.name,
             databaseType: serviceDetails.databaseDetails?.type,

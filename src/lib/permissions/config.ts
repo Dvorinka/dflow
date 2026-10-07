@@ -165,6 +165,8 @@ export const getActionAccess = {
   getServiceBackups: ['backups.read'],
   getRestorableBackups: ['backups.read'],
   createServiceAction: ['services.create', 'projects.read', 'services.read'],
+  testExternalDbConnectionAction: ['services.read'],
+  cloneServiceAction: ['services.create', 'services.read', 'projects.read'],
   createServiceWithPluginAction: [
     'servers.read',
     'servers.update',
@@ -235,6 +237,10 @@ export const getActionAccess = {
   internalBackupAction: ['backups.create', 'services.read'],
   internalRestoreAction: ['backups.read', 'services.read', 'backups.update'],
   internalDbDeleteAction: ['services.read', 'backups.delete', 'backups.read'],
+  configureExternalBackupAction: ['services.read', 'services.update'],
+  externalBackupAction: ['backups.create', 'services.read'],
+  scheduleExternalBackupAction: ['services.read', 'services.update'],
+  unscheduleExternalBackupAction: ['services.read', 'services.update'],
 
   // Deployment actions
   createDeploymentAction: ['services.read', 'services.update'],

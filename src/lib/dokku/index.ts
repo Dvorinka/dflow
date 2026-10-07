@@ -28,6 +28,14 @@ import { unlock } from '@/lib/dokku/git/unlock'
 import { off as httpAuthOff, on as httpAuthOn } from '@/lib/dokku/httpAuth'
 import { off as maintenanceOff, on as maintenanceOn, status as maintenanceStatus } from '@/lib/dokku/maintenance'
 import { auth as DatabaseAuth } from '@/lib/dokku/plugin/database/backup/auth'
+import {
+  backup as databaseBackup,
+  deauth as databaseBackupDeauth,
+} from '@/lib/dokku/plugin/database/backup/backup'
+import {
+  schedule as databaseBackupSchedule,
+  unschedule as databaseBackupUnschedule,
+} from '@/lib/dokku/plugin/database/backup/schedule'
 import { deleteBackup } from '@/lib/dokku/plugin/database/backup/internal/delete'
 import { exportDB } from '@/lib/dokku/plugin/database/backup/internal/export'
 import { importDB } from '@/lib/dokku/plugin/database/backup/internal/import'
@@ -113,6 +121,10 @@ export const dokku = {
     unexpose: unexposeDatabasePort,
     backup: {
       auth: DatabaseAuth,
+      backup: databaseBackup,
+      deauth: databaseBackupDeauth,
+      schedule: databaseBackupSchedule,
+      unschedule: databaseBackupUnschedule,
     },
     internal: {
       export: exportDB,
