@@ -6,6 +6,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../ui/accordion'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import {
@@ -18,12 +29,24 @@ import {
 } from '../ui/form'
 import { Input } from '../ui/input'
 import { MultiSelect } from '../ui/multi-select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
 import { Textarea } from '../ui/textarea'
 import { useAction } from 'next-safe-action/hooks'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-import { updateEC2InstanceAction } from '@/actions/cloud/aws'
+import {
+  updateEC2InstanceAction,
+  upgradeEC2InstanceTypeAction,
+} from '@/actions/cloud/aws'
+import { instanceTypes } from '@/lib/constants'
 import { SecurityGroup, Server } from '@/payload-types'
 
 type UpdateEC2InstanceFormValues = {
@@ -62,6 +85,8 @@ const UpdateEC2InstanceForm = ({
     },
   })
 
+  const [resizeType, setResizeType] = useState('')
+
   // Use the useAction hook for the update action
   const { execute: updateEC2Instance, isPending: updatingEC2Instance } =
     useAction(updateEC2InstanceAction, {
@@ -74,6 +99,21 @@ const UpdateEC2InstanceForm = ({
         toast.error(`Failed to update EC2 instance: ${error.serverError}`)
       },
     })
+
+  const { execute: resizeInstance, isPending: resizingInstance } = useAction(
+    upgradeEC2InstanceTypeAction,
+    {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success(`Instance resized to ${resizeType}`)
+          setResizeType('')
+        }
+      },
+      onError: ({ error }) => {
+        toast.error(`Failed to resize instance: ${error.serverError}`)
+      },
+    },
+  )
 
   const onSubmit = (values: UpdateEC2InstanceFormValues) => {
     updateEC2Instance({
@@ -474,6 +514,73 @@ const UpdateEC2InstanceForm = ({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+
+          {/* Resize (#365): stop → modify type → start. Separate action
+              because it takes the instance offline briefly. */}
+          <div className='space-y-2'>
+            <h3 className='text-lg font-medium'>Resize Instance</h3>
+            <p className='text-muted-foreground text-xs'>
+              AWS stops the instance while the type is applied and starts it
+              again — expect a few minutes of downtime.
+            </p>
+            <div className='flex items-center gap-2'>
+              <div className='flex-1'>
+                <Select value={resizeType} onValueChange={setResizeType}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={`Current: ${server.awsEc2Details?.instanceType || 'unknown'}`}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {instanceTypes.map(({ label, value }) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    disabled={
+                      resizingInstance ||
+                      !resizeType ||
+                      resizeType === server.awsEc2Details?.instanceType
+                    }>
+                    {resizingInstance ? 'Resizing...' : 'Resize'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Resize instance to {resizeType}?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The instance is stopped while AWS applies the new type,
+                      then started automatically. Services are unavailable
+                      during the stop/start window.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() =>
+                        resizeInstance({
+                          serverId: server.id,
+                          instanceType: resizeType,
+                        })
+                      }>
+                      Resize
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
 
           <div className='flex justify-end space-x-2 pt-4'>
             <Button type='submit' disabled={updatingEC2Instance}>

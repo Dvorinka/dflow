@@ -117,6 +117,11 @@ export const getActionAccess = {
     'securityGroups.read',
     'servers.update',
   ],
+  upgradeEC2InstanceTypeAction: [
+    'servers.read',
+    'cloudProviderAccounts.read',
+    'servers.update',
+  ],
   checkAWSAccountConnection: ['servers.read'],
   listUbuntuAmisAction: ['servers.read'],
   connectAWSAccountAction: ['cloudProviderAccounts.create'],

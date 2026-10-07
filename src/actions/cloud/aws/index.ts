@@ -8,6 +8,10 @@ import {
   ImportKeyPairCommand,
   ModifyInstanceAttributeCommand,
   RunInstancesCommand,
+  StartInstancesCommand,
+  StopInstancesCommand,
+  waitUntilInstanceRunning,
+  waitUntilInstanceStopped,
   _InstanceType,
 } from '@aws-sdk/client-ec2'
 import configPromise from '@payload-config'
@@ -28,6 +32,7 @@ import {
   listUbuntuAmisSchema,
   updateAWSAccountSchema,
   updateEC2InstanceSchema,
+  upgradeEC2InstanceTypeSchema,
 } from './validator'
 
 export const createEC2InstanceAction = protectedClient
@@ -726,4 +731,143 @@ export const listUbuntuAmisAction = protectedClient
     return [...latestByVersion.entries()]
       .sort(([a], [b]) => b.localeCompare(a, undefined, { numeric: true }))
       .map(([version, { label, value }]) => ({ version, label, value }))
+  })
+
+// Resizes an AWS-provisioned server (#365). EC2 cannot change an instance
+// type while running, so this stops the instance, modifies the type, and
+// starts it again — a few minutes of downtime, not a redeploy. The start
+// runs in a finally block so a failed resize never strands the instance.
+export const upgradeEC2InstanceTypeAction = protectedClient
+  .metadata({
+    actionName: 'upgradeEC2InstanceTypeAction',
+  })
+  .inputSchema(upgradeEC2InstanceTypeSchema)
+  .action(async ({ clientInput, ctx }) => {
+    const { serverId, instanceType } = clientInput
+    const {
+      payload,
+      user,
+      userTenant: { tenant },
+    } = ctx
+
+    const server = await payload.findByID({
+      collection: 'servers',
+      id: serverId,
+      depth: 1,
+    })
+
+    // findByID bypasses access control — verify the server belongs to the
+    // caller's current tenant before touching AWS.
+    const serverTenantId =
+      typeof server.tenant === 'object' ? server.tenant?.id : server.tenant
+    if (!serverTenantId || serverTenantId !== tenant.id) {
+      throw new Error('Server not found')
+    }
+
+    if (server.provider !== 'aws' || !server.awsEc2Details?.instanceId) {
+      throw new Error(
+        'Instance type can only be changed on AWS-provisioned servers',
+      )
+    }
+
+    const { instanceId, region } = server.awsEc2Details
+    if (server.awsEc2Details.instanceType === instanceType) {
+      return { success: true, message: 'Instance is already this type' }
+    }
+
+    const accountId =
+      typeof server.cloudProviderAccount === 'object'
+        ? server.cloudProviderAccount?.id
+        : server.cloudProviderAccount
+
+    if (!accountId) {
+      throw new Error('No cloud provider account linked to this server')
+    }
+
+    const awsAccountDetails = await payload.findByID({
+      collection: 'cloudProviderAccounts',
+      id: accountId,
+    })
+
+    const accessKeyId = awsAccountDetails?.awsDetails?.accessKeyId
+    const secretAccessKey = awsAccountDetails?.awsDetails?.secretAccessKey
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error('AWS account credentials not found')
+    }
+
+    const ec2Client = new EC2Client({
+      region: region || 'us-east-1',
+      credentials: { accessKeyId, secretAccessKey },
+    })
+
+    const { Reservations } = await ec2Client.send(
+      new DescribeInstancesCommand({ InstanceIds: [instanceId] }),
+    )
+    const state = Reservations?.[0]?.Instances?.[0]?.State?.Name
+
+    if (!state || state === 'terminated' || state === 'shutting-down') {
+      throw new Error('EC2 instance no longer exists')
+    }
+
+    if (state !== 'stopped') {
+      await ec2Client.send(new StopInstancesCommand({ InstanceIds: [instanceId] }))
+      await waitUntilInstanceStopped(
+        { client: ec2Client, maxWaitTime: 180 },
+        { InstanceIds: [instanceId] },
+      )
+    }
+
+    try {
+      await ec2Client.send(
+        new ModifyInstanceAttributeCommand({
+          InstanceId: instanceId,
+          InstanceType: { Value: instanceType as _InstanceType },
+        }),
+      )
+    } finally {
+      await ec2Client.send(
+        new StartInstancesCommand({ InstanceIds: [instanceId] }),
+      )
+    }
+
+    await waitUntilInstanceRunning(
+      { client: ec2Client, maxWaitTime: 180 },
+      { InstanceIds: [instanceId] },
+    )
+
+    const updated = await payload.update({
+      collection: 'servers',
+      id: serverId,
+      data: {
+        awsEc2Details: {
+          ...server.awsEc2Details,
+          instanceType,
+        },
+      },
+    })
+
+    const { trackActivity } = await import('@/lib/activityTracker')
+    await trackActivity({
+      payload,
+      userId: user.id,
+      eventType: 'server_resized',
+      operation: 'update',
+      label: 'Server Resized',
+      status: 'success',
+      severity: 'warning',
+      category: 'server',
+      collectionSlug: 'servers',
+      documentId: serverId,
+      icon: 'server',
+      metadata: {
+        instanceId,
+        from: server.awsEc2Details.instanceType,
+        to: instanceType,
+      },
+    })
+
+    const tenantSlug = extractTenantSlug(server.tenant)
+    if (tenantSlug) revalidatePath(`/${tenantSlug}/servers/${server.id}`)
+
+    return { success: true, server: updated }
   })
