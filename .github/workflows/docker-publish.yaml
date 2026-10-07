@@ -7,11 +7,6 @@ name: Docker Build and Publish Workflow
 
 on:
   workflow_dispatch:
-  schedule:
-    # Every day at 16:19 UTC
-    # This is to ensure the image is built and pushed daily
-    # and to keep the cache fresh.
-    - cron: '19 16 * * *'
   push:
     # Only run on pushes to the main branch
     # This is to ensure that the image is built and pushed
@@ -70,13 +65,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ env.TOKEN }}
 
-      # # Extract metadata (tags, labels) for Docker
-      # # https://github.com/docker/metadata-action
-      # - name: Extract Docker metadata
-      #   id: meta
-      #   uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
-      #   with:
-      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
 
       # Build and push Docker image with Buildx (don't push on PR)
       # This is used to build the Docker image and push it to the registry.
@@ -91,7 +91,8 @@ jobs:
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           build-args: |
             DATABASE_URI=${{ secrets.DATABASE_URI }}
@@ -104,7 +105,10 @@ jobs:
             TAILSCALE_OAUTH_CLIENT_SECRET=${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
             TAILSCALE_TAILNET=${{ secrets.TAILSCALE_TAILNET }}
             NEXT_PUBLIC_WEBHOOK_URL=${{ secrets.NEXT_PUBLIC_WEBHOOK_URL }}
-            NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED=${{ secrets.NEXT_PUBLIC_DFLOW_TELEMETRY_DISABLED }}
+            NEXT_PUBLIC_TELEMETRY_DISABLED=${{ secrets.NEXT_PUBLIC_TELEMETRY_DISABLED }}
+            NETBIRD_API_URL=${{ secrets.NETBIRD_API_URL }}
+            NETBIRD_API_TOKEN=${{ secrets.NETBIRD_API_TOKEN }}
+            NETBIRD_MANAGEMENT_URL=${{ secrets.NETBIRD_MANAGEMENT_URL }}
             NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN=${{ secrets.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN }}
             NEXT_PUBLIC_BETTER_STACK_INGESTING_URL=${{secrets.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL}}
             NEXT_PUBLIC_PROXY_DOMAIN_URL=${{ secrets.NEXT_PUBLIC_PROXY_DOMAIN_URL }}
