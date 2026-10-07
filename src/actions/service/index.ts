@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { NodeSSH } from 'node-ssh'
 import { extractID } from 'payload/shared'
 
+import { pluginList } from '@/components/plugins'
 import { dokku } from '@/lib/dokku'
 import { assertTenantOwnership, extractTenantSlug } from '@/lib/extractID'
 import { protectedClient } from '@/lib/safe-action'
@@ -491,6 +492,20 @@ export const cloneServiceAction = protectedClient
           targetSsh = sameServer
             ? sourceSsh
             : await dynamicSSH(extractSSHDetails({ server: targetServer }))
+
+          // The target server may lack the database plugin entirely — the
+          // deploy queue installs plugins for service creation, but the
+          // clone data path talks to dokku directly.
+          if (!(await dokku.plugin.installed(targetSsh, dbType))) {
+            const pluginData = pluginList.find(p => p.value === dbType)
+            if (pluginData) {
+              await dokku.plugin.install({
+                ssh: targetSsh,
+                pluginUrl: pluginData.githubURL,
+                pluginName: dbType,
+              })
+            }
+          }
 
           const createRes = await dokku.database.create(
             targetSsh,
