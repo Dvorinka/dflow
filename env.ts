@@ -51,7 +51,6 @@ export const env = createEnv({
     NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: z.string().min(1).optional(),
     NEXT_PUBLIC_PROXY_DOMAIN_URL: z.string().optional(),
     NEXT_PUBLIC_PROXY_CNAME: z.string().optional(),
-    NEXT_PUBLIC_DISCORD_INVITE_URL: z.string().optional(),
   },
   runtimeEnv: {
     NEXT_PUBLIC_WEBSITE_URL: changeBasedOnENV(
@@ -80,7 +79,6 @@ export const env = createEnv({
     NETBIRD_MANAGEMENT_URL: process.env.NETBIRD_MANAGEMENT_URL,
     NEXT_PUBLIC_PROXY_DOMAIN_URL: process.env.NEXT_PUBLIC_PROXY_DOMAIN_URL,
     NEXT_PUBLIC_PROXY_CNAME: process.env.NEXT_PUBLIC_PROXY_CNAME,
-    NEXT_PUBLIC_DISCORD_INVITE_URL: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL,
     BESZEL_MONITORING_URL: process.env.BESZEL_MONITORING_URL,
     BESZEL_SUPERUSER_EMAIL: process.env.BESZEL_SUPERUSER_EMAIL,
     BESZEL_SUPERUSER_PASSWORD: process.env.BESZEL_SUPERUSER_PASSWORD,

@@ -569,7 +569,8 @@ const SuspendedPage = ({ params, searchParams }: PageProps) => {
             <AlertTitle>Unknown Server Status</AlertTitle>
             <AlertDescription>
               Unable to determine server status. Please refresh or check your
-              server configuration. If the issue persists, contact support.
+              server configuration. If the issue persists, check the logs or
+              file an issue on GitHub.
             </AlertDescription>
           </Alert>
           {renderTab()}

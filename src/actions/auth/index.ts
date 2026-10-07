@@ -70,7 +70,7 @@ export const signInAction = publicClient
             return {
               success: false,
               error:
-                'Your account has been temporarily locked. Please contact support.',
+                'Your account has been temporarily locked. Please contact your administrator.',
             }
           }
         }

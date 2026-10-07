@@ -126,12 +126,12 @@ export function NavUser({ user }: { user: User }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a
-            href='https://discord.com/channels/1346775217594302484/1384588060393603099'
+            href='https://github.com/Dvorinka/dflow/issues'
             target='_blank'
             rel='noopener noreferrer'
             className='flex items-center'>
             <HelpCircle />
-            Help & Support
+            Report an issue
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem

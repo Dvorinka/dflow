@@ -150,7 +150,7 @@ export const LoginConfirmationEmailTemplate = ({
       ) : (
         <>
           <Text style={confirmationStyles.securityText}>
-            • If you didn't request this login, contact support
+            • If you didn't request this login, contact your administrator
           </Text>
           <Text style={confirmationStyles.securityText}>
             • Your account security is our top priority
