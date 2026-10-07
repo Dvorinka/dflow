@@ -21,8 +21,8 @@ import { addInstallRailpackQueue } from '@/queues/builder/installRailpack'
 import { addInstallDokkuQueue } from '@/queues/dokku/install'
 import { addManageServerDomainQueue } from '@/queues/domain/manageGlobal'
 import { addDeleteProjectsQueue } from '@/queues/project/deleteProjects'
-import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { checkServersSSHConnectionQueue } from '@/queues/server/checkSSHConnection'
+import { addCleanupServerQueue } from '@/queues/server/cleanup'
 import { addResetServerQueue } from '@/queues/server/reset'
 
 import {
@@ -353,9 +353,7 @@ export const updateServerAction = protectedClient
 
     const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
     await invalidateServerCache(
-      typeof response.tenant === 'object'
-        ? response.tenant?.slug
-        : undefined,
+      typeof response.tenant === 'object' ? response.tenant?.slug : undefined,
       id,
     )
 
@@ -492,9 +490,7 @@ export const deleteServerAction = protectedClient
       revalidatePath(`/${userTenant.tenant.slug}/servers`)
       revalidatePath(`/${userTenant.tenant.slug}/servers/${id}`)
 
-      const { invalidateServerCache } = await import(
-        '@/lib/serverDetailsCache'
-      )
+      const { invalidateServerCache } = await import('@/lib/serverDetailsCache')
       await invalidateServerCache(userTenant.tenant.slug, id)
 
       return { deleted: true }
@@ -665,10 +661,14 @@ export const getDanglingVolumesAction = protectedClient
       const apps = ((await dokku.apps.list(ssh)) as string[])
         .map(app => app.trim())
         .filter(Boolean)
-      const dirs = await ssh.execCommand(
-        `ls -1 ${DANGLING_STORAGE_PATH}`,
-      )
-      const names = dirs.code === 0 ? dirs.stdout.split('\n').map(d => d.trim()).filter(Boolean) : []
+      const dirs = await ssh.execCommand(`ls -1 ${DANGLING_STORAGE_PATH}`)
+      const names =
+        dirs.code === 0
+          ? dirs.stdout
+              .split('\n')
+              .map(d => d.trim())
+              .filter(Boolean)
+          : []
       const mounted = await listMountedPaths(ssh, apps)
 
       const volumes = []
@@ -835,7 +835,10 @@ export const executeCommandAction = protectedClient
       const result = await Promise.race([
         ssh.execCommand(command),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Command timed out after 30s')), 30000),
+          setTimeout(
+            () => reject(new Error('Command timed out after 30s')),
+            30000,
+          ),
         ),
       ])
 
@@ -1160,8 +1163,6 @@ export const checkServerConnection = protectedClient
   .action(async ({ clientInput }) => {
     const { connectionType } = clientInput
 
-    console.log('triggered')
-
     if (connectionType === 'tailscale') {
       const { hostname, username } = clientInput
 
@@ -1184,7 +1185,6 @@ export const checkServerConnection = protectedClient
 
         try {
           // Attempt Tailscale SSH connection
-          console.log('tailscale ssh attempt')
           ssh = await dynamicSSH({
             type: 'tailscale',
             hostname,
@@ -1192,7 +1192,6 @@ export const checkServerConnection = protectedClient
           })
 
           if (ssh.isConnected()) {
-            console.log('connected to tailscale ssh')
             sshConnected = true
 
             // Get server information
@@ -1275,7 +1274,6 @@ export const checkServerConnection = protectedClient
           // Clean up SSH connection
           if (ssh) {
             try {
-              console.log('ssh connected successfully, and closing')
               ssh.dispose()
             } catch (disposeError) {
               console.error('Error disposing SSH connection:', disposeError)
