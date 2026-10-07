@@ -49,6 +49,229 @@ import { Label } from '@/components/ui/label'
 import { databaseOptions } from '@/lib/constants'
 import { Backup as BackupType, Service } from '@/payload-types'
 
+const WEEKDAYS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+]
+
+type ScheduleFreq = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
+
+type ScheduleFields = {
+  freq: ScheduleFreq
+  minute: number
+  time: string
+  weekday: number
+  monthDay: number
+}
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const parseInitialSchedule = (cron: string): ScheduleFields => {
+  const base: ScheduleFields = {
+    freq: 'custom',
+    minute: 0,
+    time: '03:00',
+    weekday: 0,
+    monthDay: 1,
+  }
+  const f = cron.trim().split(/\s+/)
+  if (f.length !== 5 || !/^\d{1,2}$/.test(f[0])) return base
+  const [m, h, dom, , dow] = f
+  const minute = parseInt(m, 10)
+  if (/^\d{1,2}$/.test(h) && dom === '*' && dow === '*')
+    return { ...base, freq: 'daily', time: toTimeField(minute, h) }
+  if (/^\d{1,2}$/.test(h) && dom === '*' && /^\d$/.test(dow))
+    return {
+      ...base,
+      freq: 'weekly',
+      time: toTimeField(minute, h),
+      weekday: parseInt(dow, 10),
+    }
+  if (/^\d{1,2}$/.test(h) && /^\d{1,2}$/.test(dom) && dow === '*')
+    return {
+      ...base,
+      freq: 'monthly',
+      time: toTimeField(minute, h),
+      monthDay: parseInt(dom, 10),
+    }
+  if (h === '*' && dom === '*' && dow === '*')
+    return { ...base, freq: 'hourly', minute }
+  return base
+}
+
+const toTimeField = (minute: number, hour: string) =>
+  `${pad(parseInt(hour, 10))}:${pad(minute)}`
+
+const cronFromFields = (f: ScheduleFields): string => {
+  const [h = '3', m = '0'] = f.time.split(':')
+  switch (f.freq) {
+    case 'hourly':
+      return `${f.minute} * * * *`
+    case 'weekly':
+      return `${parseInt(m, 10)} ${parseInt(h, 10)} * * ${f.weekday}`
+    case 'monthly':
+      return `${parseInt(m, 10)} ${parseInt(h, 10)} ${f.monthDay} * *`
+    default:
+      return `${parseInt(m, 10)} ${parseInt(h, 10)} * * *`
+  }
+}
+
+const describeFields = (f: ScheduleFields): string => {
+  switch (f.freq) {
+    case 'hourly':
+      return `Every hour at minute :${pad(f.minute)}`
+    case 'weekly':
+      return `Every ${WEEKDAYS[f.weekday]} at ${f.time}`
+    case 'monthly':
+      return `Day ${f.monthDay} of every month at ${f.time}`
+    default:
+      return `Every day at ${f.time}`
+  }
+}
+
+const ScheduleBuilder = ({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (cron: string) => void
+}) => {
+  const [fields, setFields] = useState<ScheduleFields>(() =>
+    parseInitialSchedule(value),
+  )
+
+  const update = (patch: Partial<ScheduleFields>) => {
+    const next = { ...fields, ...patch }
+    setFields(next)
+    if (next.freq !== 'custom') onChange(cronFromFields(next))
+  }
+
+  return (
+    <div className='space-y-4'>
+      <div className='grid grid-cols-2 gap-3'>
+        <div className='space-y-2'>
+          <Label>Frequency</Label>
+          <Select
+            value={fields.freq}
+            onValueChange={v => update({ freq: v as ScheduleFreq })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='hourly'>Hourly</SelectItem>
+              <SelectItem value='daily'>Daily</SelectItem>
+              <SelectItem value='weekly'>Weekly</SelectItem>
+              <SelectItem value='monthly'>Monthly</SelectItem>
+              <SelectItem value='custom'>Custom (cron)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {fields.freq === 'hourly' && (
+          <div className='space-y-2'>
+            <Label>At minute</Label>
+            <Input
+              type='number'
+              min={0}
+              max={59}
+              value={fields.minute}
+              onChange={e =>
+                update({
+                  minute: Math.max(0, Math.min(59, Number(e.target.value) || 0)),
+                })
+              }
+            />
+          </div>
+        )}
+
+        {fields.freq === 'weekly' && (
+          <div className='space-y-2'>
+            <Label>Day</Label>
+            <Select
+              value={String(fields.weekday)}
+              onValueChange={v => update({ weekday: parseInt(v, 10) })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WEEKDAYS.map((d, i) => (
+                  <SelectItem key={d} value={String(i)}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {fields.freq === 'monthly' && (
+          <div className='space-y-2'>
+            <Label>Day of month</Label>
+            <Input
+              type='number'
+              min={1}
+              max={28}
+              value={fields.monthDay}
+              onChange={e =>
+                update({
+                  monthDay: Math.max(
+                    1,
+                    Math.min(28, Number(e.target.value) || 1),
+                  ),
+                })
+              }
+            />
+          </div>
+        )}
+
+        {(fields.freq === 'daily' ||
+          fields.freq === 'weekly' ||
+          fields.freq === 'monthly') && (
+          <div className='space-y-2'>
+            <Label>Time</Label>
+            <Input
+              type='time'
+              value={fields.time}
+              onChange={e => update({ time: e.target.value || '03:00' })}
+            />
+          </div>
+        )}
+      </div>
+
+      {fields.freq === 'custom' && (
+        <div className='space-y-2'>
+          <Label htmlFor='backup-cron'>Cron schedule</Label>
+          <Input
+            id='backup-cron'
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder='0 3 * * *'
+          />
+          <p className='text-muted-foreground text-xs'>
+            Standard five-field cron — e.g. <code>0 3 * * *</code> daily at
+            03:00, <code>0 3 * * 0</code> weekly on Sunday.
+          </p>
+        </div>
+      )}
+
+      <p className='text-muted-foreground text-xs'>
+        {fields.freq === 'custom' ? (
+          <>Custom expression — dokku runs whatever cron accepts.</>
+        ) : (
+          <>
+            {describeFields(fields)} — <code>{value}</code> (server local time)
+          </>
+        )}
+      </p>
+    </div>
+  )
+}
+
 export const IndividualBackup = ({
   backup,
   serviceId,
@@ -332,20 +555,11 @@ const Backup = ({
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className='space-y-2'>
-                  <Label htmlFor='backup-cron'>Cron schedule</Label>
-                  <Input
-                    id='backup-cron'
-                    value={cronSchedule}
-                    onChange={e => setCronSchedule(e.target.value)}
-                    placeholder='0 3 * * *'
-                  />
-                  <p className='text-muted-foreground text-xs'>
-                    Standard cron — e.g.{' '}
-                    <code>0 3 * * *</code> daily at 03:00,{' '}
-                    <code>0 3 * * 0</code> weekly on Sunday.
-                  </p>
-                </div>
+                <ScheduleBuilder
+                  key={databaseDetails?.backupSchedule ?? 'unset'}
+                  value={cronSchedule}
+                  onChange={setCronSchedule}
+                />
 
                 <DialogFooter>
                   {databaseDetails?.backupSchedule && (
