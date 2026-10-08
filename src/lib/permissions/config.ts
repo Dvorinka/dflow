@@ -277,6 +277,14 @@ export const getActionAccess = {
   setServiceNginxConfigSchema: ['services.update'],
   getDeploymentsAction: ['services.read'],
 
+  // Ansible actions (#401) — playbooks execute remote configuration, so
+  // mutations require servers.update
+  getPlaybooksAction: ['servers.read'],
+  createPlaybookAction: ['servers.update'],
+  deletePlaybookAction: ['servers.update'],
+  runAnsiblePlaybookAction: ['servers.read', 'servers.update'],
+  getAnsibleExecutionsAction: ['servers.read'],
+
   // Activity actions (self-scoped reads; team.read is the least privilege
   // that every dashboard role already carries)
   getActivitiesAction: ['team.read'],
