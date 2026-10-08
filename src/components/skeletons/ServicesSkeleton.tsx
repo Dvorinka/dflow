@@ -32,7 +32,7 @@ const ServicesSkeleton = () => {
                 .map((_, index) => (
                   <div
                     key={index}
-                    className='h-36 w-full rounded-xl border bg-[#171d33] text-card-foreground shadow-sm md:w-72'>
+                    className='h-36 w-full rounded-xl border bg-[#100e18] text-card-foreground shadow-sm md:w-72'>
                     <div className='flex w-full flex-row justify-between space-y-1.5 p-6'>
                       <div className='flex items-center gap-x-3'>
                         <Skeleton className='size-6 rounded-full' />

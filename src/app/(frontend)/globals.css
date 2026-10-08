@@ -164,38 +164,39 @@
   }
 
   .dark {
-    /* Railway's dark palette, sampled from their live stylesheets */
-    --background: #13111c;
+    /* Railway's dark palette stepped down a notch — same violet tint,
+       deeper surfaces */
+    --background: #0b0a12;
     --foreground: #f7f7f8;
-    --card: #181622;
+    --card: #121019;
     --card-foreground: #f7f7f8;
-    --popover: #181622;
+    --popover: #121019;
     --popover-foreground: #f7f7f8;
     --primary: #a667e4;
     --primary-foreground: #ffffff;
-    --secondary: #2c2a3b;
+    --secondary: #1e1c29;
     --secondary-foreground: #f7f7f8;
-    --muted: #1f1e2c;
-    --muted-foreground: #868593;
-    --accent: #1f1e2c;
+    --muted: #16141f;
+    --muted-foreground: #7a7889;
+    --accent: #16141f;
     --accent-foreground: #f7f7f8;
     --destructive: #d85c5a;
     --destructive-foreground: #ffffff;
-    --border: #33323e;
-    --input: #33323e;
+    --border: #2a2833;
+    --input: #2a2833;
     --ring: #a667e4;
     --chart-1: #a667e4;
     --chart-2: #853bce;
     --chart-3: #6d2db0;
     --chart-4: #552090;
     --chart-5: #3d1670;
-    --sidebar: #13111c;
+    --sidebar: #0b0a12;
     --sidebarForeground: #f7f7f8;
     --sidebarPrimary: #a667e4;
     --sidebarPrimaryForeground: #ffffff;
-    --sidebarAccent: #1f1e2c;
+    --sidebarAccent: #16141f;
     --sidebarAccentForeground: #f7f7f8;
-    --sidebarBorder: #33323e;
+    --sidebarBorder: #2a2833;
     --sidebarRing: #a667e4;
     --sidebar-background: var(--sidebar);
     --sidebar-foreground: var(--sidebarForeground);
