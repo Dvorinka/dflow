@@ -134,14 +134,16 @@ const ReferenceVariableDropdown = ({
           type='button'
           className='absolute top-1.5 right-2 h-6 w-6 rounded-sm'
           size='icon'
-          variant='outline'>
+          variant='outline'
+        >
           <Braces className='h-3! w-3!' />
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         className='max-h-64 overflow-y-scroll pt-0 pb-2'
-        align='end'>
+        align='end'
+      >
         <DropdownMenuLabel className='bg-popover sticky top-0 z-10 pt-2'>
           Reference Variables
         </DropdownMenuLabel>
@@ -149,7 +151,8 @@ const ReferenceVariableDropdown = ({
         <DropdownMenuItem
           onSelect={() => {
             setValue(`variables.${index}.value`, publicDomain)
-          }}>
+          }}
+        >
           <Globe className='size-6 text-green-600' />
           {publicDomain}
         </DropdownMenuItem>
@@ -157,7 +160,8 @@ const ReferenceVariableDropdown = ({
         <DropdownMenuItem
           onSelect={() => {
             setValue(`variables.${index}.value`, secretKey)
-          }}>
+          }}
+        >
           <KeyRound className='size-6 text-blue-500' />
           {secretKey}
         </DropdownMenuItem>
@@ -202,7 +206,8 @@ const ReferenceVariableDropdown = ({
                             `variables.${index}.value`,
                             `${value}${populatedValue}`,
                           )
-                        }}>
+                        }}
+                      >
                         {database.databaseDetails?.type &&
                           databaseIcons[database.databaseDetails?.type]}
 
@@ -268,7 +273,8 @@ const CopyToClipboard = ({
           }
 
           copyToClipboard()
-        }}>
+        }}
+      >
         <AnimatePresence initial={false} mode='wait'>
           {copying ? (
             <motion.div
@@ -276,7 +282,8 @@ const CopyToClipboard = ({
               exit='hidden'
               initial='hidden'
               key='check'
-              variants={variants}>
+              variants={variants}
+            >
               <svg
                 viewBox='0 0 24 24'
                 width='14'
@@ -286,7 +293,8 @@ const CopyToClipboard = ({
                 strokeLinecap='round'
                 strokeLinejoin='round'
                 fill='none'
-                shapeRendering='geometricPrecision'>
+                shapeRendering='geometricPrecision'
+              >
                 <path d='M20 6L9 17l-5-5'></path>
               </svg>
             </motion.div>
@@ -296,7 +304,8 @@ const CopyToClipboard = ({
               exit='hidden'
               initial='hidden'
               key='copy'
-              variants={variants}>
+              variants={variants}
+            >
               <svg
                 viewBox='0 0 24 24'
                 width='14'
@@ -306,7 +315,8 @@ const CopyToClipboard = ({
                 strokeLinecap='round'
                 strokeLinejoin='round'
                 fill='none'
-                shapeRendering='geometricPrecision'>
+                shapeRendering='geometricPrecision'
+              >
                 <path d='M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z'></path>
               </svg>
             </motion.div>
@@ -386,7 +396,8 @@ const KeyValuePair = memo(
           size='icon'
           onClick={() => {
             removeVariable(id)
-          }}>
+          }}
+        >
           <Trash2 className='text-destructive' />
         </Button>
       </div>
@@ -473,10 +484,34 @@ const VariablesForm = ({ service }: { service: Service }) => {
     append: appendVariable,
     remove: removeVariable,
     insert: insertVariable,
+    replace: replaceVariables,
   } = useFieldArray({
     control: form.control,
     name: 'variables',
   })
+
+  const [rawMode, setRawMode] = useState(false)
+  const [rawText, setRawText] = useState('')
+
+  const enterRawMode = () => {
+    setRawText(
+      fields
+        .filter(f => f.key || f.value)
+        .map(f => `${f.key}=${f.value}`)
+        .join('\n'),
+    )
+    setRawMode(true)
+  }
+
+  const applyRawMode = () => {
+    const parsed = parseEnv(rawText)
+    replaceVariables(
+      parsed?.length
+        ? parsed.map(row => ({ key: row!.key, value: row!.value }))
+        : [{ key: '', value: '' }],
+    )
+    setRawMode(false)
+  }
 
   const handleSubmit = (values: z.infer<typeof updateServiceSchema>) => {
     saveEnvironmentVariables({
@@ -604,48 +639,84 @@ const VariablesForm = ({ service }: { service: Service }) => {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className='w-full space-y-6'>
-          <div className='space-y-2'>
-            {fields.length ? (
-              <div className='text-muted-foreground grid grid-cols-[1fr_1fr_2.5rem] gap-4 text-sm'>
-                <p className='font-semibold'>Key</p>
-                <p className='flex items-center font-semibold'>
-                  Value{' '}
-                  <SidebarToggleButton
-                    directory='services'
-                    fileName='environment-variables'
-                  />
-                </p>
+          className='w-full space-y-6'
+        >
+          {rawMode ? (
+            <div className='space-y-3'>
+              <textarea
+                value={rawText}
+                onChange={e => setRawText(e.target.value)}
+                placeholder={'KEY=value\nANOTHER_KEY=another value'}
+                spellCheck={false}
+                className='border-border bg-background focus:border-ring min-h-72 w-full rounded-md border p-3 font-mono text-sm outline-none'
+              />
+              <div className='flex justify-end gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => setRawMode(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type='button' onClick={applyRawMode}>
+                  Apply
+                </Button>
               </div>
-            ) : null}
+            </div>
+          ) : (
+            <div className='space-y-2'>
+              {fields.length ? (
+                <div className='text-muted-foreground grid grid-cols-[1fr_1fr_2.5rem] gap-4 text-sm'>
+                  <p className='font-semibold'>Key</p>
+                  <p className='flex items-center font-semibold'>
+                    Value{' '}
+                    <SidebarToggleButton
+                      directory='services'
+                      fileName='environment-variables'
+                    />
+                  </p>
+                </div>
+              ) : null}
 
-            {fields.map((field, index) => {
-              return (
-                <KeyValuePair
-                  handlePaste={handlePaste}
-                  key={field.id} // use stable id provided by RHF
-                  id={index} // pass real index, not used as key
-                  databaseList={databaseList?.data ?? []}
-                  gettingDatabases={gettingDatabases}
-                  parsedValues={parsedValues}
-                  removeVariable={removeVariable}
-                  serviceName={service.name}
-                />
-              )
-            })}
+              {fields.map((field, index) => {
+                return (
+                  <KeyValuePair
+                    handlePaste={handlePaste}
+                    key={field.id} // use stable id provided by RHF
+                    id={index} // pass real index, not used as key
+                    databaseList={databaseList?.data ?? []}
+                    gettingDatabases={gettingDatabases}
+                    parsedValues={parsedValues}
+                    removeVariable={removeVariable}
+                    serviceName={service.name}
+                  />
+                )
+              })}
 
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => {
-                appendVariable({
-                  key: '',
-                  value: '',
-                })
-              }}>
-              <Plus /> New Variable
-            </Button>
-          </div>
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    appendVariable({
+                      key: '',
+                      value: '',
+                    })
+                  }}
+                >
+                  <Plus /> New Variable
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  className='text-muted-foreground'
+                  onClick={enterRawMode}
+                >
+                  Raw Editor
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className='flex w-full justify-between gap-3'>
             <div className='inline-flex items-center gap-x-2'>
@@ -655,7 +726,8 @@ const VariablesForm = ({ service }: { service: Service }) => {
                 onClick={e => {
                   e.stopPropagation(), selectFile()
                 }}
-                disabled={isLoading}>
+                disabled={isLoading}
+              >
                 <FileText size={10} />
                 Import .env
               </Button>
@@ -675,7 +747,8 @@ const VariablesForm = ({ service }: { service: Service }) => {
                 type='submit'
                 variant='outline'
                 disabled={savingEnvironmentVariables}
-                onClick={() => (noRestartRef.current = true)}>
+                onClick={() => (noRestartRef.current = true)}
+              >
                 Save
               </Button>
 
@@ -683,7 +756,8 @@ const VariablesForm = ({ service }: { service: Service }) => {
                 type='submit'
                 variant='secondary'
                 disabled={savingEnvironmentVariables}
-                onClick={() => (noRestartRef.current = false)}>
+                onClick={() => (noRestartRef.current = false)}
+              >
                 Save & Restart
               </Button>
             </div>
