@@ -154,8 +154,14 @@ export const updateServiceDomainSchema = z.object({
   domain: z.object({
     hostname: z.string(),
     autoRegenerateSSL: z.boolean(),
-    certificateType: z.enum(['letsencrypt', 'cloudflare-origin', 'none']),
+    certificateType: z.enum([
+      'letsencrypt',
+      'cloudflare-origin',
+      'cloudflare-custom-hostname',
+      'none',
+    ]),
     default: z.boolean().default(false).optional(),
+    customHostnameId: z.string().optional(),
   }),
   operation: z.enum(['add', 'remove', 'set']),
   id: z.string(),

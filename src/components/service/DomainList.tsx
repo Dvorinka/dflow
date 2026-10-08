@@ -4,6 +4,8 @@ import SidebarToggleButton from '../SidebarToggleButton'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { env } from 'env'
+
+import { defaultServiceDomain } from '@/lib/domains'
 import {
   CircleCheckBig,
   CircleX,
@@ -148,8 +150,10 @@ const DomainCard = ({
     env.NEXT_PUBLIC_PROXY_DOMAIN_URL &&
     server &&
     server.hostname &&
-    domain.domain ===
-      `${service.name}.${server.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`
+    (domain.domain ===
+      defaultServiceDomain(service.name, server.hostname) ||
+      domain.domain ===
+        `${service.name}.${server.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`)
   const isDefaultDomain = domain.default
 
   // Manual refresh function
@@ -365,6 +369,7 @@ const DomainCard = ({
                       autoRegenerateSSL: domain.autoRegenerateSSL ?? false,
                       certificateType: domain.certificateType ?? 'none',
                       default: domain.default,
+                      customHostnameId: domain.customHostnameId ?? undefined,
                     },
                     id: serviceId,
                   })
@@ -375,6 +380,26 @@ const DomainCard = ({
             )}
           </div>
         </div>
+
+        {/* Cloudflare custom-hostname TXT records pending at the user's DNS */}
+        {(domain.validationRecords?.length ?? 0) > 0 && (
+          <div className='mb-4 rounded-md border border-warning/30 bg-warning/5 p-3'>
+            <p className='mb-2 text-xs font-medium'>
+              Create these TXT records to validate the custom hostname
+              {domain.customHostnameStatus
+                ? ` (status: ${domain.customHostnameStatus})`
+                : ''}
+            </p>
+            <div className='space-y-1 font-mono text-xs'>
+              {domain.validationRecords?.map((record, index) => (
+                <div key={index} className='text-muted-foreground break-all'>
+                  <span className='text-foreground'>TXT</span> {record.name}{' '}
+                  → {record.value}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Bottom section with status and sync actions */}
         <div className='flex items-center justify-between border-t pt-3'>

@@ -46,6 +46,11 @@ export const env = createEnv({
     S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
     S3_BUCKET: z.string().min(1).optional(),
     CF_ORIGIN_CA_KEY: z.string().min(1).optional(),
+    // Cloudflare-for-SaaS custom hostnames. API token needs
+    // SSL and Certificates → Edit on the zone; ZONE_ID is the zone
+    // the fallback origin / custom hostnames attach to.
+    CF_API_TOKEN: z.string().min(1).optional(),
+    CF_ZONE_ID: z.string().min(1).optional(),
     AUTH_METHOD: z.enum(['email-password', 'magic-link', 'both']).optional(),
   },
   client: {
@@ -103,6 +108,8 @@ export const env = createEnv({
     S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
     S3_BUCKET: process.env.S3_BUCKET,
     CF_ORIGIN_CA_KEY: process.env.CF_ORIGIN_CA_KEY,
+    CF_API_TOKEN: process.env.CF_API_TOKEN,
+    CF_ZONE_ID: process.env.CF_ZONE_ID,
     AUTH_METHOD: process.env.AUTH_METHOD,
   },
   emptyStringAsUndefined: true,

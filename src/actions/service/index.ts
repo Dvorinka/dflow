@@ -1204,6 +1204,14 @@ export const updateServiceDomainAction = protectedClient
       }
     }
 
+    // capture the removed entry's Cloudflare custom-hostname id so the
+    // queue can delete the CF-side record after the dokku removal
+    const removedHostnameId =
+      operation === 'remove'
+        ? updatedDomains.find(d => d.domain === domain.hostname)
+            ?.customHostnameId
+        : undefined
+
     if (operation === 'remove') {
       // In remove case removing that particular domain
       updatedDomains = updatedDomains.filter(
@@ -1250,7 +1258,10 @@ export const updateServiceDomainAction = protectedClient
     if (operation !== 'add') {
       syncServiceDomainAction({
         id,
-        domain,
+        domain: {
+          ...domain,
+          customHostnameId: removedHostnameId ?? undefined,
+        },
         operation,
       })
     }
@@ -1336,6 +1347,7 @@ export const syncServiceDomainAction = protectedClient
           name: serviceDetails.name,
           certificateType: isProxyDomain ? 'none' : domain.certificateType,
           autoRegenerateSSL: isProxyDomain ? false : domain.autoRegenerateSSL,
+          customHostnameId: domain.customHostnameId,
           id,
           variables: variables ?? [],
         },

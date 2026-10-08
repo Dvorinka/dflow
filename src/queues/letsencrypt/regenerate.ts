@@ -69,14 +69,17 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
           appName: serviceDetails.name,
         })
 
-        const wildcardDomainExists = domainsList.some(domain =>
+        // the actual attached proxy-suffixed domain — derived, not
+        // constructed, so both the old `name.hostname.proxy` format and
+        // the new flattened `name-hostname.proxy` format resolve
+        const proxyDomain = domainsList.find(domain =>
           domain.endsWith(env.NEXT_PUBLIC_PROXY_DOMAIN_URL ?? ' '),
         )
 
-        console.log({ domainsList, wildcardDomainExists })
+        console.log({ domainsList, proxyDomain })
 
         // skipping letsencrypt enablement when there is single proxy domain
-        if (wildcardDomainExists && domainsList.length === 1) {
+        if (proxyDomain && domainsList.length === 1) {
           sendEvent({
             pub,
             message: `Skipping regenerated SSL certificates for service: ${name}`,
@@ -86,13 +89,12 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
           return
         }
 
-        if (env.NEXT_PUBLIC_PROXY_DOMAIN_URL && serverDetails.hostname) {
+        if (proxyDomain) {
           // remove the wildcard-domain before generating letsencrypt
-          const domain = `${serviceDetails.name}.${serverDetails.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`
           const removeResponse = await dokku.domains.remove(
             ssh,
             serviceDetails.name,
-            domain,
+            proxyDomain,
           )
 
           console.dir({ removeResponse }, { depth: null })
@@ -153,12 +155,11 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
         }
 
         // add the wildcard-domain after generating letsencrypt
-        if (env.NEXT_PUBLIC_PROXY_DOMAIN_URL && serverDetails.hostname) {
-          const domain = `${serviceDetails.name}.${serverDetails.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`
+        if (proxyDomain) {
           const addResponse = await dokku.domains.add(
             ssh,
             serviceDetails.name,
-            domain,
+            proxyDomain,
           )
 
           console.dir({ addResponse }, { depth: null })

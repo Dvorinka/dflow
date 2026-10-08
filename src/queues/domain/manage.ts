@@ -7,6 +7,10 @@ import { getPayload } from 'payload'
 
 import traefik from '@/lib/axios/traefik'
 import { getQueue, getWorker } from '@/lib/bullmq'
+import {
+  createCustomHostname,
+  deleteCustomHostname,
+} from '@/lib/cloudflare/customHostname'
 import { createOriginCertificate } from '@/lib/cloudflare/origin'
 import { dokku } from '@/lib/dokku'
 import { jobOptions, pub, queueConnection } from '@/lib/redis'
@@ -20,8 +24,13 @@ interface QueueArgs {
     action: 'add' | 'remove' | 'set'
     domain: string
     name: string
-    certificateType: 'letsencrypt' | 'cloudflare-origin' | 'none'
+    certificateType:
+      | 'letsencrypt'
+      | 'cloudflare-origin'
+      | 'cloudflare-custom-hostname'
+      | 'none'
     autoRegenerateSSL: boolean
+    customHostnameId?: string
     id: string
     variables: Service['variables']
   }
@@ -66,6 +75,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
         certificateType,
         id: serviceId,
         variables,
+        customHostnameId,
       } = job.data.serviceDetails
       let ssh: NodeSSH | null = null
       const payload = await getPayload({ config: configPromise })
@@ -242,12 +252,15 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
             appName: name,
           })
 
-          const wildcardDomainExists = domainsList.some(domain =>
+          // the actual attached proxy-suffixed domain — derived, not
+          // constructed, so both `name.hostname.proxy` (old) and
+          // `name-hostname.proxy` (flattened) formats resolve
+          const proxyDomain = domainsList.find(domain =>
             domain.endsWith(env.NEXT_PUBLIC_PROXY_DOMAIN_URL ?? ' '),
           )
 
           // skipping letsencrypt enablement when there is single proxy domain
-          if (wildcardDomainExists && domainsList.length === 1) {
+          if (proxyDomain && domainsList.length === 1) {
             sendEvent({
               pub,
               message: `Skipping regenerated SSL certificates for service: ${name}`,
@@ -258,9 +271,12 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           }
 
           // remove the wildcard-domain before generating letsencrypt
-          if (env.NEXT_PUBLIC_PROXY_DOMAIN_URL && serverDetails.hostname) {
-            const domain = `${name}.${serverDetails.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`
-            const removeResponse = await dokku.domains.remove(ssh, name, domain)
+          if (proxyDomain) {
+            const removeResponse = await dokku.domains.remove(
+              ssh,
+              name,
+              proxyDomain,
+            )
 
             console.dir({ removeResponse }, { depth: null })
           }
@@ -302,9 +318,8 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           }
 
           // add the wildcard-domain after generating letsencrypt
-          if (env.NEXT_PUBLIC_PROXY_DOMAIN_URL && serverDetails.hostname) {
-            const domain = `${name}.${serverDetails.hostname}.${env.NEXT_PUBLIC_PROXY_DOMAIN_URL}`
-            const addResponse = await dokku.domains.add(ssh, name, domain)
+          if (proxyDomain) {
+            const addResponse = await dokku.domains.add(ssh, name, proxyDomain)
 
             console.dir({ addResponse }, { depth: null })
           }
@@ -379,6 +394,92 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           } finally {
             await ssh.execCommand(`rm -rf ${certDir}`).catch(() => {})
           }
+          }
+        }
+
+        if (
+          certificateType === 'cloudflare-custom-hostname' &&
+          action !== 'remove'
+        ) {
+          // Cloudflare-for-SaaS: register the hostname on the configured
+          // zone; TXT DCV records are persisted on the service domain so
+          // the UI can show what the user must create at their DNS provider
+          try {
+            sendEvent({
+              pub,
+              message: `Registering Cloudflare custom hostname for ${domain}`,
+              serverId: serverDetails.id,
+            })
+
+            const customHostname = await createCustomHostname(domain)
+
+            try {
+              const service = await payload.findByID({
+                collection: 'services',
+                id: serviceId,
+              })
+
+              await payload.update({
+                id: serviceId,
+                collection: 'services',
+                data: {
+                  domains: (service.domains ?? []).map(d =>
+                    d.domain === domain
+                      ? {
+                          ...d,
+                          customHostnameId: customHostname.id,
+                          customHostnameStatus: customHostname.status,
+                          validationRecords: customHostname.validationRecords,
+                        }
+                      : d,
+                  ),
+                },
+              })
+            } catch (error) {
+              console.log(
+                `Failed to persist custom hostname details for ${serviceId}: ${
+                  error instanceof Error ? error.message : ''
+                }`,
+              )
+            }
+
+            sendEvent({
+              pub,
+              message:
+                customHostname.validationRecords.length > 0
+                  ? `Custom hostname registered (status: ${customHostname.status}). Create these TXT records to validate: ${customHostname.validationRecords
+                      .map(r => `${r.name} -> ${r.value}`)
+                      .join(', ')}`
+                  : `Custom hostname registered (status: ${customHostname.status})`,
+              serverId: serverDetails.id,
+            })
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error)
+            sendEvent({
+              pub,
+              message: `Cloudflare custom hostname failed for ${domain}: ${message}`,
+              serverId: serverDetails.id,
+            })
+          }
+        }
+
+        if (action === 'remove' && customHostnameId) {
+          try {
+            await deleteCustomHostname(customHostnameId)
+            sendEvent({
+              pub,
+              message: `Deleted Cloudflare custom hostname for ${domain}`,
+              serverId: serverDetails.id,
+            })
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error)
+            sendEvent({
+              pub,
+              message: `Failed to delete Cloudflare custom hostname: ${message}`,
+              serverId: serverDetails.id,
+            })
           }
         }
 

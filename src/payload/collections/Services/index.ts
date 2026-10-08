@@ -638,8 +638,44 @@ export const Services: CollectionConfig = {
               value: 'cloudflare-origin',
             },
             {
+              label: 'Cloudflare Custom Hostname',
+              value: 'cloudflare-custom-hostname',
+            },
+            {
               label: 'None',
               value: 'none',
+            },
+          ],
+        },
+        {
+          name: 'customHostnameId',
+          type: 'text',
+          admin: {
+            description:
+              'Cloudflare-for-SaaS custom hostname id (set automatically)',
+          },
+        },
+        {
+          name: 'customHostnameStatus',
+          type: 'text',
+        },
+        {
+          name: 'validationRecords',
+          type: 'array',
+          admin: {
+            description:
+              'TXT records the user must create to validate the custom hostname',
+          },
+          fields: [
+            {
+              name: 'name',
+              type: 'text',
+              required: true,
+            },
+            {
+              name: 'value',
+              type: 'text',
+              required: true,
             },
           ],
         },

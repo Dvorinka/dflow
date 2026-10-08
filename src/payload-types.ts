@@ -912,7 +912,22 @@ export interface Service {
         default: boolean;
         synced: boolean;
         autoRegenerateSSL?: boolean | null;
-        certificateType?: ('letsencrypt' | 'cloudflare-origin' | 'none') | null;
+        certificateType?: ('letsencrypt' | 'cloudflare-origin' | 'cloudflare-custom-hostname' | 'none') | null;
+        /**
+         * Cloudflare-for-SaaS custom hostname id (set automatically)
+         */
+        customHostnameId?: string | null;
+        customHostnameStatus?: string | null;
+        /**
+         * TXT records the user must create to validate the custom hostname
+         */
+        validationRecords?:
+          | {
+              name: string;
+              value: string;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -1889,6 +1904,15 @@ export interface ServicesSelect<T extends boolean = true> {
         synced?: T;
         autoRegenerateSSL?: T;
         certificateType?: T;
+        customHostnameId?: T;
+        customHostnameStatus?: T;
+        validationRecords?:
+          | T
+          | {
+              name?: T;
+              value?: T;
+              id?: T;
+            };
         id?: T;
       };
   deployments?: T;
