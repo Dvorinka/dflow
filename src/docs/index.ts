@@ -1,6 +1,7 @@
 import {
   allIntroductions,
   allOnboardings,
+  allProjects,
   allSecurities,
   allServers,
   allServices,
@@ -14,4 +15,5 @@ export const allDocs = {
   services: allServices,
   templates: allTemplates,
   security: allSecurities,
+  projects: allProjects,
 }

@@ -112,6 +112,27 @@ export const Projects: CollectionConfig = {
       defaultValue: false,
     },
     {
+      name: 'parent',
+      type: 'relationship',
+      relationTo: 'projects',
+      label: 'Parent project',
+      admin: {
+        position: 'sidebar',
+        description:
+          'Set when this project is an environment of another project (#358).',
+      },
+    },
+    {
+      name: 'environment',
+      type: 'text',
+      label: 'Environment name',
+      admin: {
+        position: 'sidebar',
+        description:
+          'Display name of the environment, e.g. staging. Only set on child environment projects.',
+      },
+    },
+    {
       type: 'relationship',
       name: 'createdBy',
       relationTo: 'users',

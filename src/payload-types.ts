@@ -840,6 +840,14 @@ export interface Project {
    * Hide this project from the public view.
    */
   hidden?: boolean | null;
+  /**
+   * Set when this project is an environment of another project (#358).
+   */
+  parent?: (string | null) | Project;
+  /**
+   * Display name of the environment, e.g. staging. Only set on child environment projects.
+   */
+  environment?: string | null;
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
@@ -1873,6 +1881,8 @@ export interface ProjectsSelect<T extends boolean = true> {
   server?: T;
   services?: T;
   hidden?: T;
+  parent?: T;
+  environment?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

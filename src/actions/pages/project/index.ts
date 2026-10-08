@@ -155,6 +155,11 @@ export const getProjectBreadcrumbs = protectedClient
                 not_equals: true,
               },
             },
+            {
+              parent: {
+                exists: false,
+              },
+            },
             ...(role?.projects?.readLimit === 'createdByUser'
               ? [
                   {

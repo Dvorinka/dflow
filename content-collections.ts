@@ -172,6 +172,34 @@ const templates = defineCollection({
   },
 })
 
+const projects = defineCollection({
+  name: 'projects',
+  directory: 'src/docs/projects',
+  include: '**/*.md',
+  schema: z => ({
+    title: z.string(),
+    category: z.string(),
+    order: z.number(),
+    categoryOrder: z.number(),
+  }),
+  transform: async (document, context) => {
+    const html = await compileMarkdown(context, document, {
+      remarkPlugins: [remarkGfm],
+      rehypePlugins: [
+        rehypeSlug,
+        [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+      ],
+    })
+
+    return {
+      ...document,
+      html,
+      slug: document.title.toLowerCase().replace(/ /g, '-'),
+      categorySlug: document.category.toLowerCase().replace(/ /g, '-'),
+    }
+  },
+})
+
 export default defineConfig({
   collections: [
     introduction,
@@ -180,5 +208,6 @@ export default defineConfig({
     services,
     security,
     templates,
+    projects,
   ],
 })

@@ -58,6 +58,13 @@ export const getProjectsAndServers = protectedClient
                 not_equals: true,
               },
             },
+            // child environment projects show inside their parent's
+            // environment switcher, not as separate cards (#358)
+            {
+              parent: {
+                exists: false,
+              },
+            },
             ...(role?.projects?.readLimit === 'createdByUser'
               ? [
                   {

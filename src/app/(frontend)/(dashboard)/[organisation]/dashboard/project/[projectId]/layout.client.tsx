@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import SelectSearch from '@/components/SelectSearch'
+import EnvironmentSwitcher from '@/components/project/EnvironmentSwitcher'
 import { Server } from '@/payload-types'
 
 const ClientLayout = ({
@@ -51,6 +52,11 @@ const ClientLayout = ({
               projects={projects}
               projectId={params.projectId}
               placeholder='project'
+            />
+
+            <EnvironmentSwitcher
+              projectId={params.projectId as string}
+              organisationSlug={params.organisation as string}
             />
           </div>,
           document.getElementById('projectName') ?? document.body,

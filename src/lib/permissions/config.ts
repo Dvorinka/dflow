@@ -285,6 +285,17 @@ export const getActionAccess = {
   runAnsiblePlaybookAction: ['servers.read', 'servers.update'],
   getAnsibleExecutionsAction: ['servers.read'],
 
+  // Environment actions (#358) — envs are child projects whose services
+  // are cloned from a source environment
+  getEnvironmentsAction: ['projects.read'],
+  createEnvironmentAction: [
+    'projects.read',
+    'projects.create',
+    'services.read',
+    'services.create',
+    'servers.read',
+  ],
+
   // Activity actions (self-scoped reads; team.read is the least privilege
   // that every dashboard role already carries)
   getActivitiesAction: ['team.read'],
