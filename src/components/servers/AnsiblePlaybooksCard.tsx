@@ -257,6 +257,9 @@ const AnsiblePlaybooksCard = ({ serverId }: { serverId: string }) => {
                               : 'Playbook'}{' '}
                             output
                           </DialogTitle>
+                          <DialogDescription className='sr-only'>
+                            Ansible playbook execution output
+                          </DialogDescription>
                         </DialogHeader>
                         <pre className='max-h-96 overflow-auto rounded-md border bg-muted/50 p-3 font-mono text-xs whitespace-pre-wrap'>
                           {e.output || '(no output)'}
