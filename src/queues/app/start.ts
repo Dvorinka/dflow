@@ -55,13 +55,13 @@ export const addStartAppQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully started ${serviceDetails.name}`,
+          message: `Successfully started ${serviceDetails.name}`,
           serverId: serverDetails.id,
         })
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed starting ${serviceDetails?.name} : ${message}`,
+          `Failed starting ${serviceDetails?.name} : ${message}`,
         )
       } finally {
         ssh?.dispose()

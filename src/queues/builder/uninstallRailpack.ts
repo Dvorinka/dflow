@@ -57,7 +57,7 @@ export const addUninstallRailpackQueue = async (data: QueueArgs) => {
         if (uninstallResponse.code === 0) {
           sendEvent({
             pub,
-            message: '✅ Successfully uninstalled builder',
+            message: 'Successfully uninstalled builder',
             serverId: serverDetails.id,
           })
 
@@ -75,7 +75,7 @@ export const addUninstallRailpackQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to uninstall builder: ${message}`)
+        throw new Error(`failed to uninstall builder: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

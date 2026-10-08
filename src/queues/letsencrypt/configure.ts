@@ -66,7 +66,7 @@ export const addLetsencryptPluginConfigureQueue = async (data: QueueArgs) => {
         if (letsencryptEmailResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully configured letsencrypt email: ${email}`,
+            message: `Successfully configured letsencrypt email: ${email}`,
             serverId: serverDetails.id,
           })
 
@@ -93,7 +93,7 @@ export const addLetsencryptPluginConfigureQueue = async (data: QueueArgs) => {
             if (autoGenerateSSLResponse.code === 0) {
               sendEvent({
                 pub,
-                message: `✅ Successfully added cron for  SSL certificate auto-generation`,
+                message: `Successfully added cron for  SSL certificate auto-generation`,
                 serverId: serverDetails.id,
               })
             }
@@ -153,7 +153,7 @@ export const addLetsencryptPluginConfigureQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to configure letsencrypt plugin: ${message}`)
+        throw new Error(`failed to configure letsencrypt plugin: ${message}`)
       } finally {
         ssh?.dispose()
       }

@@ -60,13 +60,13 @@ export const addDeleteMachineQueue = async (data: QueueArgs) => {
         if (response?.success) {
           sendEvent({
             pub,
-            message: `🌐 Removed ${serverDetails.name} server from network!`,
+            message: `Removed ${serverDetails.name} server from network!`,
             serverId: serverDetails.id,
           })
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ Failed to delete machine: ${message}`)
+        throw new Error(`Failed to delete machine: ${message}`)
       }
     },
 

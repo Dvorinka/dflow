@@ -197,7 +197,7 @@ export const addDatabaseMigrateQueue = async (data: QueueArgs) => {
         })
 
         await log(
-          `✅ Migrated ${sourceDatabaseName} → ${targetDatabaseName}. Re-link dependent services to the new database when ready; the source database is untouched.`,
+          `Migrated ${sourceDatabaseName} → ${targetDatabaseName}. Re-link dependent services to the new database when ready; the source database is untouched.`,
         )
 
         const { trackActivity } = await import('@/lib/activityTracker')
@@ -225,7 +225,7 @@ export const addDatabaseMigrateQueue = async (data: QueueArgs) => {
         })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error'
-        await log(`❌ ${message}`)
+        await log(`${message}`)
 
         const logs = await pub.lrange(channelId, 0, -1)
         await payload
@@ -237,7 +237,7 @@ export const addDatabaseMigrateQueue = async (data: QueueArgs) => {
           .catch(() => {})
 
         throw new Error(
-          `❌ Database migration failed for ${sourceDatabaseName}: ${message}`,
+          `Database migration failed for ${sourceDatabaseName}: ${message}`,
         )
       } finally {
         // Clean up dumps on both servers and locally

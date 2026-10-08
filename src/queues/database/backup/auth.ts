@@ -83,14 +83,14 @@ export const addBackupAuthQueue = async (data: QueueArgs) => {
         if (result.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Backup auth for ${databaseType} database called ${databaseName} completed successfully`,
+            message: `Backup auth for ${databaseType} database called ${databaseName} completed successfully`,
             serverId: serverDetails.id,
           })
         }
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Backup auth for ${databaseType} database called ${databaseName} failed: ${message}`,
+          `Backup auth for ${databaseType} database called ${databaseName} failed: ${message}`,
         )
       } finally {
         if (ssh) {

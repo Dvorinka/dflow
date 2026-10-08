@@ -91,7 +91,7 @@ export const addDestroyApplicationQueue = async (data: QueueArgs) => {
         if (deletedResponse) {
           sendEvent({
             pub,
-            message: `✅ Successfully deleted ${serviceDetails.name}`,
+            message: `Successfully deleted ${serviceDetails.name}`,
             serverId: serverDetails.id,
           })
 
@@ -111,14 +111,14 @@ export const addDestroyApplicationQueue = async (data: QueueArgs) => {
                 pub,
                 message:
                   rm.code === 0
-                    ? `🗑️ Removed storage volume ${hostPath}`
-                    : `⚠️ Could not remove storage volume ${hostPath}: ${rm.stderr}`,
+                    ? `Removed storage volume ${hostPath}`
+                    : `Could not remove storage volume ${hostPath}: ${rm.stderr}`,
                 serverId: serverDetails.id,
               })
             } else if (hostPath) {
               sendEvent({
                 pub,
-                message: `⚠️ Kept bind mount ${hostPath} (outside dokku storage, remove manually if needed)`,
+                message: `Kept bind mount ${hostPath} (outside dokku storage, remove manually if needed)`,
                 serverId: serverDetails.id,
               })
             }
@@ -127,7 +127,7 @@ export const addDestroyApplicationQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed deleting ${serviceDetails?.name}: ${message}`,
+          `Failed deleting ${serviceDetails?.name}: ${message}`,
         )
       } finally {
         if (ssh) {

@@ -461,7 +461,7 @@ const ServerQueuesTab = ({ server }: ServerQueuesTabProps) => {
                                       <AlertDialogDescription className='space-y-3'>
                                         <div className='bg-destructive/10 border-destructive/20 rounded-md border p-3'>
                                           <p className='text-destructive font-medium'>
-                                            ⚠️ WARNING: This queue has active
+                                            WARNING: This queue has active
                                             jobs!
                                           </p>
                                         </div>

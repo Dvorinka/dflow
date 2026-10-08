@@ -104,7 +104,7 @@ export const addCreateDatabaseQueue = async (data: QueueArgs) => {
         )
 
         sendEvent({
-          message: `✅ Successfully created ${databaseName}-database, updated details...`,
+          message: `Successfully created ${databaseName}-database, updated details...`,
           pub,
           serverId,
           serviceId,
@@ -165,7 +165,7 @@ export const addCreateDatabaseQueue = async (data: QueueArgs) => {
         })
 
         throw new Error(
-          `❌ Failed creating ${databaseName}-database: ${message}`,
+          `Failed creating ${databaseName}-database: ${message}`,
         )
       } finally {
         sendActionEvent({

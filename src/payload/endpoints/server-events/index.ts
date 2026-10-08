@@ -34,7 +34,7 @@ export const serverEvents: PayloadHandler = async ({
       controller.enqueue(
         encoder.encode(
           `data: ${JSON.stringify({
-            message: `🔄 Connecting to channel: ${channel}...`,
+            message: `Connecting to channel: ${channel}...`,
           })}\n\n`,
         ),
       )
@@ -95,7 +95,7 @@ export const serverEvents: PayloadHandler = async ({
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
-              message: `✅ Successfully connected to channel: ${channel}`,
+              message: `Successfully connected to channel: ${channel}`,
               logs,
             })}\n\n`,
           ),

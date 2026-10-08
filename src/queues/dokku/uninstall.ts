@@ -78,7 +78,7 @@ export const addUninstallDokkuQueue = async (data: QueueArgs) => {
         ) {
           sendEvent({
             pub,
-            message: `✅ Successfully uninstalled dokku`,
+            message: `Successfully uninstalled dokku`,
             serverId: serverDetails.id,
           })
 
@@ -96,7 +96,7 @@ export const addUninstallDokkuQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to uninstall dokku: ${message}`)
+        throw new Error(`failed to uninstall dokku: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

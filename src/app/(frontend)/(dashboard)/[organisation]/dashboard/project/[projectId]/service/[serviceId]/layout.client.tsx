@@ -2,7 +2,7 @@
 
 import { useRouter } from '@bprogress/next/app'
 import { useReactFlow } from '@xyflow/react'
-import { Database, X } from 'lucide-react'
+import { Database, Globe, X } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, usePathname } from 'next/navigation'
 import { type JSX, useEffect, useMemo, useState } from 'react'
@@ -195,6 +195,25 @@ const LayoutClient = ({
                 }
               />
             </div>
+
+            {!!service.domains?.length && (
+              <div className='text-muted-foreground flex items-center gap-x-2 text-sm'>
+                <Globe className='size-3.5' />
+                <a
+                  href={`https://${service.domains.find(d => d.default)?.domain ?? service.domains[0].domain}`}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='hover:text-foreground hover:underline hover:underline-offset-4'>
+                  {service.domains.find(d => d.default)?.domain ??
+                    service.domains[0].domain}
+                </a>
+                {service.domains.length > 1 && (
+                  <span className='text-xs'>
+                    +{service.domains.length - 1} more
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Tabs (Horizontal scroll) */}

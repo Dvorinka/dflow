@@ -67,7 +67,7 @@ export const addDeletePluginQueue = async (data: QueueArgs) => {
         if (pluginUninstallationResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully uninstalled ${pluginDetails.name} plugin`,
+            message: `Successfully uninstalled ${pluginDetails.name} plugin`,
             serverId: serverDetails.id,
           })
 
@@ -109,7 +109,7 @@ export const addDeletePluginQueue = async (data: QueueArgs) => {
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ failed to uninstall ${pluginDetails?.name} plugin: ${message}`,
+          `failed to uninstall ${pluginDetails?.name} plugin: ${message}`,
         )
       } finally {
         ssh?.dispose()

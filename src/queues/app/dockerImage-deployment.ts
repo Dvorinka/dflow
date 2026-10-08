@@ -130,7 +130,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
 
           if (accountResponse.code === 0) {
             sendEvent({
-              message: `✅ Successfully logged into registry`,
+              message: `Successfully logged into registry`,
               pub,
               serverId,
               serviceId,
@@ -179,7 +179,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
 
         if (imageResponse.code === 0) {
           sendEvent({
-            message: `✅ Successfully deployed app`,
+            message: `Successfully deployed app`,
             pub,
             serverId,
             serviceId,
@@ -206,7 +206,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
               letsencryptStatus.stdout === 'true'
             ) {
               sendEvent({
-                message: `✅ SSL enabled, skipping SSL generation`,
+                message: `SSL enabled, skipping SSL generation`,
                 pub,
                 serverId,
                 serviceId,
@@ -248,7 +248,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
 
               if (letsencryptResponse.code === 0) {
                 sendEvent({
-                  message: `✅ Successfully generated SSL certificates`,
+                  message: `Successfully generated SSL certificates`,
                   pub,
                   serverId,
                   serviceId,
@@ -256,7 +256,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
                 })
               } else {
                 sendEvent({
-                  message: `❌ Failed to generated SSL certificates`,
+                  message: `Failed to generated SSL certificates`,
                   pub,
                   serverId,
                   serviceId,
@@ -316,7 +316,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
             })
 
             sendEvent({
-              message: `✅ Updated domain details`,
+              message: `Updated domain details`,
               pub,
               serverId,
               serviceId,
@@ -324,7 +324,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
           } catch (error) {
             const message = error instanceof Error ? error.message : ''
             sendEvent({
-              message: `❌ Failed to update domain details: ${message}`,
+              message: `Failed to update domain details: ${message}`,
               pub,
               serverId,
               serviceId,
@@ -382,7 +382,7 @@ export const addDockerImageDeploymentQueue = async (data: QueueArgs) => {
           tenantSlug,
         })
 
-        throw new Error(`❌ Failed to deploy app: ${message}`)
+        throw new Error(`Failed to deploy app: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

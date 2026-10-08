@@ -1,6 +1,14 @@
 'use client'
 
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Megaphone,
+  PartyPopper,
+  TriangleAlert,
+  Wrench,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -16,11 +24,11 @@ interface DismissedBanner {
   dismissedAt: number
 }
 
-const bannerTypeIcon = {
-  announcement: '📢',
-  maintainance: '🔧',
-  promotion: '🎉',
-  alert: '⚠️',
+const bannerTypeIcon: Record<string, React.ReactNode> = {
+  announcement: <Megaphone className='size-4' />,
+  maintainance: <Wrench className='size-4' />,
+  promotion: <PartyPopper className='size-4' />,
+  alert: <TriangleAlert className='size-4' />,
 }
 
 const variantStyles = {
@@ -157,9 +165,7 @@ export default function BannerComponent({ banners }: BannerProps) {
             )}>
             <div className='mx-auto flex max-w-7xl items-center justify-center gap-3'>
               <div className='shrink-0'>
-                {bannerTypeIcon[banner.type] && (
-                  <span className='text-lg'>{bannerTypeIcon[banner.type]}</span>
-                )}
+                {bannerTypeIcon[banner.type]}
               </div>
 
               <div className='flex flex-col gap-2 md:flex-row md:items-center md:gap-4'>

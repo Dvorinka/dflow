@@ -63,7 +63,7 @@ export const installMonitoringToolsAction = protectedClient
 
       sendEvent({
         pub,
-        message: '🔧 Starting monitoring installation...',
+        message: 'Starting monitoring installation...',
         serverId: serverDetails.id,
       })
 
@@ -123,7 +123,7 @@ export const installMonitoringToolsAction = protectedClient
       if (newServices.length > 0 || updatedServices.length > 0) {
         sendEvent({
           pub,
-          message: '🚀 Starting monitoring deployment...',
+          message: 'Starting monitoring deployment...',
           serverId: serverDetails.id,
         })
 
@@ -153,14 +153,14 @@ export const installMonitoringToolsAction = protectedClient
 
         sendEvent({
           pub,
-          message: '✅ Monitoring deployment queued successfully',
+          message: 'Monitoring deployment queued successfully',
           serverId: serverDetails.id,
         })
       } else {
         // If no services to deploy, monitoring is already fully installed
         sendEvent({
           pub,
-          message: '✅ Monitoring tools are already installed and running',
+          message: 'Monitoring tools are already installed and running',
           serverId: serverDetails.id,
         })
 
@@ -191,7 +191,7 @@ export const installMonitoringToolsAction = protectedClient
 
       sendEvent({
         pub,
-        message: `❌ Installation failed: ${message}`,
+        message: `Installation failed: ${message}`,
         serverId: serverDetails.id,
       })
 

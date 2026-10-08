@@ -63,7 +63,7 @@ export const addInstallNetdataQueue = async (data: QueueArgs) => {
         if (installResponse.success) {
           sendEvent({
             pub,
-            message: `✅ Successfully installed Netdata: ${installResponse.message}`,
+            message: `Successfully installed Netdata: ${installResponse.message}`,
             serverId: serverDetails.id,
           })
 
@@ -91,7 +91,7 @@ export const addInstallNetdataQueue = async (data: QueueArgs) => {
           if (enableResponse.success) {
             sendEvent({
               pub,
-              message: `✅ Successfully enabled and started Netdata service`,
+              message: `Successfully enabled and started Netdata service`,
               serverId: serverDetails.id,
             })
           } else {
@@ -118,7 +118,7 @@ export const addInstallNetdataQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ Failed to install Netdata: ${message}`)
+        throw new Error(`Failed to install Netdata: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

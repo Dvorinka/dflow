@@ -21,7 +21,7 @@ function ScrollArea({
         {children}
       </ScrollAreaPrimitive.Viewport>
 
-      {/* ✅ Add both scrollbars */}
+      {/* Add both scrollbars */}
       <ScrollBar orientation='vertical' />
       <ScrollBar orientation='horizontal' />
 

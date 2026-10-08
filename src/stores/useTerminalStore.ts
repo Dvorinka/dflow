@@ -48,14 +48,14 @@ const styleLogMessage = (message: string): string => {
   let styledMessage = `\r\n\x1b[2m${timestamp}\x1b[0m `
 
   if (
-    message.includes('✓') ||
+    message.includes('') ||
     message.includes('Connected') ||
     message.includes('established') ||
     message.includes('successfully')
   ) {
     styledMessage += `\x1b[92m${message}\x1b[0m`
   } else if (
-    message.includes('✗') ||
+    message.includes('') ||
     message.includes('Error') ||
     message.includes('Failed') ||
     message.includes('error')
@@ -236,14 +236,14 @@ export const useTerminalStore = create<TerminalState & TerminalActions>(
           }
 
           const openStyled = styleLogMessage(
-            `✓ Connection established to server ${serverId}`,
+            `Connection established to server ${serverId}`,
           )
           const waitStyled = styleLogMessage('Waiting for server logs...')
 
           currentState.setStatus(serverId, 'connected')
           currentState.addLog(
             serverId,
-            `✓ Connection established to server ${serverId}`,
+            `Connection established to server ${serverId}`,
             openStyled,
           )
           currentState.addLog(
@@ -292,10 +292,10 @@ export const useTerminalStore = create<TerminalState & TerminalActions>(
             return
           }
 
-          const errorStyled = styleLogMessage('✗ Connection failed')
+          const errorStyled = styleLogMessage('Connection failed')
 
           currentState.setStatus(serverId, 'error')
-          currentState.addLog(serverId, '✗ Connection failed', errorStyled)
+          currentState.addLog(serverId, 'Connection failed', errorStyled)
 
           set({
             eventSource: null,
@@ -309,13 +309,13 @@ export const useTerminalStore = create<TerminalState & TerminalActions>(
       } catch (error) {
         console.error('Failed to create EventSource:', error)
         const errorStyled = styleLogMessage(
-          '✗ Failed to create connection to server',
+          'Failed to create connection to server',
         )
 
         state.setStatus(serverId, 'error')
         state.addLog(
           serverId,
-          '✗ Failed to create connection to server',
+          'Failed to create connection to server',
           errorStyled,
         )
 

@@ -82,14 +82,14 @@ export const addInstallLetsencryptAndConfigureQueue = async (
           } else {
             sendEvent({
               pub,
-              message: `✅ Successfully installed letsencrypt plugin`,
+              message: `Successfully installed letsencrypt plugin`,
               serverId: serverDetails.id,
             })
           }
         } else {
           sendEvent({
             pub,
-            message: `✅ Letsencrypt plugin is already installed`,
+            message: `Letsencrypt plugin is already installed`,
             serverId: serverDetails.id,
           })
         }
@@ -119,7 +119,7 @@ export const addInstallLetsencryptAndConfigureQueue = async (
         if (letsencryptEmailResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully configured letsencrypt email: ${email}`,
+            message: `Successfully configured letsencrypt email: ${email}`,
             serverId: serverDetails.id,
           })
 
@@ -146,7 +146,7 @@ export const addInstallLetsencryptAndConfigureQueue = async (
             if (autoGenerateSSLResponse.code === 0) {
               sendEvent({
                 pub,
-                message: `✅ Successfully added cron for  SSL certificate auto-generation`,
+                message: `Successfully added cron for  SSL certificate auto-generation`,
                 serverId: serverDetails.id,
               })
             }
@@ -201,7 +201,7 @@ export const addInstallLetsencryptAndConfigureQueue = async (
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed to install & configure letsencrypt plugin: ${message}`,
+          `Failed to install & configure letsencrypt plugin: ${message}`,
         )
       } finally {
         ssh?.dispose()

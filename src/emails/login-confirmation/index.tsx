@@ -132,7 +132,7 @@ export const LoginConfirmationEmailTemplate = ({
 
     <Section style={confirmationStyles.securitySection}>
       <Text style={confirmationStyles.securityTitle}>
-        {isNewUser ? '🔐 Keep Your Password Safe' : '🛡️ Security Notice'}
+        {isNewUser ? 'Keep Your Password Safe' : 'Security Notice'}
       </Text>
 
       {isNewUser ? (

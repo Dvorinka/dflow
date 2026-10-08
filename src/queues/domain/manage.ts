@@ -163,7 +163,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
         if (executionResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully ${operation[action]} domain ${domain}`,
+            message: `Successfully ${operation[action]} domain ${domain}`,
             serverId: serverDetails.id,
           })
 
@@ -250,7 +250,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           if (wildcardDomainExists && domainsList.length === 1) {
             sendEvent({
               pub,
-              message: `🔁 Skipping regenerated SSL certificates for service: ${name}`,
+              message: `Skipping regenerated SSL certificates for service: ${name}`,
               serverId: serverDetails.id,
             })
 
@@ -296,7 +296,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           if (letsencryptResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully added SSL Certificate to domain ${name}`,
+              message: `Successfully added SSL Certificate to domain ${name}`,
               serverId: serverDetails.id,
             })
           }
@@ -321,7 +321,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
           if (!/^(\*\.)?[a-zA-Z0-9]([a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?$/.test(domain)) {
             sendEvent({
               pub,
-              message: `❌ Invalid domain name for certificate request: ${domain}`,
+              message: `Invalid domain name for certificate request: ${domain}`,
               serverId: serverDetails.id,
             })
           } else {
@@ -365,7 +365,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
 
             sendEvent({
               pub,
-              message: `✅ Cloudflare Origin certificate installed for ${domain} (expires ${expiresOn})`,
+              message: `Cloudflare Origin certificate installed for ${domain} (expires ${expiresOn})`,
               serverId: serverDetails.id,
             })
           } catch (error) {
@@ -373,7 +373,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
               error instanceof Error ? error.message : String(error)
             sendEvent({
               pub,
-              message: `❌ Cloudflare Origin certificate failed for ${domain}: ${message}`,
+              message: `Cloudflare Origin certificate failed for ${domain}: ${message}`,
               serverId: serverDetails.id,
             })
           } finally {
@@ -399,7 +399,7 @@ export const addManageServiceDomainQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed ${operation[action]} domain ${domain}: ${message}`,
+          `Failed ${operation[action]} domain ${domain}: ${message}`,
         )
       } finally {
         ssh?.dispose()

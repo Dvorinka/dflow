@@ -147,7 +147,7 @@ export const addExternalBackupQueue = async (data: QueueArgs) => {
         if (result.code === 0) {
           sendEvent({
             pub,
-            message: `✅ External backup ${op} for ${databaseName} succeeded`,
+            message: `External backup ${op} for ${databaseName} succeeded`,
             serverId: serverDetails.id,
           })
 
@@ -181,7 +181,7 @@ export const addExternalBackupQueue = async (data: QueueArgs) => {
         }
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ External backup ${op} for ${databaseType} database ${databaseName} failed: ${message}`,
+          `External backup ${op} for ${databaseType} database ${databaseName} failed: ${message}`,
         )
       } finally {
         if (ssh) {

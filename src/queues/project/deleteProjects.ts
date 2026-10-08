@@ -49,7 +49,7 @@ export const addDeleteProjectsQueue = async (data: QueueArgs) => {
         if (projects.length === 0) {
           sendEvent({
             pub,
-            message: '✅ No projects found on server',
+            message: 'No projects found on server',
             serverId: serverDetails.id,
           })
         } else {
@@ -95,7 +95,7 @@ export const addDeleteProjectsQueue = async (data: QueueArgs) => {
           if (failed.length > 0) {
             sendEvent({
               pub,
-              message: `⚠️ ${failed.length} project(s) failed to delete, ${succeeded.length} succeeded`,
+              message: `${failed.length} project(s) failed to delete, ${succeeded.length} succeeded`,
               serverId: serverDetails.id,
             })
 
@@ -109,7 +109,7 @@ export const addDeleteProjectsQueue = async (data: QueueArgs) => {
           } else {
             sendEvent({
               pub,
-              message: `✅ Successfully processed ${projects.length} project(s) for deletion`,
+              message: `Successfully processed ${projects.length} project(s) for deletion`,
               serverId: serverDetails.id,
             })
           }
@@ -143,7 +143,7 @@ export const addDeleteProjectsQueue = async (data: QueueArgs) => {
         })
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ Failed to delete projects: ${message}`)
+        throw new Error(`Failed to delete projects: ${message}`)
       }
     },
 

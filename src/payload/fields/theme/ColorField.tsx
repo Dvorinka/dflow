@@ -44,7 +44,7 @@ function parseCssVars(css: string): Record<string, string> {
       char.toUpperCase(),
     )
 
-    // ✅ Normalize different color formats
+    // Normalize different color formats
     if (/^hsl\(/i.test(value)) {
       // already valid hsl
       result[camelKey] = value

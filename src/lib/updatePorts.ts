@@ -133,7 +133,7 @@ export const updatePorts = async ({
   })
 
   sendEvent({
-    message: `✅ Successfully exposed ports ${unsyncedPorts.join(', ')}`,
+    message: `Successfully exposed ports ${unsyncedPorts.join(', ')}`,
     pub,
     serverId,
     serviceId,

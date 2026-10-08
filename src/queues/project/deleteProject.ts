@@ -186,7 +186,7 @@ export const addDeleteProjectQueue = async (data: QueueArgs) => {
 
               sendEvent({
                 pub,
-                message: `✅ Service '${service.name}' marked for deletion`,
+                message: `Service '${service.name}' marked for deletion`,
                 serverId: serverDetails.id,
               })
             }
@@ -223,7 +223,7 @@ export const addDeleteProjectQueue = async (data: QueueArgs) => {
 
             sendEvent({
               pub,
-              message: `✅ Service '${service.name}' marked as deleted`,
+              message: `Service '${service.name}' marked as deleted`,
               serverId: serverDetails.id,
             })
           }
@@ -255,7 +255,7 @@ export const addDeleteProjectQueue = async (data: QueueArgs) => {
         if (project) {
           sendEvent({
             pub,
-            message: `✅ Project successfully deleted with ${servicesList?.length || 0} service(s)`,
+            message: `Project successfully deleted with ${servicesList?.length || 0} service(s)`,
             serverId: serverDetails.id,
           })
 
@@ -270,7 +270,7 @@ export const addDeleteProjectQueue = async (data: QueueArgs) => {
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
         console.log({ error })
-        throw new Error(`❌ Failed to delete project: ${message}`)
+        throw new Error(`Failed to delete project: ${message}`)
       }
     },
 

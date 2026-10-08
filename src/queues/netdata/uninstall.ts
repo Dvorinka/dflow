@@ -65,7 +65,7 @@ export const addUninstallNetdataQueue = async (data: QueueArgs) => {
         if (uninstallResponse.success) {
           sendEvent({
             pub,
-            message: `✅ Successfully uninstalled Netdata: ${uninstallResponse.message}`,
+            message: `Successfully uninstalled Netdata: ${uninstallResponse.message}`,
             serverId: serverDetails.id,
           })
 
@@ -87,7 +87,7 @@ export const addUninstallNetdataQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ Failed to uninstall Netdata: ${message}`)
+        throw new Error(`Failed to uninstall Netdata: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

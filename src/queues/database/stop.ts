@@ -86,7 +86,7 @@ export const addStopDatabaseQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully stopped ${databaseName}-database`,
+          message: `Successfully stopped ${databaseName}-database`,
           serverId: serverDetails.id,
         })
 
@@ -118,7 +118,7 @@ export const addStopDatabaseQueue = async (data: QueueArgs) => {
         })
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ Failed stop ${databaseName}-database: ${message}`)
+        throw new Error(`Failed stop ${databaseName}-database: ${message}`)
       } finally {
         ssh?.dispose()
       }

@@ -109,7 +109,7 @@ export const addInternalBackupQueue = async (data: QueueArgs) => {
           if (result.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Imported backup for ${databaseType} database called ${databaseName} was successful`,
+              message: `Imported backup for ${databaseType} database called ${databaseName} was successful`,
               serverId: serverDetails.id,
             })
           }
@@ -140,7 +140,7 @@ export const addInternalBackupQueue = async (data: QueueArgs) => {
           if (result.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Exported backup for ${databaseType} database called ${databaseName} was successful`,
+              message: `Exported backup for ${databaseType} database called ${databaseName} was successful`,
               serverId: serverDetails.id,
             })
 
@@ -162,7 +162,7 @@ export const addInternalBackupQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ ${type} backup for ${databaseType} database called ${databaseName} failed: ${message}`,
+          `${type} backup for ${databaseType} database called ${databaseName} failed: ${message}`,
         )
       } finally {
         if (ssh) {

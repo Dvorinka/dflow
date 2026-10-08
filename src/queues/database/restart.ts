@@ -91,7 +91,7 @@ export const addRestartDatabaseQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully restarted ${databaseName}-database`,
+          message: `Successfully restarted ${databaseName}-database`,
           serverId: serverDetails.id,
         })
 
@@ -124,7 +124,7 @@ export const addRestartDatabaseQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed restarting ${databaseName}-database: ${message}`,
+          `Failed restarting ${databaseName}-database: ${message}`,
         )
       } finally {
         if (ssh) {

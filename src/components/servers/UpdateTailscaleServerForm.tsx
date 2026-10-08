@@ -5,7 +5,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle, RefreshCw, XCircle } from 'lucide-react'
+import { Check, CheckCircle, RefreshCw, X, XCircle } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -361,11 +361,11 @@ const UpdateTailscaleServerForm = ({
                     Tailscale connection successful
                   </p>
                   <div className='mt-1 space-y-1 text-xs text-emerald-400'>
-                    <p>✓ Tailscale network accessible</p>
-                    <p>✓ SSH authentication successful</p>
+                    <p><Check className='-mt-0.5 inline size-3.5' /> Tailscale network accessible</p>
+                    <p><Check className='-mt-0.5 inline size-3.5' /> SSH authentication successful</p>
                     {connectionStatus.serverInfo?.dokku && (
                       <p>
-                        ✓ Dokku {connectionStatus.serverInfo.dokku} detected
+                        <Check className='-mt-0.5 inline size-3.5' /> Dokku {connectionStatus.serverInfo.dokku} detected
                       </p>
                     )}
                   </div>
@@ -383,11 +383,11 @@ const UpdateTailscaleServerForm = ({
                   <div className='space-y-1 text-xs'>
                     <p>
                       Network accessible:{' '}
-                      {connectionStatus?.portIsOpen ? '✓' : '✗'}
+                      {connectionStatus?.portIsOpen ? <Check className='inline size-3.5' /> : <X className='inline size-3.5' />}
                     </p>
                     <p>
                       SSH connection:{' '}
-                      {connectionStatus?.sshConnected ? '✓' : '✗'}
+                      {connectionStatus?.sshConnected ? <Check className='inline size-3.5' /> : <X className='inline size-3.5' />}
                     </p>
                   </div>
                   <p className='text-sm opacity-90'>

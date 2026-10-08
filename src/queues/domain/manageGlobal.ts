@@ -132,7 +132,7 @@ export const addManageServerDomainQueue = async (data: QueueArgs) => {
           if (executionResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully ${global.action}ed global domain ${global.domains.join(', ')}, updating details...`,
+              message: `Successfully ${global.action}ed global domain ${global.domains.join(', ')}, updating details...`,
               serverId: serverDetails.id,
             })
 
@@ -174,7 +174,7 @@ export const addManageServerDomainQueue = async (data: QueueArgs) => {
         let message = error instanceof Error ? error.message : ''
 
         throw new Error(
-          `❌ failed to ${serverDetails?.global.action} for domain ${serverDetails?.global?.domains.join(', ')}: ${message}`,
+          `failed to ${serverDetails?.global.action} for domain ${serverDetails?.global?.domains.join(', ')}: ${message}`,
         )
       } finally {
         ssh?.dispose()

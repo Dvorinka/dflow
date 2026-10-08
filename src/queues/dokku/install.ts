@@ -65,7 +65,7 @@ export const addInstallDokkuQueue = async (data: QueueArgs) => {
 
           sendEvent({
             pub,
-            message: `✅ Successfully installed dokku`,
+            message: `Successfully installed dokku`,
             serverId: serverDetails.id,
           })
 
@@ -83,7 +83,7 @@ export const addInstallDokkuQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to install dokku: ${message}`)
+        throw new Error(`failed to install dokku: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

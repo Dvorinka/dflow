@@ -42,7 +42,7 @@ export const addScaleAppQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully scaled ${appName}`,
+          message: `Successfully scaled ${appName}`,
           serverId,
         })
 
@@ -50,7 +50,7 @@ export const addScaleAppQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
 
-        throw new Error(`❌ Failed scaling ${appName}: ${message}`)
+        throw new Error(`Failed scaling ${appName}: ${message}`)
       } finally {
         ssh?.dispose()
       }

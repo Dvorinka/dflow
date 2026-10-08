@@ -56,13 +56,13 @@ export const addStopAppQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully stopped ${serviceDetails.name}`,
+          message: `Successfully stopped ${serviceDetails.name}`,
           serverId: serverDetails.id,
         })
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed stopping ${serviceDetails?.name}: ${message}`,
+          `Failed stopping ${serviceDetails?.name}: ${message}`,
         )
       } finally {
         ssh?.dispose()

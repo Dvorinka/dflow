@@ -390,7 +390,7 @@ async function handleReferenceVariables({
 
             if (!meshHost) {
               sendEvent({
-                message: `❌ ${databaseName} lives on another server with no reachable private IP`,
+                message: `${databaseName} lives on another server with no reachable private IP`,
                 pub,
                 serverId: serverDetails.id,
               })
@@ -429,7 +429,7 @@ async function handleReferenceVariables({
                 const message =
                   error instanceof Error ? error.message : ''
                 sendEvent({
-                  message: `❌ Failed to expose ${databaseName} on its server: ${message}`,
+                  message: `Failed to expose ${databaseName} on its server: ${message}`,
                   pub,
                   serverId: serverDetails.id,
                 })
@@ -439,7 +439,7 @@ async function handleReferenceVariables({
 
             if (!exposedPort) {
               sendEvent({
-                message: `❌ ${databaseName} has no exposed port — link it first or expose a port`,
+                message: `${databaseName} has no exposed port — link it first or expose a port`,
                 pub,
                 serverId: serverDetails.id,
               })
@@ -465,7 +465,7 @@ async function handleReferenceVariables({
             })
 
             sendEvent({
-              message: `🔗 Linked ${databaseName} over private network (${meshHost}:${exposedPort})`,
+              message: `Linked ${databaseName} over private network (${meshHost}:${exposedPort})`,
               pub,
               serverId: serverDetails.id,
             })
@@ -648,7 +648,7 @@ async function handleReferenceVariables({
                   const message = error instanceof Error ? error.message : ''
 
                   sendEvent({
-                    message: `❌ Failed to expose ${databaseName}: ${message}`,
+                    message: `Failed to expose ${databaseName}: ${message}`,
                     pub,
                     serverId: serverDetails.id,
                   })
@@ -725,7 +725,7 @@ async function handleReferenceVariables({
                 return { [variable]: generatedValue }
               } else {
                 sendEvent({
-                  message: `❌ Failed to link ${databaseName} to ${serviceDetails.name}`,
+                  message: `Failed to link ${databaseName} to ${serviceDetails.name}`,
                   pub,
                   serverId: serverDetails.id,
                 })
@@ -948,7 +948,7 @@ export const addUpdateEnvironmentVariablesQueue = async (data: QueueArgs) => {
 
               sendEvent({
                 pub,
-                message: `❌ invalid variable syntax ${key} : ${value}`,
+                message: `invalid variable syntax ${key} : ${value}`,
                 serverId: serverDetails.id,
               })
               break
@@ -996,7 +996,7 @@ export const addUpdateEnvironmentVariablesQueue = async (data: QueueArgs) => {
             if (envResponse) {
               sendEvent({
                 pub,
-                message: `✅ Successfully updated environment variables for ${serviceDetails.name}`,
+                message: `Successfully updated environment variables for ${serviceDetails.name}`,
                 serverId: serverDetails.id,
               })
 
@@ -1041,7 +1041,7 @@ export const addUpdateEnvironmentVariablesQueue = async (data: QueueArgs) => {
             const message = error instanceof Error ? error.message : ''
             sendEvent({
               pub,
-              message: `❌ Failed update environment variables for ${serviceDetails.name}: ${message}`,
+              message: `Failed update environment variables for ${serviceDetails.name}: ${message}`,
               serverId: serverDetails.id,
             })
           }
@@ -1049,7 +1049,7 @@ export const addUpdateEnvironmentVariablesQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed update environment variables for ${serviceDetails?.name}: ${message}`,
+          `Failed update environment variables for ${serviceDetails?.name}: ${message}`,
         )
       } finally {
         ssh?.dispose()

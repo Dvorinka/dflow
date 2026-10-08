@@ -204,7 +204,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
                   if (pluginInstallResponse.code === 0) {
                     sendEvent({
                       pub,
-                      message: `✅ Successfully installed ${pluginName} plugin`,
+                      message: `Successfully installed ${pluginName} plugin`,
                       serverId: server.id,
                       serviceId: jobId,
                       channelId: jobId,
@@ -248,7 +248,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
               })
 
               sendEvent({
-                message: `✅ Updated server plugin database`,
+                message: `Updated server plugin database`,
                 pub,
                 serverId: server.id,
                 serviceId: jobId,
@@ -256,7 +256,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
               })
             } else {
               sendEvent({
-                message: `✅ All required plugins already installed`,
+                message: `All required plugins already installed`,
                 pub,
                 serverId: server.id,
                 serviceId: jobId,
@@ -317,7 +317,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
               try {
                 await dokku.resource.limit(ssh, serviceName, resourceArgs)
                 sendEvent({
-                  message: `✅ Applied default resource limits`,
+                  message: `Applied default resource limits`,
                   pub,
                   serverId: server.id,
                   serviceId: jobId,
@@ -326,7 +326,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
               } catch (e) {
                 console.error('Failed to apply default resource limits:', e)
                 sendEvent({
-                  message: `⚠️ Warning: Failed to apply resource limits`,
+                  message: `Warning: Failed to apply resource limits`,
                   pub,
                   serverId: server.id,
                   serviceId: jobId,
@@ -369,7 +369,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
 
         if (serviceResponse?.id) {
           sendEvent({
-            message: `✅ Successfully created service: ${serviceName}`,
+            message: `Successfully created service: ${serviceName}`,
             pub,
             serverId: server.id,
             serviceId: jobId,
@@ -392,7 +392,7 @@ export const addCreateServiceWithPluginsQueue = async (data: QueueArgs) => {
         const serverId = server?.id ?? 'unknown'
 
         sendEvent({
-          message: `❌ ${message}`,
+          message: `${message}`,
           pub,
           serverId,
           serviceId: jobId,

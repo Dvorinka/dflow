@@ -112,7 +112,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
 
                 // app creation failed need to thronging an error
                 if (!appCreationResponse) {
-                  throw new Error(`❌ Failed to create ${serviceDetails?.name}`)
+                  throw new Error(`Failed to create ${serviceDetails?.name}`)
                 }
 
                 let updatedServiceDetails: Service | null = null
@@ -218,7 +218,7 @@ export const addTemplateDeployQueue = async (data: QueueArgs) => {
                 // app creation failed need to thronging an error
                 if (!appCreationResponse) {
                   throw new Error(
-                    `❌ Failed to create-app ${serviceDetails?.name}`,
+                    `Failed to create-app ${serviceDetails?.name}`,
                   )
                 }
 

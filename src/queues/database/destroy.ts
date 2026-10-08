@@ -142,7 +142,7 @@ export const addDestroyDatabaseQueue = async (data: QueueArgs) => {
         if (deletedResponse) {
           sendEvent({
             pub,
-            message: `✅ Successfully deleted ${databaseName}-database`,
+            message: `Successfully deleted ${databaseName}-database`,
             serverId: serverDetails.id,
           })
         }
@@ -219,7 +219,7 @@ export const addDestroyDatabaseQueue = async (data: QueueArgs) => {
           if (deleteBackupsResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully deleted backup files: ${backupsTobeDeleted.join(', ')}`,
+              message: `Successfully deleted backup files: ${backupsTobeDeleted.join(', ')}`,
               serverId: serverDetails.id,
             })
 
@@ -244,7 +244,7 @@ export const addDestroyDatabaseQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed deleting ${databaseName}-database: ${message}`,
+          `Failed deleting ${databaseName}-database: ${message}`,
         )
       } finally {
         if (ssh) {

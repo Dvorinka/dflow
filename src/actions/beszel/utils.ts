@@ -298,7 +298,7 @@ export async function processServices(
 
         sendEvent({
           pub,
-          message: `🔄 Updated service: ${existing.name}`,
+          message: `Updated service: ${existing.name}`,
           serverId,
         })
       }

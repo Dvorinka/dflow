@@ -97,7 +97,7 @@ export const addExposeDatabasePortQueue = async (data: QueueArgs) => {
           if (unexposedResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully Unexposed ports ${previousPorts.join(
+              message: `Successfully Unexposed ports ${previousPorts.join(
                 ', ',
               )} of ${databaseName}-database`,
               serverId: serverDetails.id,
@@ -115,7 +115,7 @@ export const addExposeDatabasePortQueue = async (data: QueueArgs) => {
           } else {
             sendEvent({
               pub,
-              message: `❌ Failed to Unexpose ports ${previousPorts.join(
+              message: `Failed to Unexpose ports ${previousPorts.join(
                 ', ',
               )} of ${databaseName}-database`,
               serverId: serverDetails.id,
@@ -157,7 +157,7 @@ export const addExposeDatabasePortQueue = async (data: QueueArgs) => {
           if (exposureResponse.code === 0) {
             sendEvent({
               pub,
-              message: `✅ Successfully exposed ${databaseName} on port ${portsResponse.join(', ')}`,
+              message: `Successfully exposed ${databaseName} on port ${portsResponse.join(', ')}`,
               serverId: serverDetails.id,
             })
 
@@ -173,7 +173,7 @@ export const addExposeDatabasePortQueue = async (data: QueueArgs) => {
           } else {
             sendEvent({
               pub,
-              message: `❌ Failed to expose ${databaseName} on port ${portsResponse.join(', ')}`,
+              message: `Failed to expose ${databaseName} on port ${portsResponse.join(', ')}`,
               serverId: serverDetails.id,
             })
 
@@ -190,7 +190,7 @@ export const addExposeDatabasePortQueue = async (data: QueueArgs) => {
         let message = error instanceof Error ? error.message : ''
 
         throw new Error(
-          `❌ Failed attaching ports ${databaseName}-database: ${message}`,
+          `Failed attaching ports ${databaseName}-database: ${message}`,
         )
       } finally {
         ssh?.dispose()

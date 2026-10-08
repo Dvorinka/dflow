@@ -79,7 +79,7 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
         if (wildcardDomainExists && domainsList.length === 1) {
           sendEvent({
             pub,
-            message: `🔁 Skipping regenerated SSL certificates for service: ${name}`,
+            message: `Skipping regenerated SSL certificates for service: ${name}`,
             serverId: serverDetails.id,
           })
 
@@ -122,7 +122,7 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
         if (letsencryptEmailResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully regenerated SSL certificates for service: ${name}`,
+            message: `Successfully regenerated SSL certificates for service: ${name}`,
             serverId: serverDetails.id,
           })
 
@@ -165,7 +165,7 @@ export const addLetsencryptRegenerateQueueQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to regenerate SSL certificates: ${message}`)
+        throw new Error(`failed to regenerate SSL certificates: ${message}`)
       } finally {
         ssh?.dispose()
       }

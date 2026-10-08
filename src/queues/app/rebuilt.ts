@@ -85,7 +85,7 @@ export const addRebuildAppQueue = async (data: QueueArgs) => {
         if (res.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully rebuilt ${serviceDetails.name}`,
+            message: `Successfully rebuilt ${serviceDetails.name}`,
             serverId: serverDetails.id,
           })
 
@@ -140,7 +140,7 @@ export const addRebuildAppQueue = async (data: QueueArgs) => {
           tenantSlug,
         })
 
-        throw new Error(`❌ Failed to rebuild app: ${message}`)
+        throw new Error(`Failed to rebuild app: ${message}`)
       } finally {
         ssh?.dispose()
       }

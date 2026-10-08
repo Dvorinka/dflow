@@ -173,7 +173,7 @@ const serverBackupMethod = async ({
 
         sendEvent({
           pub,
-          message: `🔄 Updated service: ${existingService.name}`,
+          message: `Updated service: ${existingService.name}`,
           serverId,
         })
       }

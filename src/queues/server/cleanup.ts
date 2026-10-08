@@ -28,14 +28,14 @@ const runStep = async (
   label: string,
   command: string,
 ) => {
-  sendEvent({ pub, message: `🧹 ${label}...`, serverId })
+  sendEvent({ pub, message: `${label}...`, serverId })
   const res = await ssh.execCommand(command)
   sendEvent({
     pub,
     message:
       res.code === 0
-        ? `✅ ${label} done`
-        : `⚠️ ${label} exited with code ${res.code}: ${res.stderr.slice(0, 500)}`,
+        ? `${label} done`
+        : `${label} exited with code ${res.code}: ${res.stderr.slice(0, 500)}`,
     serverId,
   })
 }
@@ -74,7 +74,7 @@ export const addCleanupServerQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: '✅ Server cleanup completed',
+          message: 'Server cleanup completed',
           serverId,
         })
 
@@ -88,7 +88,7 @@ export const addCleanupServerQueue = async (data: QueueArgs) => {
           error instanceof Error ? error.message : 'Unknown error'
         sendEvent({
           pub,
-          message: `❌ Server cleanup failed: ${message}`,
+          message: `Server cleanup failed: ${message}`,
           serverId: job.data.serverDetails.id,
         })
         throw new Error(`Server cleanup failed: ${message}`)

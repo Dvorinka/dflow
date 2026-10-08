@@ -71,7 +71,7 @@ export const addInstallPluginQueue = async (data: QueueArgs) => {
         if (pluginInstallationResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully installed ${pluginDetails.name} plugin`,
+            message: `Successfully installed ${pluginDetails.name} plugin`,
             serverId: serverDetails.id,
           })
 
@@ -120,7 +120,7 @@ export const addInstallPluginQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to install plugin: ${message}`)
+        throw new Error(`failed to install plugin: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

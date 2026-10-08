@@ -6,7 +6,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle, Plus, RefreshCw, XCircle } from 'lucide-react'
+import { Check, CheckCircle, Plus, RefreshCw, X, XCircle } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { parseAsString, useQueryState } from 'nuqs'
 import { useEffect, useState } from 'react'
@@ -531,11 +531,11 @@ const AttachCustomServerForm = ({
                       Connection successful
                     </p>
                     <div className='mt-1 space-y-1 text-xs text-emerald-400'>
-                      <p>✓ Port {form.getValues('port')} is accessible</p>
-                      <p>✓ SSH authentication successful</p>
+                      <p><Check className='-mt-0.5 inline size-3.5' /> Port {form.getValues('port')} is accessible</p>
+                      <p><Check className='-mt-0.5 inline size-3.5' /> SSH authentication successful</p>
                       {connectionStatus.serverInfo?.dokku && (
                         <p>
-                          ✓ Dokku {connectionStatus.serverInfo.dokku} detected
+                          <Check className='-mt-0.5 inline size-3.5' /> Dokku {connectionStatus.serverInfo.dokku} detected
                         </p>
                       )}
                     </div>
@@ -553,11 +553,11 @@ const AttachCustomServerForm = ({
                     <div className='space-y-1 text-xs'>
                       <p>
                         Port accessible:{' '}
-                        {connectionStatus?.portIsOpen ? '✓' : '✗'}
+                        {connectionStatus?.portIsOpen ? <Check className='inline size-3.5' /> : <X className='inline size-3.5' />}
                       </p>
                       <p>
                         SSH connection:{' '}
-                        {connectionStatus?.sshConnected ? '✓' : '✗'}
+                        {connectionStatus?.sshConnected ? <Check className='inline size-3.5' /> : <X className='inline size-3.5' />}
                       </p>
                     </div>
                     <p className='text-sm opacity-90'>

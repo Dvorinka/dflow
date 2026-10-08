@@ -3,7 +3,7 @@
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Copy, Dices, Key, RefreshCw, Shield, Terminal } from 'lucide-react'
+import { Copy, Dices, Key, Lightbulb, RefreshCw, Shield, Terminal } from 'lucide-react'
 import { useAction } from 'next-safe-action/hooks'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -429,7 +429,7 @@ const TailscaleForm = () => {
 
               <div className='bg-muted/30 mt-4 rounded border p-3'>
                 <p className='text-muted-foreground text-xs'>
-                  💡 <strong>Tip:</strong> Run these commands in order on your
+                  <Lightbulb className='-mt-0.5 inline size-3.5' /> <strong>Tip:</strong> Run these commands in order on your
                   server. The first command installs Tailscale, and the second
                   connects it to your network.
                 </p>

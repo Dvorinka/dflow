@@ -168,7 +168,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
                 if (pluginInstallResponse.code === 0) {
                   sendEvent({
                     pub,
-                    message: `✅ Successfully installed ${pluginName} plugin`,
+                    message: `Successfully installed ${pluginName} plugin`,
                     serverId,
                     serviceId,
                     channelId: deploymentId,
@@ -223,7 +223,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
             })
           } else {
             sendEvent({
-              message: `✅ All required plugins already installed`,
+              message: `All required plugins already installed`,
               pub,
               serverId,
               serviceId,
@@ -269,7 +269,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
         )
 
         sendEvent({
-          message: `✅ Successfully created ${databaseName} database`,
+          message: `Successfully created ${databaseName} database`,
           pub,
           serverId,
           serviceId,
@@ -302,7 +302,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
         const message = error instanceof Error ? error.message : 'Unknown error'
 
         sendEvent({
-          message: `❌ ${message}`,
+          message: `${message}`,
           pub,
           serverId,
           serviceId,
@@ -320,7 +320,7 @@ export const addCreateDatabaseWithPluginsQueue = async (data: QueueArgs) => {
         })
 
         throw new Error(
-          `❌ Failed creating ${databaseName} database: ${message}`,
+          `Failed creating ${databaseName} database: ${message}`,
         )
       } finally {
         sendActionEvent({

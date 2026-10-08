@@ -22,7 +22,7 @@ const AnimatedCoinIcon = ({ className }: { className?: string }) => {
       }
     }, 100)
 
-    // ✅ Cleanup: clear the interval when the component unmounts
+    // Cleanup: clear the interval when the component unmounts
     return () => {
       clearInterval(frameSwitch)
     }

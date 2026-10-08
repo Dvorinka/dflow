@@ -92,7 +92,7 @@ export const deleteInternalBackupQueue = async (data: QueueArgs) => {
         if (result.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully deleted ${fileName}`,
+            message: `Successfully deleted ${fileName}`,
             serverId: serverDetails.id,
           })
 
@@ -113,7 +113,7 @@ export const deleteInternalBackupQueue = async (data: QueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Backup delete failed for the database ${databaseName}: ${message}`,
+          `Backup delete failed for the database ${databaseName}: ${message}`,
         )
       } finally {
         if (ssh) {

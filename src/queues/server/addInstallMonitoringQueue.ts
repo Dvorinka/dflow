@@ -56,7 +56,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
         // Notify user that installation has started
         sendEvent({
           pub,
-          message: `🔧 Starting monitoring tools installation...`,
+          message: `Starting monitoring tools installation...`,
           serverId: serverDetails.id,
         })
 
@@ -95,7 +95,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `📁 Creating monitoring project: ${uniqueName}`,
+          message: `Creating monitoring project: ${uniqueName}`,
           serverId: serverDetails.id,
         })
 
@@ -134,7 +134,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `🔐 Authenticating with Beszel monitoring system...`,
+          message: `Authenticating with Beszel monitoring system...`,
           serverId: serverDetails.id,
         })
 
@@ -147,7 +147,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `👤 Setting up monitoring user access...`,
+          message: `Setting up monitoring user access...`,
           serverId: serverDetails.id,
         })
 
@@ -175,7 +175,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `🖥️ Creating monitoring system for ${serverDetails.name}...`,
+          message: `Creating monitoring system for ${serverDetails.name}...`,
           serverId: serverDetails.id,
         })
 
@@ -187,7 +187,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `🔑 Generating monitoring fingerprint...`,
+          message: `Generating monitoring fingerprint...`,
           serverId: serverDetails.id,
         })
 
@@ -203,7 +203,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
         // STEP 3: Fetch and configure Beszel Agent template
         sendEvent({
           pub,
-          message: `📋 Fetching Beszel Agent template...`,
+          message: `Fetching Beszel Agent template...`,
           serverId: serverDetails.id,
         })
 
@@ -212,7 +212,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `⚙️ Configuring monitoring agent services...`,
+          message: `Configuring monitoring agent services...`,
           serverId: serverDetails.id,
         })
 
@@ -313,7 +313,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `🏗️ Creating monitoring services in database...`,
+          message: `Creating monitoring services in database...`,
           serverId: serverDetails.id,
         })
 
@@ -390,7 +390,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `🚀 Initiating monitoring services deployment...`,
+          message: `Initiating monitoring services deployment...`,
           serverId: serverDetails.id,
         })
 
@@ -410,7 +410,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
         if (deployResponse.id) {
           sendEvent({
             pub,
-            message: `✅ Monitoring tools installation initiated successfully`,
+            message: `Monitoring tools installation initiated successfully`,
             serverId: serverDetails.id,
           })
 
@@ -429,11 +429,11 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `❌ Failed to install monitoring tools: ${message}`,
+          message: `Failed to install monitoring tools: ${message}`,
           serverId: serverDetails.id,
         })
 
-        throw new Error(`❌ Failed to install monitoring tools: ${message}`, {
+        throw new Error(`Failed to install monitoring tools: ${message}`, {
           cause: error,
         })
       }
@@ -447,7 +447,7 @@ export const addInstallMonitoringQueue = async (data: QueueArgs) => {
     if (job?.data) {
       sendEvent({
         pub,
-        message: `❌ Monitoring installation failed: ${err.message}`,
+        message: `Monitoring installation failed: ${err.message}`,
         serverId: job.data.serverDetails.id,
       })
     }

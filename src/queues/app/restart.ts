@@ -55,13 +55,13 @@ export const addRestartAppQueue = async (data: QueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully restarted ${serviceDetails.name}`,
+          message: `Successfully restarted ${serviceDetails.name}`,
           serverId: serverDetails.id,
         })
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ Failed restarting ${serviceDetails?.name} : ${message}`,
+          `Failed restarting ${serviceDetails?.name} : ${message}`,
         )
       } finally {
         ssh?.dispose()

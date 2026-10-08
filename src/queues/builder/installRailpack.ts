@@ -59,7 +59,7 @@ export const addInstallRailpackQueue = async (data: QueueArgs) => {
         if (installationResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully installed builder`,
+            message: `Successfully installed builder`,
             serverId: serverDetails.id,
           })
 
@@ -77,7 +77,7 @@ export const addInstallRailpackQueue = async (data: QueueArgs) => {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
-        throw new Error(`❌ failed to install builder: ${message}`)
+        throw new Error(`failed to install builder: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

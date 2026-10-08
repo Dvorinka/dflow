@@ -27,7 +27,12 @@ const LogsTab = ({
     )
 
     eventSource.onmessage = event => {
-      let data: { message?: unknown; error?: unknown } = {}
+      let data: {
+        message?: unknown
+        error?: unknown
+        status?: unknown
+        live?: unknown
+      } = {}
       try {
         data = JSON.parse(event.data) ?? {}
       } catch {
@@ -40,17 +45,17 @@ const LogsTab = ({
         return
       }
 
+      // Connection lifecycle messages are status, not log rows
+      if (data?.status) {
+        setStatus(`${data.status}`)
+        if (data.live) {
+          setStreaming(true)
+        }
+        return
+      }
+
       if (data?.message) {
         const message = `${data.message}`
-
-        // Connection lifecycle messages are status, not log rows
-        if (message.startsWith('🖥️') || message.startsWith('✅')) {
-          setStatus(message.replace(/^[^ ]+ /, ''))
-          if (message.startsWith('✅')) {
-            setStreaming(true)
-          }
-          return
-        }
 
         // Chunks split mid-line; hold the partial tail for the next chunk
         const text = tailRef.current + message

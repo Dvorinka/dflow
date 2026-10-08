@@ -93,7 +93,7 @@ const railpackBuild = async ({
 
   if (cloningResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully cloned repository`,
+      message: `Successfully cloned repository`,
       pub,
       serverId,
       serviceId,
@@ -101,7 +101,7 @@ const railpackBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to clone repository`,
+      message: `Failed to clone repository`,
       pub,
       serverId,
       serviceId,
@@ -148,14 +148,14 @@ const railpackBuild = async ({
 
   if (workspaceResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully created workspace`,
+      message: `Successfully created workspace`,
       pub,
       serverId,
       serviceId,
       channelId: serviceDetails.deploymentId,
     })
   } else {
-    throw new Error('❌ Failed to create workspace, please try again!')
+    throw new Error('Failed to create workspace, please try again!')
   }
 
   // 3. Generating a docker-image with railpack
@@ -189,7 +189,7 @@ const railpackBuild = async ({
 
   if (imageCreationResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully created docker-image`,
+      message: `Successfully created docker-image`,
       pub,
       serverId,
       serviceId,
@@ -198,7 +198,7 @@ const railpackBuild = async ({
   } else {
     // 4. Deleting the workspace if railpack image creation failed
     await server.git.deleteWorkspace({ appName, ssh })
-    throw new Error('❌ Failed to create docker-image')
+    throw new Error('Failed to create docker-image')
   }
 
   // 5. Deploying the docker image
@@ -233,14 +233,14 @@ const railpackBuild = async ({
 
   if (deployImageResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully deployed app`,
+      message: `Successfully deployed app`,
       pub,
       serverId,
       serviceId,
       channelId: serviceDetails.deploymentId,
     })
   } else {
-    throw new Error('❌ Failed to deploy app')
+    throw new Error('Failed to deploy app')
   }
 }
 
@@ -314,7 +314,7 @@ const dockerFileBuild = async ({
 
     if (buildArgsResponse.code === 0) {
       sendEvent({
-        message: `✅ Successfully added environment variables as build arguments`,
+        message: `Successfully added environment variables as build arguments`,
         pub,
         serverId,
         serviceId,
@@ -322,7 +322,7 @@ const dockerFileBuild = async ({
       })
     } else {
       sendEvent({
-        message: `❌ Failed to add environment variables as build arguments`,
+        message: `Failed to add environment variables as build arguments`,
         pub,
         serverId,
         serviceId,
@@ -371,7 +371,7 @@ const dockerFileBuild = async ({
 
   if (cloningResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully cloned repository`,
+      message: `Successfully cloned repository`,
       pub,
       serverId,
       serviceId,
@@ -379,7 +379,7 @@ const dockerFileBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to clone repository`,
+      message: `Failed to clone repository`,
       pub,
       serverId,
       serviceId,
@@ -437,7 +437,7 @@ const buildpacksBuild = async ({
 
   if (buildArgsResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully cleared build arguments`,
+      message: `Successfully cleared build arguments`,
       pub,
       serverId,
       serviceId,
@@ -445,7 +445,7 @@ const buildpacksBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to clear build arguments`,
+      message: `Failed to clear build arguments`,
       pub,
       serverId,
       serviceId,
@@ -493,7 +493,7 @@ const buildpacksBuild = async ({
 
   if (cloningResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully cloned repository`,
+      message: `Successfully cloned repository`,
       pub,
       serverId,
       serviceId,
@@ -501,7 +501,7 @@ const buildpacksBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to clone repository`,
+      message: `Failed to clone repository`,
       pub,
       serverId,
       serviceId,
@@ -556,7 +556,7 @@ const staticBuild = async ({
 
   if (buildpacksResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully set static builder`,
+      message: `Successfully set static builder`,
       pub,
       serverId,
       serviceId,
@@ -564,7 +564,7 @@ const staticBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to set static builder`,
+      message: `Failed to set static builder`,
       pub,
       serverId,
       serviceId,
@@ -606,7 +606,7 @@ const staticBuild = async ({
 
   if (cloningResponse.code === 0) {
     sendEvent({
-      message: `✅ Successfully cloned repository`,
+      message: `Successfully cloned repository`,
       pub,
       serverId,
       serviceId,
@@ -614,7 +614,7 @@ const staticBuild = async ({
     })
   } else {
     sendEvent({
-      message: `❌ Failed to clone repository`,
+      message: `Failed to clone repository`,
       pub,
       serverId,
       serviceId,
@@ -774,7 +774,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
 
         //   if (portResponse) {
         //     sendEvent({
-        //       message: `✅ Successfully exposed port ${port}`,
+        //       message: `Successfully exposed port ${port}`,
         //       pub,
         //       serverId,
         //       serviceId,
@@ -782,7 +782,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
         //     })
         //   } else {
         //     sendEvent({
-        //       message: `❌ Failed to exposed port ${port}`,
+        //       message: `Failed to exposed port ${port}`,
         //       pub,
         //       serverId,
         //       serviceId,
@@ -880,7 +880,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
             letsencryptStatus.stdout === 'true'
           ) {
             sendEvent({
-              message: `✅ SSL enabled, skipping SSL generation`,
+              message: `SSL enabled, skipping SSL generation`,
               pub,
               serverId,
               serviceId,
@@ -922,7 +922,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
 
             if (letsencryptResponse.code === 0) {
               sendEvent({
-                message: `✅ Successfully generated SSL certificates`,
+                message: `Successfully generated SSL certificates`,
                 pub,
                 serverId,
                 serviceId,
@@ -930,7 +930,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
               })
             } else {
               sendEvent({
-                message: `❌ Failed to generated SSL certificates`,
+                message: `Failed to generated SSL certificates`,
                 pub,
                 serverId,
                 serviceId,
@@ -987,7 +987,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
             })
 
             sendEvent({
-              message: `✅ Updated domain details`,
+              message: `Updated domain details`,
               pub,
               serverId,
               serviceId,
@@ -995,7 +995,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
           } catch (error) {
             const message = error instanceof Error ? error.message : ''
             sendEvent({
-              message: `❌ Failed to update domain details: ${message}`,
+              message: `Failed to update domain details: ${message}`,
               pub,
               serverId,
               serviceId,
@@ -1055,7 +1055,7 @@ export const addDeployQueue = async (data: QueueArgs) => {
           action: 'refresh',
           tenantSlug,
         })
-        throw new Error(`❌ Failed to deploy app: ${message}`)
+        throw new Error(`Failed to deploy app: ${message}`)
       } finally {
         if (ssh) {
           ssh.dispose()

@@ -69,7 +69,7 @@ export const addTogglePluginQueue = async (data: QueueArgs) => {
         if (pluginStatusResponse.code === 0) {
           sendEvent({
             pub,
-            message: `✅ Successfully ${pluginDetails.enabled ? 'enabled' : 'disabled'} ${pluginDetails.name} plugin`,
+            message: `Successfully ${pluginDetails.enabled ? 'enabled' : 'disabled'} ${pluginDetails.name} plugin`,
             serverId: serverDetails.id,
           })
 
@@ -118,7 +118,7 @@ export const addTogglePluginQueue = async (data: QueueArgs) => {
       } catch (error) {
         const message = error instanceof Error ? error.message : ''
         throw new Error(
-          `❌ failed to ${pluginDetails?.enabled ? 'enable' : 'disable'} ${pluginDetails?.name} plugin: ${message}`,
+          `failed to ${pluginDetails?.enabled ? 'enable' : 'disable'} ${pluginDetails?.name} plugin: ${message}`,
         )
       } finally {
         if (ssh) {

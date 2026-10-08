@@ -115,7 +115,7 @@ export const MagicLinkEmailTemplate = ({
 
       <Section style={magicLinkStyles.buttonSection}>
         <Button href={href} style={magicLinkStyles.primaryButton}>
-          🔐 {buttonText}
+          {buttonText}
         </Button>
       </Section>
 
@@ -128,7 +128,7 @@ export const MagicLinkEmailTemplate = ({
     <Hr style={magicLinkStyles.divider} />
 
     <Section style={magicLinkStyles.securitySection}>
-      <Text style={magicLinkStyles.securityTitle}>🛡️ Security Notice</Text>
+      <Text style={magicLinkStyles.securityTitle}>Security Notice</Text>
       <Text style={magicLinkStyles.securityText}>
         • This link is valid for 10 minutes only
       </Text>

@@ -91,7 +91,7 @@ export const addResourceAppQueue = async (data: ResourceQueueArgs) => {
 
         sendEvent({
           pub,
-          message: `✅ Successfully updated resource for ${appName}`,
+          message: `Successfully updated resource for ${appName}`,
           serverId,
         })
 
@@ -99,7 +99,7 @@ export const addResourceAppQueue = async (data: ResourceQueueArgs) => {
       } catch (error) {
         let message = error instanceof Error ? error.message : ''
 
-        throw new Error(`❌ Failed resource update for ${appName}: ${message}`)
+        throw new Error(`Failed resource update for ${appName}: ${message}`)
       } finally {
         ssh?.dispose()
       }

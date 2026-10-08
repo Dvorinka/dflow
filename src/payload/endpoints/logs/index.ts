@@ -37,7 +37,7 @@ export const logs: PayloadHandler = async ({ headers, payload, query }) => {
       try {
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ message: `🖥️ connecting to ${serverDetails.name} server...` })}\n\n`,
+            `data: ${JSON.stringify({ status: `Connecting to ${serverDetails.name}…` })}\n\n`,
           ),
         )
 
@@ -46,7 +46,7 @@ export const logs: PayloadHandler = async ({ headers, payload, query }) => {
         if (ssh.isConnected()) {
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ message: `✅ connected to ${serverDetails.name} server...` })}\n\n`,
+              `data: ${JSON.stringify({ status: `Connected to ${serverDetails.name}`, live: true })}\n\n`,
             ),
           )
 
