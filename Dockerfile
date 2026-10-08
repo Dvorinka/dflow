@@ -113,6 +113,10 @@ RUN adduser --system --uid 1001 nextjs
 
 RUN apk add --no-cache openssh-client
 
+# Ansible playbook runner (#401) — ansible-core + sshpass for
+# password-authed inventories; playbooks run from the app container.
+RUN apk add --no-cache ansible-core sshpass
+
 # RUN mkdir -p /var/run/tailscale /var/lib/tailscale && chmod 777 /var/run/tailscale /var/lib/tailscale
 
 RUN apk add --no-cache tailscale

@@ -18,6 +18,7 @@ import AccessDeniedAlert from '@/components/AccessDeniedAlert'
 import RefreshButton from '@/components/RefreshButton'
 import SidebarToggleButton from '@/components/SidebarToggleButton'
 import UpdateManualServerFrom from '@/components/servers/AttachCustomServerForm'
+import AnsiblePlaybooksCard from '@/components/servers/AnsiblePlaybooksCard'
 import CloudInitStatusBanner from '@/components/servers/CloudInitStatusBanner'
 import UpdateEC2InstanceForm from '@/components/servers/CreateEC2InstanceForm'
 import Danger from '@/components/servers/Danger'
@@ -146,6 +147,8 @@ const GeneralTab = ({ server }: { server: ServerType }) => {
       <DanglingVolumesCard serverId={server.id} />
 
       <RemoteCommandCard serverId={server.id} />
+
+      <AnsiblePlaybooksCard serverId={server.id} />
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         <div className='md:col-span-2'>

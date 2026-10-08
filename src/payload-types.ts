@@ -68,6 +68,8 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    ansiblePlaybooks: AnsiblePlaybook;
+    ansibleExecutions: AnsibleExecution;
     projects: Project;
     services: Service;
     servers: Server;
@@ -102,6 +104,8 @@ export interface Config {
   };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    ansiblePlaybooks: AnsiblePlaybooksSelect<false> | AnsiblePlaybooksSelect<true>;
+    ansibleExecutions: AnsibleExecutionsSelect<false> | AnsibleExecutionsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
     servers: ServersSelect<false> | ServersSelect<true>;
@@ -326,35 +330,24 @@ export interface Role {
   deletedAt?: string | null;
 }
 /**
+ * Versioned Ansible playbooks runnable against connected servers
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "projects".
+ * via the `definition` "ansiblePlaybooks".
  */
-export interface Project {
+export interface AnsiblePlaybook {
   id: string;
-  _order?: string | null;
   tenant?: (string | null) | Tenant;
-  /**
-   * Enter the name of the project.
-   */
   name: string;
-  /**
-   * Provide a brief description of the project.
-   */
   description?: string | null;
   /**
-   * Attach a server, all the servers in this project will be deployed in that server
+   * Full ansible-playbook YAML. Runs with the server's SSH user.
    */
-  server: string | Server;
-  services?: {
-    docs?: (string | Service)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
+  playbook: string;
   /**
-   * Hide this project from the public view.
+   * Restrict this playbook to specific servers. Empty = any server.
    */
-  hidden?: boolean | null;
-  createdBy?: (string | null) | User;
+  servers?: (string | Server)[] | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -791,6 +784,63 @@ export interface SecurityGroup {
   securityGroupId?: string | null;
   syncStatus?: ('in-sync' | 'pending' | 'failed' | 'start-sync') | null;
   lastSyncedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+}
+/**
+ * Execution log of Ansible playbook runs
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ansibleExecutions".
+ */
+export interface AnsibleExecution {
+  id: string;
+  tenant?: (string | null) | Tenant;
+  playbook: string | AnsiblePlaybook;
+  server: string | Server;
+  status: 'queued' | 'running' | 'success' | 'failed';
+  /**
+   * ansible-playbook stdout/stderr
+   */
+  output?: string | null;
+  exitCode?: number | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: string;
+  _order?: string | null;
+  tenant?: (string | null) | Tenant;
+  /**
+   * Enter the name of the project.
+   */
+  name: string;
+  /**
+   * Provide a brief description of the project.
+   */
+  description?: string | null;
+  /**
+   * Attach a server, all the servers in this project will be deployed in that server
+   */
+  server: string | Server;
+  services?: {
+    docs?: (string | Service)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Hide this project from the public view.
+   */
+  hidden?: boolean | null;
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -1472,6 +1522,8 @@ export interface Webhook {
   collections?:
     | (
         | 'users'
+        | 'ansiblePlaybooks'
+        | 'ansibleExecutions'
         | 'projects'
         | 'services'
         | 'servers'
@@ -1623,6 +1675,14 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
+        relationTo: 'ansiblePlaybooks';
+        value: string | AnsiblePlaybook;
+      } | null)
+    | ({
+        relationTo: 'ansibleExecutions';
+        value: string | AnsibleExecution;
+      } | null)
+    | ({
         relationTo: 'projects';
         value: string | Project;
       } | null)
@@ -1769,6 +1829,37 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ansiblePlaybooks_select".
+ */
+export interface AnsiblePlaybooksSelect<T extends boolean = true> {
+  tenant?: T;
+  name?: T;
+  description?: T;
+  playbook?: T;
+  servers?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ansibleExecutions_select".
+ */
+export interface AnsibleExecutionsSelect<T extends boolean = true> {
+  tenant?: T;
+  playbook?: T;
+  server?: T;
+  status?: T;
+  output?: T;
+  exitCode?: T;
+  startedAt?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

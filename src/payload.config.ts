@@ -14,6 +14,8 @@ import { logs } from '@/payload/endpoints/logs'
 import { serverEvents } from '@/payload/endpoints/server-events'
 
 import { Activity } from './payload/collections/Activity'
+import { AnsibleExecutions } from './payload/collections/AnsibleExecutions'
+import { AnsiblePlaybooks } from './payload/collections/AnsiblePlaybooks'
 import { Backups } from './payload/collections/Backups'
 import { Banners } from './payload/collections/Banners'
 import { CloudProviderAccounts } from './payload/collections/CloudProviderAccounts'
@@ -63,6 +65,8 @@ export default buildConfig({
   globals: [Theme, Branding, AuthConfig],
   collections: [
     Users,
+    AnsiblePlaybooks,
+    AnsibleExecutions,
     Projects,
     Services,
     Servers,
@@ -104,6 +108,8 @@ export default buildConfig({
         projects: {},
         backups: {},
         roles: {},
+        ansiblePlaybooks: {},
+        ansibleExecutions: {},
       },
       userHasAccessToAllTenants: user => Boolean(user?.role?.includes('admin')),
       enabled: true,
