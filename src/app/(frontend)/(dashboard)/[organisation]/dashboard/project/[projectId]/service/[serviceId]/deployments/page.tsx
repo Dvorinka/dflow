@@ -21,13 +21,14 @@ const DeploymentsPage = async ({ params }: PageProps) => {
     getServiceDetails({ id: serviceId }),
   ])
 
-  const server =
-    typeof service?.project === 'object' ? service.project.server : ''
+  const project = typeof service?.project === 'object' ? service.project : null
+  const server = project?.server ?? ''
 
   return (
     <DeploymentList
       deployments={deployments}
       serviceId={serviceId}
+      projectId={project?.id ?? ''}
       // todo: optimize server id fetching
       serverId={typeof server === 'object' ? server.id : server}
     />
